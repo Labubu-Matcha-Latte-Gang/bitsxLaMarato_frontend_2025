@@ -1,0 +1,9 @@
+services:
+  web_client:
+    build: 
+      context: .
+      args:
+        - API_URL=${API_URL}
+    container_name: flutter_local_preview
+    ports:
+      - "8080:80"
