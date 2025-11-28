@@ -4,9 +4,9 @@ WORKDIR /app
 
 ARG API_URL
 
-COPY pubspec.* ./
-RUN flutter pub get
 COPY . .
+
+RUN flutter pub get
 
 RUN flutter build web --verbose --release --no-tree-shake-icons --dart-define=API_URL=${API_URL:-http://localhost:5000}
 
