@@ -8,7 +8,7 @@ COPY pubspec.* ./
 RUN flutter pub get
 COPY . .
 
-RUN flutter build web --release --dart-define=API_URL=${API_URL:-http://localhost:5000}
+RUN flutter build web --verbose --release --no-tree-shake-icons --dart-define=API_URL=${API_URL:-http://localhost:5000}
 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
