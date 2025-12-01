@@ -111,8 +111,8 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDarkMode 
-                    ? [const Color(0xFF1a1a1a), const Color(0xFF2D2D2D), const Color(0xFF404040)]
-                    : [const Color(0xFFE3F2FD), const Color(0xFFB8E6FF), const Color(0xFF81D4FA)],
+                    ? [const Color(0xFF1E2124), const Color(0xFF1E2124), const Color(0xFF1E2124)]
+                    : [const Color(0xFF90E0EF), const Color(0xFF90E0EF), const Color(0xFF90E0EF)],
               ),
             ),
           ),
@@ -217,80 +217,92 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                             ),
                           ),
                         ),
-                        
-                        // Botones con corner radius 32
-                        Column(
-                          children: [
-                            // Botón LOGIN
-                            SizedBox(
-                              width: double.infinity,
-                              height: 55,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode 
-                                      ? const Color(0xFF7C3AED)  // Morado para modo oscuro
-                                      : const Color(0xFF0284C7), // Azul para modo claro
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                onPressed: () {
-                                  // TODO: Navegar a pantalla de login
-                                  print('LOGIN pressed');
-                                },
-                                child: const Text(
-                                  'LOGIN',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            // Botón REGISTER
-                            SizedBox(
-                              width: double.infinity,
-                              height: 55,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode 
-                                      ? const Color(0xFF7C3AED)  // Morado para modo oscuro
-                                      : const Color(0xFF0284C7), // Azul para modo claro
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(32),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                onPressed: () {
-                                  // TODO: Navegar a pantalla de registro
-                                  print('REGISTER pressed');
-                                },
-                                child: const Text(
-                                  'REGISTER',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
                 ),
                 
-                // Espaciado inferior
-                const SizedBox(height: 40),
+                // Recuadro inferior con botones (30% de la pantalla)
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF282B30) : const Color(0xFFCAF0F8),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 40.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Botón LOGIN
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDarkMode 
+                                  ? const Color(0xFF7C3AED)  // Morado para modo oscuro
+                                  : const Color(0xFF0284C7), // Azul para modo claro
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              // TODO: Navegar a pantalla de login
+                              print('LOGIN pressed');
+                            },
+                            child: const Text(
+                              'ENTRAR',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Botón REGISTER
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDarkMode 
+                                  ? const Color(0xFF7C3AED)  // Morado para modo oscuro
+                                  : const Color(0xFF0284C7), // Azul para modo claro
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              // TODO: Navegar a pantalla de registro
+                              print('REGISTER pressed');
+                            },
+                            child: const Text(
+                              'REGISTRAR-SE',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
