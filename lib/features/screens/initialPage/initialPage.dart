@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../../utils/constants/image_strings.dart';
+import '../login/login.dart';
 
 class Particle {
   double x;
@@ -254,8 +255,10 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                               elevation: 0,
                             ),
                             onPressed: () {
-                              // TODO: Navegar a pantalla de login
-                              print('LOGIN pressed');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginPage()),
+                              );
                             },
                             child: const Text(
                               'ENTRAR',
