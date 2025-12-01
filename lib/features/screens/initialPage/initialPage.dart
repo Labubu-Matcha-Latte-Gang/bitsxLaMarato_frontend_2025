@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import '../../utils/constants/image_strings.dart';
+import '../../../utils/constants/image_strings.dart';
 
 class Particle {
   double x;
@@ -170,56 +170,35 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                           child: Column(
                             children: [
                               // Logo con imagen real
-                              Container(
+                              SizedBox(
                                 height: 200,
                                 width: 300,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: (isDarkMode ? Colors.white : const Color(0xFF1E3A8A)).withOpacity(0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.white.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Image.asset(
-                                      isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        // Fallback en caso de que la imagen no se encuentre
-                                        return Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.local_hospital,
-                                              size: 80,
-                                              color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            Text(
-                                              'LMLG',
-                                              style: TextStyle(
-                                                fontSize: 32,
-                                                fontWeight: FontWeight.bold,
-                                                color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
-                                                letterSpacing: 4,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                child: Image.asset(
+                                  isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Fallback en caso de que la imagen no se encuentre
+                                    return Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.local_hospital,
+                                          size: 80,
+                                          color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'LMLG',
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                                            letterSpacing: 4,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                             ],
@@ -239,31 +218,21 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                           ),
                         ),
                         
-                        // Botones con efecto glassmorphism
+                        // Botones con corner radius 32
                         Column(
                           children: [
                             // Botón LOGIN
-                            Container(
+                            SizedBox(
                               width: double.infinity,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: (isDarkMode ? const Color(0xFF6366F1) : const Color(0xFF0EA5E9)).withOpacity(0.4),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
+                              height: 55,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isDarkMode 
-                                      ? const Color(0xFF6366F1) 
-                                      : const Color(0xFF0EA5E9),
+                                      ? const Color(0xFF7C3AED)  // Morado para modo oscuro
+                                      : const Color(0xFF0284C7), // Azul para modo claro
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(25),
+                                    borderRadius: BorderRadius.circular(32),
                                   ),
                                   elevation: 0,
                                 ),
@@ -275,7 +244,7 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                   'LOGIN',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                     letterSpacing: 1,
                                   ),
                                 ),
@@ -285,27 +254,17 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                             const SizedBox(height: 16),
                             
                             // Botón REGISTER
-                            Container(
+                            SizedBox(
                               width: double.infinity,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: (isDarkMode ? const Color(0xFF6366F1) : const Color(0xFF0EA5E9)).withOpacity(0.4),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
+                              height: 55,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isDarkMode 
-                                      ? const Color(0xFF6366F1) 
-                                      : const Color(0xFF0EA5E9),
+                                      ? const Color(0xFF7C3AED)  // Morado para modo oscuro
+                                      : const Color(0xFF0284C7), // Azul para modo claro
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(25),
+                                    borderRadius: BorderRadius.circular(32),
                                   ),
                                   elevation: 0,
                                 ),
@@ -317,7 +276,7 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                   'REGISTER',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                     letterSpacing: 1,
                                   ),
                                 ),
