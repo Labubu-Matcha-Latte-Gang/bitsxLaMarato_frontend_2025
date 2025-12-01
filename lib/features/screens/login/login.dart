@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'utils/constants/image_strings.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -23,7 +24,7 @@ class LoginScreen extends StatelessWidget {
                   Image(
                     height: 319,
                     width: 304,
-                    image: AssetImage(TImages.logo-blanc),
+                    image: AssetImage(TImages.lightLogo),
                   )
                 ],
               )
