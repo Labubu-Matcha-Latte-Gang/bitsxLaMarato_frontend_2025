@@ -1,4 +1,5 @@
 /// Class with image string constants
+library;
 
 class TImages {
   static const String darkLogoText = "assets/logos/logo-text-blau.png";
