@@ -85,6 +85,7 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
   late AnimationController _animationController;
   List<Particle> particles = [];
   final Random random = Random();
+  Size? screenSize;
 
   @override
   void initState() {
@@ -94,8 +95,17 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
       vsync: this,
     )..repeat();
 
-    _initializeParticles();
     _animationController.addListener(_updateParticles);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newScreenSize = MediaQuery.of(context).size;
+    if (screenSize != newScreenSize) {
+      screenSize = newScreenSize;
+      _initializeParticles();
+    }
   }
 
   @override
@@ -112,16 +122,60 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
     super.dispose();
   }
 
+  // Calcular número de partículas basado en el tamaño de pantalla
+  int _getResponsiveParticleCount() {
+    if (screenSize == null) return widget.particleCount;
+    final screenArea = screenSize!.width * screenSize!.height;
+    final baseArea = 400 * 800; // Área base de referencia
+    final ratio = screenArea / baseArea;
+
+    // Ajustar el número de partículas según el área
+    int responsiveCount = (widget.particleCount * ratio).round();
+
+    // Limitar entre un mínimo y máximo razonable
+    responsiveCount = responsiveCount.clamp(20, 150);
+
+    return responsiveCount;
+  }
+
+  // Calcular velocidad basada en el tamaño de pantalla
+  double _getResponsiveSpeed() {
+    if (screenSize == null) return widget.speed;
+    final screenDiagonal = screenSize!.shortestSide;
+    final baseDiagonal = 400.0; // Diagonal base de referencia
+    final ratio = screenDiagonal / baseDiagonal;
+
+    return widget.speed * ratio;
+  }
+
+  // Calcular tamaño de partículas basado en el tamaño de pantalla
+  (double minSize, double maxSize) _getResponsiveSizes() {
+    if (screenSize == null) return (widget.minSize, widget.maxSize);
+    final screenDiagonal = screenSize!.shortestSide;
+    final baseDiagonal = 400.0;
+    final ratio = (screenDiagonal / baseDiagonal).clamp(0.5, 2.0);
+
+    return (
+      widget.minSize * ratio,
+      widget.maxSize * ratio,
+    );
+  }
+
   void _initializeParticles() {
+    if (screenSize == null || screenSize == Size.zero) return;
+
     particles.clear();
-    for (int i = 0; i < widget.particleCount; i++) {
+    final responsiveCount = _getResponsiveParticleCount();
+    final responsiveSpeed = _getResponsiveSpeed();
+    final (minSize, maxSize) = _getResponsiveSizes();
+
+    for (int i = 0; i < responsiveCount; i++) {
       particles.add(Particle(
-        x: random.nextDouble() * 400,
-        y: random.nextDouble() * 800,
-        vx: (random.nextDouble() - 0.5) * widget.speed,
-        vy: (random.nextDouble() - 0.5) * widget.speed,
-        size: random.nextDouble() * (widget.maxSize - widget.minSize) +
-            widget.minSize,
+        x: random.nextDouble() * screenSize!.width,
+        y: random.nextDouble() * screenSize!.height,
+        vx: (random.nextDouble() - 0.5) * responsiveSpeed,
+        vy: (random.nextDouble() - 0.5) * responsiveSpeed,
+        size: random.nextDouble() * (maxSize - minSize) + minSize,
         color: _getParticleColor(),
         opacity: random.nextDouble() * (widget.maxOpacity - widget.minOpacity) +
             widget.minOpacity,
@@ -130,22 +184,24 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
   }
 
   void _updateParticles() {
+    if (screenSize == null || screenSize == Size.zero) return;
+
     setState(() {
       for (var particle in particles) {
         particle.x += particle.vx;
         particle.y += particle.vy;
 
-        // Rebotar en los bordes
-        if (particle.x < 0 || particle.x > 400) {
+        // Rebotar en los bordes con el tamaño real de la pantalla
+        if (particle.x < 0 || particle.x > screenSize!.width) {
           particle.vx *= -1;
         }
-        if (particle.y < 0 || particle.y > 800) {
+        if (particle.y < 0 || particle.y > screenSize!.height) {
           particle.vy *= -1;
         }
 
-        // Mantener dentro de los límites
-        particle.x = particle.x.clamp(0, 400);
-        particle.y = particle.y.clamp(0, 800);
+        // Mantener dentro de los límites de la pantalla
+        particle.x = particle.x.clamp(0, screenSize!.width);
+        particle.y = particle.y.clamp(0, screenSize!.height);
       }
     });
   }
