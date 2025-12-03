@@ -176,7 +176,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                       children: [
                         // Título
                         Text(
-                          'Benvingut a LMLG!',
+                          'Registra\'t a LMLG!',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
