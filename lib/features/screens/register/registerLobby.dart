@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import 'registerDoctor.dart';
@@ -35,21 +36,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
           // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124)
-                      ]
-                    : [
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF)
-                      ],
-              ),
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
@@ -77,13 +64,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                       // Botón de back
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -92,9 +77,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                         child: IconButton(
                           icon: Icon(
                             Icons.arrow_back,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: () {
                             Navigator.pop(context);
@@ -104,13 +87,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                       // Botón de tema
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -121,9 +102,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                             isDarkMode
                                 ? Icons.wb_sunny
                                 : Icons.nightlight_round,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -162,9 +141,8 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                                         Icon(
                                           Icons.local_hospital,
                                           size: 60,
-                                          color: isDarkMode
-                                              ? Colors.white
-                                              : const Color(0xFF1E3A8A),
+                                          color: AppColors.getPrimaryTextColor(
+                                              isDarkMode),
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
@@ -172,9 +150,9 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                                           style: TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : const Color(0xFF1E3A8A),
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                    isDarkMode),
                                             letterSpacing: 3,
                                           ),
                                         ),
@@ -205,9 +183,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF282B30)
-                    : const Color(0xFFCAF0F8),
+                color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
@@ -229,9 +205,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                         'Registrar-se com a:',
                         style: TextStyle(
                           fontSize: 18,
-                          color: isDarkMode
-                              ? Colors.white70
-                              : const Color(0xFF1E3A8A),
+                          color: AppColors.getSecondaryTextColor(isDarkMode),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -246,10 +220,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDarkMode
-                                  ? const Color(0xFF7289DA)
-                                  : const Color(0xFF0077B6),
-                              foregroundColor: Colors.white,
+                              backgroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonTextColor(
+                                      isDarkMode),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(32),
                               ),
@@ -259,7 +234,8 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => RegisterPacient(isDarkMode: isDarkMode),
+                                  builder: (context) =>
+                                      RegisterPacient(isDarkMode: isDarkMode),
                                 ),
                               );
                             },
@@ -281,9 +257,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                           'o',
                           style: TextStyle(
                             fontSize: 16,
-                            color: isDarkMode
-                                ? Colors.white60
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getTertiaryTextColor(isDarkMode),
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -296,10 +270,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDarkMode
-                                  ? const Color(0xFF7289DA)
-                                  : const Color(0xFF0077B6),
-                              foregroundColor: Colors.white,
+                              backgroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonTextColor(
+                                      isDarkMode),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(32),
                               ),
@@ -336,9 +311,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                             'Already have an account? Login',
                             style: TextStyle(
                               fontSize: 14,
-                              color: isDarkMode
-                                  ? Colors.white60
-                                  : const Color(0xFF1E3A8A),
+                              color: AppColors.getTertiaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
                             ),

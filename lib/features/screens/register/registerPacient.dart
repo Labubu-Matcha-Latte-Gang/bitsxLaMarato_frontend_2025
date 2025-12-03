@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../utils/app_colors.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -112,7 +113,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Diagnòstic',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -120,7 +121,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -131,7 +132,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -148,7 +149,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Sexe',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -156,7 +157,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -167,7 +168,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -184,7 +185,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Tractament',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -192,7 +193,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -203,7 +204,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -225,7 +226,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Edat',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -233,13 +234,11 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
                 border: _currentPage == 0
                     ? Border.all(
-                        color: isDarkMode
-                            ? const Color(0xFF0077B6)
-                            : const Color(0xFF0077B6),
+                        color: AppColors.getPrimaryButtonColor(isDarkMode),
                         width: 2,
                       )
                     : null,
@@ -253,7 +252,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -270,7 +269,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Altura (cm)',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -278,7 +277,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -290,7 +289,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -307,7 +306,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Pes (kg)',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -315,7 +314,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -327,7 +326,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -353,8 +352,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                     'Nom',
                     style: TextStyle(
                       fontSize: 14,
-                      color:
-                          isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                      color: AppColors.getSecondaryTextColor(isDarkMode),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -362,8 +360,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                   Container(
                     height: 45,
                     decoration: BoxDecoration(
-                      color:
-                          isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                      color: AppColors.getFieldBackgroundColor(isDarkMode),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextFormField(
@@ -374,8 +371,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                             EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                       ),
                       style: TextStyle(
-                        color:
-                            isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                        color: AppColors.getInputTextColor(isDarkMode),
                       ),
                     ),
                   ),
@@ -394,8 +390,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                     'Cognom',
                     style: TextStyle(
                       fontSize: 14,
-                      color:
-                          isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                      color: AppColors.getSecondaryTextColor(isDarkMode),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -403,8 +398,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                   Container(
                     height: 45,
                     decoration: BoxDecoration(
-                      color:
-                          isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                      color: AppColors.getFieldBackgroundColor(isDarkMode),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextFormField(
@@ -415,8 +409,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                             EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                       ),
                       style: TextStyle(
-                        color:
-                            isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                        color: AppColors.getInputTextColor(isDarkMode),
                       ),
                     ),
                   ),
@@ -436,7 +429,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Email',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -444,7 +437,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -456,12 +449,11 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                   suffixIcon: Icon(
                     Icons.email_outlined,
-                    color:
-                        isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                    color: AppColors.getSecondaryTextColor(isDarkMode),
                   ),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -478,7 +470,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
               'Password',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                color: AppColors.getSecondaryTextColor(isDarkMode),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -486,7 +478,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
             Container(
               height: 45,
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7289DA) : Colors.white,
+                color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextFormField(
@@ -501,8 +493,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       _isPasswordVisible
                           ? Icons.visibility
                           : Icons.visibility_off,
-                      color:
-                          isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                      color: AppColors.getSecondaryTextColor(isDarkMode),
                     ),
                     onPressed: () {
                       setState(() {
@@ -512,7 +503,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                   ),
                 ),
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                  color: AppColors.getInputTextColor(isDarkMode),
                 ),
               ),
             ),
@@ -530,21 +521,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
           // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124)
-                      ]
-                    : [
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF)
-                      ],
-              ),
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
@@ -572,13 +549,11 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       // Botón de back
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -587,9 +562,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                         child: IconButton(
                           icon: Icon(
                             Icons.arrow_back,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: () {
                             Navigator.pop(context);
@@ -599,13 +572,11 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       // Botón de tema
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -616,9 +587,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                             isDarkMode
                                 ? Icons.wb_sunny
                                 : Icons.nightlight_round,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -640,9 +609,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                         return Icon(
                           Icons.local_hospital,
                           size: 40,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1E3A8A),
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
                         );
                       },
                     ),
@@ -666,9 +633,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 maxHeight: MediaQuery.of(context).size.height * 0.75,
               ),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF282B30)
-                    : const Color(0xFFCAF0F8),
+                color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                 borderRadius: const BorderRadius.all(Radius.circular(32)),
               ),
               child: Padding(
@@ -686,9 +651,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                         ),
 
@@ -705,13 +668,10 @@ class _RegisterPacientState extends State<RegisterPacient> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: _currentPage == index
-                                    ? (isDarkMode
-                                        ? const Color(0xFF0077B6)
-                                        : const Color(0xFF0077B6))
-                                    : (isDarkMode
-                                        ? Colors.white30
-                                        : const Color(0xFF1E3A8A)
-                                            .withOpacity(0.3)),
+                                    ? AppColors.getPrimaryButtonColor(
+                                        isDarkMode)
+                                    : AppColors.getTertiaryTextColor(isDarkMode)
+                                        .withOpacity(0.3),
                               ),
                             );
                           }),
@@ -742,12 +702,13 @@ class _RegisterPacientState extends State<RegisterPacient> {
                                 height: 60,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: isDarkMode
-                                        ? const Color(0xFF7289DA)
-                                            .withOpacity(0.5)
-                                        : const Color(0xFF0077B6)
+                                    backgroundColor:
+                                        AppColors.getPrimaryButtonColor(
+                                                isDarkMode)
                                             .withOpacity(0.5),
-                                    foregroundColor: Colors.white,
+                                    foregroundColor:
+                                        AppColors.getPrimaryButtonTextColor(
+                                            isDarkMode),
                                     shape: const CircleBorder(),
                                     elevation: 0,
                                     padding: EdgeInsets.zero,
@@ -771,10 +732,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
                                     height: 50,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: isDarkMode
-                                            ? const Color(0xFF7289DA)
-                                            : const Color(0xFF0077B6),
-                                        foregroundColor: Colors.white,
+                                        backgroundColor:
+                                            AppColors.getPrimaryButtonColor(
+                                                isDarkMode),
+                                        foregroundColor:
+                                            AppColors.getPrimaryButtonTextColor(
+                                                isDarkMode),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(32),
@@ -801,10 +764,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
                                 height: 60,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: isDarkMode
-                                        ? const Color(0xFF7289DA)
-                                        : const Color(0xFF0077B6),
-                                    foregroundColor: Colors.white,
+                                    backgroundColor:
+                                        AppColors.getPrimaryButtonColor(
+                                            isDarkMode),
+                                    foregroundColor:
+                                        AppColors.getPrimaryButtonTextColor(
+                                            isDarkMode),
                                     shape: const CircleBorder(),
                                     elevation: 0,
                                     padding: EdgeInsets.zero,
@@ -830,14 +795,11 @@ class _RegisterPacientState extends State<RegisterPacient> {
                             'Ja tens un compte? Login',
                             style: TextStyle(
                               fontSize: 14,
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.8)
-                                  : const Color(0xFF1E3A8A),
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
-                              decorationColor: isDarkMode
-                                  ? Colors.white.withOpacity(0.8)
-                                  : const Color(0xFF1E3A8A),
+                              decorationColor:
+                                  AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),

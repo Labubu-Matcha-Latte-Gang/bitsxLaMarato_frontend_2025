@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../app_colors.dart';
 
 class Particle {
   double x;
@@ -214,7 +215,7 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
 
   Color _getParticleColor() {
     return widget.particleColor ??
-        (widget.isDarkMode ? Colors.white : const Color(0xFF1E3A8A));
+        AppColors.getParticleColor(widget.isDarkMode);
   }
 
   @override

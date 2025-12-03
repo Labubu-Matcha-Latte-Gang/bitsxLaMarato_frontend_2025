@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../login/login.dart';
@@ -28,21 +29,7 @@ class _InitialPageState extends State<InitialPage> {
           // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124)
-                      ]
-                    : [
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF)
-                      ],
-              ),
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
@@ -69,13 +56,11 @@ class _InitialPageState extends State<InitialPage> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -86,9 +71,7 @@ class _InitialPageState extends State<InitialPage> {
                             isDarkMode
                                 ? Icons.wb_sunny
                                 : Icons.nightlight_round,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -127,9 +110,8 @@ class _InitialPageState extends State<InitialPage> {
                                         Icon(
                                           Icons.local_hospital,
                                           size: 80,
-                                          color: isDarkMode
-                                              ? Colors.white
-                                              : const Color(0xFF1E3A8A),
+                                          color: AppColors.getPrimaryTextColor(
+                                              isDarkMode),
                                         ),
                                         const SizedBox(height: 10),
                                         Text(
@@ -137,9 +119,9 @@ class _InitialPageState extends State<InitialPage> {
                                           style: TextStyle(
                                             fontSize: 32,
                                             fontWeight: FontWeight.bold,
-                                            color: isDarkMode
-                                                ? Colors.white
-                                                : const Color(0xFF1E3A8A),
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                    isDarkMode),
                                             letterSpacing: 4,
                                           ),
                                         ),
@@ -161,9 +143,7 @@ class _InitialPageState extends State<InitialPage> {
                   height: MediaQuery.of(context).size.height * 0.35,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF282B30)
-                        : const Color(0xFFCAF0F8),
+                    color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(32),
                       topRight: Radius.circular(32),
@@ -183,9 +163,8 @@ class _InitialPageState extends State<InitialPage> {
                             'Començem!',
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : const Color(0xFF1E3A8A),
+                              color:
+                                  AppColors.getSecondaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -215,8 +194,8 @@ class _InitialPageState extends State<InitialPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) =>
-                                            LoginScreen(isDarkMode: isDarkMode)),
+                                        builder: (context) => LoginScreen(
+                                            isDarkMode: isDarkMode)),
                                   );
                                 },
                                 child: const Text(
@@ -238,12 +217,12 @@ class _InitialPageState extends State<InitialPage> {
                               height: 50,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode
-                                      ? const Color(
-                                          0xFF7289DA) // Nuevo color para modo oscuro
-                                      : const Color(
-                                          0xFF0077B6), // Nuevo color para modo claro
-                                  foregroundColor: Colors.white,
+                                  backgroundColor:
+                                      AppColors.getPrimaryButtonColor(
+                                          isDarkMode),
+                                  foregroundColor:
+                                      AppColors.getPrimaryButtonTextColor(
+                                          isDarkMode),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(32),
                                   ),

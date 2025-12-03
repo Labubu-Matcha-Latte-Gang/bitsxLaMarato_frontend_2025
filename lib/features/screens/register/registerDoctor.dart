@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../utils/app_colors.dart';
 
 class RegisterDoctor extends StatefulWidget {
   final bool isDarkMode;
@@ -49,21 +50,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124)
-                      ]
-                    : [
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF)
-                      ],
-              ),
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
@@ -91,13 +78,11 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                       // Botón de back
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -106,9 +91,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         child: IconButton(
                           icon: Icon(
                             Icons.arrow_back,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: () {
                             Navigator.pop(context);
@@ -118,13 +101,11 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                       // Botón de tema
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -135,9 +116,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             isDarkMode
                                 ? Icons.wb_sunny
                                 : Icons.nightlight_round,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -159,9 +138,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         return Icon(
                           Icons.local_hospital,
                           size: 40,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1E3A8A),
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
                         );
                       },
                     ),
@@ -185,9 +162,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                 maxHeight: MediaQuery.of(context).size.height * 0.75,
               ),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF282B30)
-                    : const Color(0xFFCAF0F8),
+                color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                 borderRadius: const BorderRadius.all(Radius.circular(32)),
               ),
               child: Padding(
@@ -205,9 +180,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                         ),
 
@@ -225,9 +198,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                     'Nom',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDarkMode
-                                          ? Colors.white70
-                                          : const Color(0xFF1E3A8A),
+                                      color: AppColors.getSecondaryTextColor(
+                                          isDarkMode),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -235,9 +207,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   Container(
                                     height: 45,
                                     decoration: BoxDecoration(
-                                      color: isDarkMode
-                                          ? const Color(0xFF7289DA)
-                                          : Colors.white,
+                                      color: AppColors.getFieldBackgroundColor(
+                                          isDarkMode),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: TextFormField(
@@ -248,9 +219,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                             horizontal: 15, vertical: 12),
                                       ),
                                       style: TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : const Color(0xFF1E3A8A),
+                                        color: AppColors.getInputTextColor(
+                                            isDarkMode),
                                       ),
                                     ),
                                   ),
@@ -269,9 +239,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                     'Cognom',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDarkMode
-                                          ? Colors.white70
-                                          : const Color(0xFF1E3A8A),
+                                      color: AppColors.getSecondaryTextColor(
+                                          isDarkMode),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

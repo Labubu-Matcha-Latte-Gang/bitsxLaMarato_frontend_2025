@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../utils/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -45,21 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124),
-                        const Color(0xFF1E2124)
-                      ]
-                    : [
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF),
-                        const Color(0xFF90E0EF)
-                      ],
-              ),
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
@@ -87,13 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Botón de back
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -102,9 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: IconButton(
                           icon: Icon(
                             Icons.arrow_back,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: () {
                             Navigator.pop(context);
@@ -114,13 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Botón de tema
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]?.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.3),
+                          color: AppColors.getBlurContainerColor(isDarkMode),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppColors.containerShadow,
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -131,9 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             isDarkMode
                                 ? Icons.wb_sunny
                                 : Icons.nightlight_round,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -155,9 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return Icon(
                           Icons.local_hospital,
                           size: 60,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF1E3A8A),
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
                         );
                       },
                     ),
@@ -181,9 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 maxHeight: MediaQuery.of(context).size.height * 0.65,
               ),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF282B30)
-                    : const Color(0xFFCAF0F8),
+                color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                 borderRadius: const BorderRadius.all(Radius.circular(32)),
               ),
               child: Padding(
@@ -201,9 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF1E3A8A),
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                         ),
 
@@ -217,9 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Email',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : const Color(0xFF1E3A8A),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -227,9 +199,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF7289DA)
-                                    : Colors.white,
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -241,15 +212,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       horizontal: 15, vertical: 12),
                                   suffixIcon: Icon(
                                     Icons.email_outlined,
-                                    color: isDarkMode
-                                        ? Colors.white70
-                                        : const Color(0xFF1E3A8A),
+                                    color: AppColors.getPlaceholderTextColor(
+                                        isDarkMode),
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF1E3A8A),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
                               ),
                             ),
@@ -266,9 +235,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Password',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : const Color(0xFF1E3A8A),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -276,9 +244,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF7289DA)
-                                    : Colors.white,
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -293,9 +260,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _isPasswordVisible
                                           ? Icons.visibility
                                           : Icons.visibility_off,
-                                      color: isDarkMode
-                                          ? Colors.white70
-                                          : const Color(0xFF1E3A8A),
+                                      color: AppColors.getPlaceholderTextColor(
+                                          isDarkMode),
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -306,9 +272,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF1E3A8A),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
                               ),
                             ),
@@ -329,9 +294,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'T\'has oblidat de la contrasenya?',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDarkMode
-                                      ? Colors.white.withOpacity(0.8)
-                                      : const Color(0xFF1E3A8A),
+                                  color: AppColors.getTertiaryTextColor(
+                                      isDarkMode),
                                   fontWeight: FontWeight.w400,
                                   decoration: TextDecoration.underline,
                                 ),
@@ -348,10 +312,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDarkMode
-                                  ? const Color(0xFF7289DA)
-                                  : const Color(0xFF0077B6),
-                              foregroundColor: Colors.white,
+                              backgroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonTextColor(
+                                      isDarkMode),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(32),
                               ),
@@ -386,14 +351,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Nou a LMLG? Registra\'t',
                             style: TextStyle(
                               fontSize: 14,
-                              color: isDarkMode
-                                  ? Colors.white.withOpacity(0.8)
-                                  : const Color(0xFF1E3A8A),
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
-                              decorationColor: isDarkMode
-                                  ? Colors.white.withOpacity(0.8)
-                                  : const Color(0xFF1E3A8A),
+                              decorationColor:
+                                  AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
