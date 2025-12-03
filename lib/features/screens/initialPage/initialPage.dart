@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../../utils/constants/image_strings.dart';
+import '../login/login.dart';
 
 class Particle {
   double x;
@@ -29,7 +30,8 @@ class InitialPage extends StatefulWidget {
   State<InitialPage> createState() => _InitialPageState();
 }
 
-class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin {
+class _InitialPageState extends State<InitialPage>
+    with TickerProviderStateMixin {
   bool isDarkMode = false;
   late AnimationController _animationController;
   List<Particle> particles = [];
@@ -42,7 +44,7 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 16),
       vsync: this,
     )..repeat();
-    
+
     _initializeParticles();
     _animationController.addListener(_updateParticles);
   }
@@ -110,19 +112,27 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDarkMode 
-                    ? [const Color(0xFF1E2124), const Color(0xFF1E2124), const Color(0xFF1E2124)]
-                    : [const Color(0xFF90E0EF), const Color(0xFF90E0EF), const Color(0xFF90E0EF)],
+                colors: isDarkMode
+                    ? [
+                        const Color(0xFF1E2124),
+                        const Color(0xFF1E2124),
+                        const Color(0xFF1E2124)
+                      ]
+                    : [
+                        const Color(0xFF90E0EF),
+                        const Color(0xFF90E0EF),
+                        const Color(0xFF90E0EF)
+                      ],
               ),
             ),
           ),
-          
+
           // Sistema de partículas
           CustomPaint(
             painter: ParticlePainter(particles),
             size: Size.infinite,
           ),
-          
+
           // Contenido principal
           SafeArea(
             child: Column(
@@ -135,7 +145,9 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.grey[800]?.withOpacity(0.8) : Colors.white.withOpacity(0.3),
+                          color: isDarkMode
+                              ? Colors.grey[800]?.withOpacity(0.8)
+                              : Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -147,8 +159,12 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-                            color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1E3A8A),
                           ),
                           onPressed: _toggleTheme,
                         ),
@@ -156,7 +172,7 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                     ],
                   ),
                 ),
-                
+
                 // Contenido principal centrado
                 Expanded(
                   child: Padding(
@@ -174,17 +190,22 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                 height: 260,
                                 width: 380,
                                 child: Image.asset(
-                                  isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                                  isDarkMode
+                                      ? TImages.lightLogoText
+                                      : TImages.darkLogoText,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) {
                                     // Fallback en caso de que la imagen no se encuentre
                                     return Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.local_hospital,
                                           size: 80,
-                                          color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : const Color(0xFF1E3A8A),
                                         ),
                                         const SizedBox(height: 10),
                                         Text(
@@ -192,7 +213,9 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                           style: TextStyle(
                                             fontSize: 32,
                                             fontWeight: FontWeight.bold,
-                                            color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : const Color(0xFF1E3A8A),
                                             letterSpacing: 4,
                                           ),
                                         ),
@@ -208,36 +231,42 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                     ),
                   ),
                 ),
-                
+
                 // Recuadro inferior con botones (35% de la pantalla)
                 Container(
                   height: MediaQuery.of(context).size.height * 0.35,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF282B30) : const Color(0xFFCAF0F8),
+                    color: isDarkMode
+                        ? const Color(0xFF282B30)
+                        : const Color(0xFFCAF0F8),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(32),
                       topRight: Radius.circular(32),
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 25.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40.0, vertical: 25.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         // Texto "Començem!" dentro del recuadro
                         Padding(
-                          padding: const EdgeInsets.only(top: 10.0, bottom: 25.0),
+                          padding:
+                              const EdgeInsets.only(top: 10.0, bottom: 25.0),
                           child: Text(
                             'Començem!',
                             style: TextStyle(
                               fontSize: 18,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF1E3A8A),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF1E3A8A),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        
+
                         // Columna con botones
                         Column(
                           children: [
@@ -247,9 +276,11 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                               height: 50,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode 
-                                      ? const Color(0xFF7289DA)  // Nuevo color para modo oscuro
-                                      : const Color(0xFF0077B6), // Nuevo color para modo claro
+                                  backgroundColor: isDarkMode
+                                      ? const Color(
+                                          0xFF7289DA) // Nuevo color para modo oscuro
+                                      : const Color(
+                                          0xFF0077B6), // Nuevo color para modo claro
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(32),
@@ -260,13 +291,8 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => Scaffold(
-                                        appBar: AppBar(title: const Text('Login')),
-                                        body: const Center(
-                                          child: Text('Página de Login - En construcción'),
-                                        ),
-                                      ),
-                                    ),
+                                        builder: (context) =>
+                                            const LoginScreen()),
                                   );
                                 },
                                 child: const Text(
@@ -279,18 +305,20 @@ class _InitialPageState extends State<InitialPage> with TickerProviderStateMixin
                                 ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Botón REGISTER
                             SizedBox(
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode 
-                                      ? const Color(0xFF7289DA)  // Nuevo color para modo oscuro
-                                      : const Color(0xFF0077B6), // Nuevo color para modo claro
+                                  backgroundColor: isDarkMode
+                                      ? const Color(
+                                          0xFF7289DA) // Nuevo color para modo oscuro
+                                      : const Color(
+                                          0xFF0077B6), // Nuevo color para modo claro
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(32),
@@ -338,14 +366,14 @@ class ParticlePainter extends CustomPainter {
 
     for (var particle in particles) {
       paint.color = particle.color.withOpacity(particle.opacity);
-      
+
       // Dibujar partícula como círculo
       canvas.drawCircle(
         Offset(particle.x, particle.y),
         particle.size,
         paint,
       );
-      
+
       // Efecto de resplandor
       paint.color = particle.color.withOpacity(particle.opacity * 0.3);
       canvas.drawCircle(
