@@ -1,4 +1,4 @@
-import 'package:bitsxlamarato_frontend_2025/features/screens/initialPage/initialPage.dart';
+import 'package:bitsxlamarato_frontend_2025/features/screens/InitialPage/InitialPage.dart';
 import 'package:flutter/material.dart';
 
 void main() {

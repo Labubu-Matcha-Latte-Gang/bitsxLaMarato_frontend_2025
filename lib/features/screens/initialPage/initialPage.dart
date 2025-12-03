@@ -1,27 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../../../utils/constants/image_strings.dart';
+import '../../../utils/effects/particle_system.dart';
 import '../login/login.dart';
-
-class Particle {
-  double x;
-  double y;
-  double vx;
-  double vy;
-  double size;
-  Color color;
-  double opacity;
-
-  Particle({
-    required this.x,
-    required this.y,
-    required this.vx,
-    required this.vy,
-    required this.size,
-    required this.color,
-    required this.opacity,
-  });
-}
 
 class InitialPage extends StatefulWidget {
   const InitialPage({super.key});
@@ -30,74 +10,12 @@ class InitialPage extends StatefulWidget {
   State<InitialPage> createState() => _InitialPageState();
 }
 
-class _InitialPageState extends State<InitialPage>
-    with TickerProviderStateMixin {
+class _InitialPageState extends State<InitialPage> {
   bool isDarkMode = false;
-  late AnimationController _animationController;
-  List<Particle> particles = [];
-  final Random random = Random();
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 16),
-      vsync: this,
-    )..repeat();
-
-    _initializeParticles();
-    _animationController.addListener(_updateParticles);
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _initializeParticles() {
-    particles.clear();
-    for (int i = 0; i < 50; i++) {
-      particles.add(Particle(
-        x: random.nextDouble() * 400,
-        y: random.nextDouble() * 800,
-        vx: (random.nextDouble() - 0.5) * 0.5,
-        vy: (random.nextDouble() - 0.5) * 0.5,
-        size: random.nextDouble() * 3 + 1,
-        color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A),
-        opacity: random.nextDouble() * 0.6 + 0.2,
-      ));
-    }
-  }
-
-  void _updateParticles() {
-    setState(() {
-      for (var particle in particles) {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        // Rebotar en los bordes
-        if (particle.x < 0 || particle.x > 400) {
-          particle.vx *= -1;
-        }
-        if (particle.y < 0 || particle.y > 800) {
-          particle.vy *= -1;
-        }
-
-        // Mantener dentro de los límites
-        particle.x = particle.x.clamp(0, 400);
-        particle.y = particle.y.clamp(0, 800);
-      }
-    });
-  }
 
   void _toggleTheme() {
     setState(() {
       isDarkMode = !isDarkMode;
-      // Actualizar colores de partículas
-      for (var particle in particles) {
-        particle.color = isDarkMode ? Colors.white : const Color(0xFF1E3A8A);
-      }
     });
   }
 
@@ -127,10 +45,15 @@ class _InitialPageState extends State<InitialPage>
             ),
           ),
 
-          // Sistema de partículas
-          CustomPaint(
-            painter: ParticlePainter(particles),
-            size: Size.infinite,
+          // Sistema de partículas usando el widget reutilizable
+          ParticleSystemWidget(
+            isDarkMode: isDarkMode,
+            particleCount: 50,
+            maxSize: 3.0,
+            minSize: 1.0,
+            speed: 0.5,
+            maxOpacity: 0.6,
+            minOpacity: 0.2,
           ),
 
           // Contenido principal
@@ -352,38 +275,4 @@ class _InitialPageState extends State<InitialPage>
       ),
     );
   }
-}
-
-// Painter personalizado para las partículas
-class ParticlePainter extends CustomPainter {
-  final List<Particle> particles;
-
-  ParticlePainter(this.particles);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-
-    for (var particle in particles) {
-      paint.color = particle.color.withOpacity(particle.opacity);
-
-      // Dibujar partícula como círculo
-      canvas.drawCircle(
-        Offset(particle.x, particle.y),
-        particle.size,
-        paint,
-      );
-
-      // Efecto de resplandor
-      paint.color = particle.color.withOpacity(particle.opacity * 0.3);
-      canvas.drawCircle(
-        Offset(particle.x, particle.y),
-        particle.size * 2,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
