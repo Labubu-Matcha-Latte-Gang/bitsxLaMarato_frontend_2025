@@ -249,8 +249,17 @@ class _InitialPageState extends State<InitialPage> {
                                   elevation: 0,
                                 ),
                                 onPressed: () {
+<<<<<<< Updated upstream
                                   // TODO: Navegar a pantalla de registro
                                   print('REGISTER pressed');
+=======
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => RegisterLobby(
+                                            isDarkMode: isDarkMode)),
+                                  );
+>>>>>>> Stashed changes
                                 },
                                 child: const Text(
                                   'REGISTRAR-SE',
