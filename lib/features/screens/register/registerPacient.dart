@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../../../services/api_service.dart';
+import '../../../models/patient_models.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -35,6 +37,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
   int _currentPage = 0;
   final int _totalPages = 3;
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -84,21 +87,157 @@ class _RegisterPacientState extends State<RegisterPacient> {
     }
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implementar lógica de registro de paciente
-      print('Pacient register:');
-      print('Diagnostic: ${_diagnosticController.text}');
-      print('Sexe: ${_sexeController.text}');
-      print('Tractament: ${_tractamentController.text}');
-      print('Edat: ${_edatController.text}');
-      print('Altura: ${_alturaController.text}');
-      print('Pes: ${_pesController.text}');
-      print('Nom: ${_nomController.text}');
-      print('Cognom: ${_cognomController.text}');
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // Validar que todos los campos numéricos sean válidos
+        final age = int.tryParse(_edatController.text);
+        final height = double.tryParse(_alturaController.text);
+        final weight = double.tryParse(_pesController.text);
+
+        if (age == null || height == null || weight == null) {
+          _showErrorDialog(
+              'Si us plau, introdueix valors numèrics vàlids per a l\'edat, altura i pes.');
+          return;
+        }
+
+        // Validar campos de texto obligatorios
+        if (_diagnosticController.text.trim().isEmpty ||
+            _sexeController.text.trim().isEmpty ||
+            _tractamentController.text.trim().isEmpty ||
+            _nomController.text.trim().isEmpty ||
+            _cognomController.text.trim().isEmpty ||
+            _emailController.text.trim().isEmpty ||
+            _passwordController.text.isEmpty) {
+          _showErrorDialog('Si us plau, completa tots els camps obligatoris.');
+          return;
+        }
+
+        // Crear el request para la API
+        final request = PatientRegistrationRequest(
+          name: _nomController.text.trim(),
+          surname: _cognomController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          ailments: _diagnosticController.text.trim(),
+          gender: _sexeController.text.trim().toLowerCase(),
+          age: age,
+          treatments: _tractamentController.text.trim(),
+          heightCm: height,
+          weightKg: weight,
+          doctors: [],
+        );
+
+        print('DEBUG - Form data being sent:');
+        print('  Name: ${request.name}');
+        print('  Surname: ${request.surname}');
+        print('  Email: ${request.email}');
+        print('  Password: ${request.password}');
+        print('  Ailments: ${request.ailments}');
+        print('  Gender: ${request.gender}');
+        print('  Age: ${request.age}');
+        print('  Treatments: ${request.treatments}');
+        print('  Height: ${request.heightCm}');
+        print('  Weight: ${request.weightKg}');
+        print('  Doctors: ${request.doctors}');
+
+        // Llamar a la API
+        final response = await ApiService.registerPatient(request);
+
+        // Si llega aquí, el registro fue exitoso
+        _showSuccessDialog(
+          'Pacient registrat amb èxit!',
+          'Benvingut/da ${response.name} ${response.surname}',
+        );
+      } catch (e) {
+        String errorMessage = 'Error en registrar el pacient';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        } else {
+          errorMessage = 'Error de connexió: ${e.toString()}';
+        }
+        _showErrorDialog(errorMessage);
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                Navigator.of(context).pop(); // Volver a la pantalla anterior
+              },
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildPage1() {
@@ -160,8 +299,9 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 color: AppColors.getFieldBackgroundColor(isDarkMode),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: TextFormField(
-                controller: _sexeController,
+              child: DropdownButtonFormField<String>(
+                value:
+                    _sexeController.text.isEmpty ? null : _sexeController.text,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding:
@@ -170,6 +310,29 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 style: TextStyle(
                   color: AppColors.getInputTextColor(isDarkMode),
                 ),
+                dropdownColor:
+                    AppColors.getSecondaryBackgroundColor(isDarkMode),
+                items: const [
+                  DropdownMenuItem<String>(
+                    value: 'male',
+                    child: Text('Home'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'female',
+                    child: Text('Dona'),
+                  ),
+                ],
+                onChanged: (String? value) {
+                  setState(() {
+                    _sexeController.text = value ?? '';
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Si us plau, selecciona el sexe';
+                  }
+                  return null;
+                },
               ),
             ),
           ],
@@ -744,15 +907,23 @@ class _RegisterPacientState extends State<RegisterPacient> {
                                         ),
                                         elevation: 0,
                                       ),
-                                      onPressed: _nextPage,
-                                      child: const Text(
-                                        'REGISTER',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
+                                      onPressed: _isLoading ? null : _nextPage,
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 2),
+                                            )
+                                          : const Text(
+                                              'REGISTER',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 1,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
