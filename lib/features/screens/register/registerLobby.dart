@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import 'registerDoctor.dart';
 
 class RegisterLobby extends StatefulWidget {
-  const RegisterLobby({super.key});
+  final bool isDarkMode;
+  const RegisterLobby({super.key, this.isDarkMode = false});
 
   @override
   State<RegisterLobby> createState() => _RegisterLobbyState();
 }
 
 class _RegisterLobbyState extends State<RegisterLobby> {
-  bool isDarkMode = false;
+  late bool isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    isDarkMode = widget.isDarkMode;
+  }
 
   void _toggleTheme() {
     setState(() {
@@ -293,8 +301,13 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                               elevation: 0,
                             ),
                             onPressed: () {
-                              // TODO: Navegar a pantalla de registro de doctor
-                              print('DOCTOR register pressed');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      RegisterDoctor(isDarkMode: isDarkMode),
+                                ),
+                              );
                             },
                             child: const Text(
                               'DOCTOR',
