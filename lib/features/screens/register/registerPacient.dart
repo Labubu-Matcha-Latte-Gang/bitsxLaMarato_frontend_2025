@@ -631,8 +631,8 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 Container(
                   margin: const EdgeInsets.only(bottom: 20),
                   child: SizedBox(
-                    height: 80,
-                    width: 120,
+                    height: 100,
+                    width: 150,
                     child: Image.asset(
                       isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
@@ -682,7 +682,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                       children: [
                         // Título
                         Text(
-                          'Benvingut a LMLG!',
+                          'Registra\'t a LMLG!',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
