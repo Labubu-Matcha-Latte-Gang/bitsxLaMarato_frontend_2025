@@ -216,7 +216,7 @@ class _InitialPageState extends State<InitialPage> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            const LoginScreen()),
+                                            LoginScreen(isDarkMode: isDarkMode)),
                                   );
                                 },
                                 child: const Text(

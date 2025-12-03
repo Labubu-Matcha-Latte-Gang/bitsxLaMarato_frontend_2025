@@ -1,109 +1,411 @@
-import 'package:bitsxlamarato_frontend_2025/utils/functions/helper_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:bitsxlamarato_frontend_2025/utils/constants/image_strings.dart';
-import 'package:bitsxlamarato_frontend_2025/utils/constants/icon_strings.dart';
+import '../../../utils/constants/image_strings.dart';
+import '../../../utils/effects/particle_system.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  final bool isDarkMode;
+  const LoginScreen({super.key, this.isDarkMode = false});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  late bool isDarkMode;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _isPasswordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isDarkMode = widget.isDarkMode;
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dark = THelperFunctions.isDarkMode(context);
-
     return Scaffold(
-        body: SingleChildScrollView(
-            child: Padding(
-                padding: const EdgeInsets.only(
-                  top: 56,
-                  left: 24.0,
-                  right: 24.0,
-                  bottom: 24.0,
-                ),
-                child: Column(
-                  children: [
-                    ///Logo and title
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Image(
-                          height: 200,
-                          width: 200,
-                          image: AssetImage(
-                              dark ? TImages.darkLogo : TImages.lightLogo),
-                        ),
-                        const Text(
-                          "Benvingut a LMLG!",
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8.0),
+      body: Stack(
+        children: [
+          // Fondo con gradiente
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        const Color(0xFF1E2124),
+                        const Color(0xFF1E2124),
+                        const Color(0xFF1E2124)
+                      ]
+                    : [
+                        const Color(0xFF90E0EF),
+                        const Color(0xFF90E0EF),
+                        const Color(0xFF90E0EF)
                       ],
-                    ),
+              ),
+            ),
+          ),
 
-                    ///Form
-                    Form(
-                        child: Column(
-                      children: [
-                        ///Email
-                        TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: "Correu electrònic",
-                            hintText: "Introdueix el teu correu electrònic",
-                          ),
-                        ),
-                        const SizedBox(height: 16.0),
+          // Sistema de partículas usando el widget reutilizable
+          ParticleSystemWidget(
+            isDarkMode: isDarkMode,
+            particleCount: 50,
+            maxSize: 3.0,
+            minSize: 1.0,
+            speed: 0.5,
+            maxOpacity: 0.6,
+            minOpacity: 0.2,
+          ),
 
-                        ///Password
-                        TextFormField(
-                          decoration: InputDecoration(
-                            labelText: "Contrasenya",
-                            hintText: "Introdueix la teva contrasenya",
-                            suffixIcon: Image.asset(
-                              TIcons.eyeClosed,
-                              height: 2,
-                              width: 2,
+          // Contenido principal
+          SafeArea(
+            child: Column(
+              children: [
+                // Header con botón de tema y back
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Botón de back
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[800]?.withOpacity(0.8)
+                              : Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                        ),
-
-                        ///Forgot password
-                        Row(
-                          children: [
-                            ///Forgot password
-                            TextButton(
-                                onPressed: () {},
-                                child: const Text(
-                                    "T'has oblidat de la contrasenya?")),
                           ],
                         ),
-                        const SizedBox(height: 8.0),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1E3A8A),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                      // Botón de tema
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[800]?.withOpacity(0.8)
+                              : Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1E3A8A),
+                          ),
+                          onPressed: _toggleTheme,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-                        ///Login button
-                        SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              child: const Text("Inicia sessió"),
-                            )),
+                // Logo grande en la parte superior
+                Container(
+                  margin: const EdgeInsets.only(bottom: 30),
+                  child: SizedBox(
+                    height: 120,
+                    width: 180,
+                    child: Image.asset(
+                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.local_hospital,
+                          size: 60,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1E3A8A),
+                        );
+                      },
+                    ),
+                  ),
+                ),
 
-                        const SizedBox(height: 16.0),
+                // Spacer para empujar el contenido hacia arriba
+                const Spacer(),
+              ],
+            ),
+          ),
 
-                        Row(
+          // Recuadro de formulario posicionado desde arriba
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.35,
+            left: 0,
+            right: 0,
+            child: Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.65,
+              ),
+              decoration: BoxDecoration(
+                color: isDarkMode
+                    ? const Color(0xFF282B30)
+                    : const Color(0xFFCAF0F8),
+                borderRadius: const BorderRadius.all(Radius.circular(32)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 30.0, vertical: 25.0),
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Título
+                        Text(
+                          'Benvingut de nou!',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1E3A8A),
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        // Campo Email
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Nou a LMLG?",
-                              style: dark
-                                  ? const TextStyle(color: Colors.white)
-                                  : const TextStyle(color: Colors.black),
+                              'Email',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF1E3A8A),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                            TextButton(
-                                onPressed: () {},
-                                child: const Text("Registrar-se")),
+                            const SizedBox(height: 5),
+                            Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? const Color(0xFF7289DA)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 12),
+                                  suffixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : const Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1E3A8A),
+                                ),
+                              ),
+                            ),
                           ],
-                        )
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Campo Password
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Password',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF1E3A8A),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? const Color(0xFF7289DA)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_isPasswordVisible,
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 12),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF1E3A8A),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1E3A8A),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Link "T'has oblidat de la contrasenya?"
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Implementar recuperación de contraseña
+                              },
+                              child: Text(
+                                'T\'has oblidat de la contrasenya?',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDarkMode
+                                      ? Colors.white.withOpacity(0.8)
+                                      : const Color(0xFF1E3A8A),
+                                  fontWeight: FontWeight.w400,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        // Botón LOGIN
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDarkMode
+                                  ? const Color(0xFF7289DA)
+                                  : const Color(0xFF0077B6),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                // TODO: Implementar lógica de login
+                                print('Login: ${_emailController.text}');
+                              }
+                            },
+                            child: const Text(
+                              'INICIA SESSIÓ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Link "Nou a LMLG? Registra't"
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(
+                                context); // Volver atrás para registrarse
+                          },
+                          child: Text(
+                            'Nou a LMLG? Registra\'t',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode
+                                  ? Colors.white.withOpacity(0.8)
+                                  : const Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                              decorationColor: isDarkMode
+                                  ? Colors.white.withOpacity(0.8)
+                                  : const Color(0xFF1E3A8A),
+                            ),
+                          ),
+                        ),
                       ],
-                    ))
-                  ],
-                ))));
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
