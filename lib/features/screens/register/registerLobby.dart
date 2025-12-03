@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import 'registerDoctor.dart';
+import 'registerPacient.dart';
 
 class RegisterLobby extends StatefulWidget {
   final bool isDarkMode;
@@ -255,8 +256,12 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                               elevation: 0,
                             ),
                             onPressed: () {
-                              // TODO: Navegar a pantalla de registro de paciente
-                              print('PACIENT register pressed');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RegisterPacient(isDarkMode: isDarkMode),
+                                ),
+                              );
                             },
                             child: const Text(
                               'PACIENT',

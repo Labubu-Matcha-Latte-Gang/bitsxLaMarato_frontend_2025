@@ -148,12 +148,12 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
                 // Logo pequeño en la parte superior
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: SizedBox(
                     height: 80,
                     width: 120,
                     child: Image.asset(
-                      isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
