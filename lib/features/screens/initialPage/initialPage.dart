@@ -253,9 +253,17 @@ class _InitialPageState extends State<InitialPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
+                                        builder: (context) => RegisterLobby(
+                                            isDarkMode: isDarkMode)),
+                                  );
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
                                         builder: (context) =>
                                             const RegisterLobby()),
                                   );
+
                                 },
                                 child: const Text(
                                   'REGISTRAR-SE',
