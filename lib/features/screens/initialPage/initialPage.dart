@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../login/login.dart';
+import '../register/registerLobby.dart';
 
 class InitialPage extends StatefulWidget {
   const InitialPage({super.key});
@@ -249,8 +250,12 @@ class _InitialPageState extends State<InitialPage> {
                                   elevation: 0,
                                 ),
                                 onPressed: () {
-                                  // TODO: Navegar a pantalla de registro
-                                  print('REGISTER pressed');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RegisterLobby()),
+                                  );
                                 },
                                 child: const Text(
                                   'REGISTRAR-SE',
