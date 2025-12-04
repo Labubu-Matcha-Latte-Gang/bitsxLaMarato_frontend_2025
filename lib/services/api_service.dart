@@ -200,15 +200,14 @@ class ApiService {
     String id,
     ActivityPartialUpdateRequest request,
   ) async {
-    final body = request.toJson();
-    if (body.isEmpty) {
-      throw ApiException(
-        'No s\'ha proporcionat cap camp per actualitzar.',
-        400,
-      );
-    }
-
     try {
+      final body = request.toJson();
+      if (body.isEmpty) {
+        throw ApiException(
+          'No s\'ha proporcionat cap camp per actualitzar.',
+          400,
+        );
+      }
       final headers = await _authHeaders();
       final response = await http.patch(
         _activityUriWithId(id),
