@@ -90,6 +90,13 @@ class _RegisterPacientState extends State<RegisterPacient> {
     }
   }
 
+  String _normalizeGender(String? value) {
+    final normalized = (value ?? '').trim().toLowerCase();
+    if (normalized == 'male' || normalized == 'home') return 'male';
+    if (normalized == 'female' || normalized == 'dona') return 'female';
+    return '';
+  }
+
   Future<void> _submitForm() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
@@ -125,8 +132,8 @@ class _RegisterPacientState extends State<RegisterPacient> {
         return;
       }
 
-      final genderValue = (_selectedGender ?? '').trim().toLowerCase();
-      if (genderValue != 'male' && genderValue != 'female') {
+      final genderValue = _normalizeGender(_selectedGender);
+      if (genderValue.isEmpty) {
         _showErrorDialog(
             'El camp sexe ha de tenir el valor "male" o "female" (Home/Dona).');
         return;
