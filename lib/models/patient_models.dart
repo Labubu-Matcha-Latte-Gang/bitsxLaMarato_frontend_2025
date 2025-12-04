@@ -119,3 +119,68 @@ class ApiError {
     );
   }
 }
+
+// --- DOCTOR MODELS ---
+
+class DoctorRegistrationRequest {
+  final String name;
+  final String surname;
+  final String email;
+  final String password;
+  final List<String> patients;
+
+  DoctorRegistrationRequest({
+    required this.name,
+    required this.surname,
+    required this.email,
+    required this.password,
+    required this.patients,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'surname': surname,
+      'email': email,
+      'password': password,
+      'patients': patients,
+    };
+  }
+}
+
+class DoctorRegistrationResponse {
+  final String email;
+  final String name;
+  final String surname;
+  final DoctorRole role;
+
+  DoctorRegistrationResponse({
+    required this.email,
+    required this.name,
+    required this.surname,
+    required this.role,
+  });
+
+  factory DoctorRegistrationResponse.fromJson(Map<String, dynamic> json) {
+    return DoctorRegistrationResponse(
+      email: json['email'],
+      name: json['name'],
+      surname: json['surname'],
+      role: DoctorRole.fromJson(json['role']),
+    );
+  }
+}
+
+class DoctorRole {
+  final List<String> patients;
+
+  DoctorRole({
+    required this.patients,
+  });
+
+  factory DoctorRole.fromJson(Map<String, dynamic> json) {
+    return DoctorRole(
+      patients: List<String>.from(json['patients']),
+    );
+  }
+}

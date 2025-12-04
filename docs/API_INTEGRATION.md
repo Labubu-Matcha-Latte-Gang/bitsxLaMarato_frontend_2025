@@ -26,7 +26,17 @@ Se ha implementado la integración con el endpoint `/api/v1/user/patient` para e
 
 ## Funcionalidades implementadas:
 
-### ✅ Validaciones de formulario
+## Funcionalidades implementadas:
+
+### ✅ Registro de Pacientes
+- **Endpoint**: POST `/api/v1/user/patient`
+- **Campos**: name, surname, email, password, ailments, gender, age, treatments, height_cm, weight_kg, doctors
+
+### ✅ Registro de Doctores
+- **Endpoint**: POST `/api/v1/user/doctor`  
+- **Campos**: name, surname, email, password, patients (array de emails)
+
+### ✅ Validaciones de formulario (Pacientes)
 - **Diagnóstico**: Campo obligatorio
 - **Sexe**: Dropdown con opciones "Home" (male) y "Dona" (female)
 - **Tractament**: Campo obligatorio
@@ -35,12 +45,13 @@ Se ha implementado la integración con el endpoint `/api/v1/user/patient` para e
 - **Pes**: Validación numérica con decimales (20-500 kg)
 - **Nom i Cognom**: Campos obligatorios
 - **Email**: Validación de formato
-- **Password**: Campo obligatorio
+- **Password**: Patrón ^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$ (mínimo 8 caracteres, mayúscula, minúscula, número)
 
 ### ✅ Integración con API
-- **Endpoint**: POST `/api/v1/user/patient`
+- **Patient Endpoint**: POST `/api/v1/user/patient`
+- **Doctor Endpoint**: POST `/api/v1/user/doctor`
 - **Headers**: `Content-Type: application/json`
-- **Body**: JSON con todos los datos del paciente
+- **Body**: JSON con todos los datos del usuario
 - **Respuesta 201**: Registro exitoso
 - **Respuestas de error**: 400, 404, 422, 500 manejadas correctamente
 
@@ -83,6 +94,7 @@ dependencies:
 
 ## Estructura de datos enviados a la API
 
+### Paciente
 ```json
 {
   "name": "Clara",
@@ -96,6 +108,20 @@ dependencies:
   "height_cm": 168.5,
   "weight_kg": 64.3,
   "doctors": []
+}
+```
+
+### Doctor
+```json
+{
+  "name": "Dr. Joan",
+  "surname": "García",
+  "email": "joan.garcia@hospital.com", 
+  "password": "DrGarcia123",
+  "patients": [
+    "clara.puig@example.com",
+    "anna.lopez@example.com"
+  ]
 }
 ```
 
