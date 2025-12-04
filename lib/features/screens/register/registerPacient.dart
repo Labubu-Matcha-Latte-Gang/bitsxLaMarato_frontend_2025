@@ -3,7 +3,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import 'patient_registration_service.dart';
-import '../login/login.dart';
+import '../micro/mic.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -90,6 +90,13 @@ class _RegisterPacientState extends State<RegisterPacient> {
     }
   }
 
+  void _navigateToHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const MicScreen()),
+      (_) => false,
+    );
+  }
+
   String _normalizeGender(String? value) {
     final normalized = (value ?? '').trim().toLowerCase();
     if (normalized == 'male' || normalized == 'home') return 'male';
@@ -169,9 +176,14 @@ class _RegisterPacientState extends State<RegisterPacient> {
       final result = await _registrationService.register(formData);
 
       if (result is PatientRegistrationSuccess) {
+        final welcomeName = [
+          result.login.user?.name ?? result.response.name,
+          result.login.user?.surname ?? result.response.surname,
+        ].where((part) => part.trim().isNotEmpty).join(' ');
+
         _showSuccessDialog(
-          'Pacient registrat amb èxit!',
-          'Benvingut/da ${result.response.name} ${result.response.surname}',
+          'Compte creat i sessió iniciada!',
+          'Benvingut/da $welcomeName',
         );
       } else if (result is PatientRegistrationFailure) {
         _showErrorDialog(result.message);
@@ -244,15 +256,10 @@ class _RegisterPacientState extends State<RegisterPacient> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
-                // Navegar a la pantalla de login
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
-                  ),
-                );
+                _navigateToHome();
               },
               child: Text(
-                'D\'acord',
+                'Començar',
                 style: TextStyle(
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
