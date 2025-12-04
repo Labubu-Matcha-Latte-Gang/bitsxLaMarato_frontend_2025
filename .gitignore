@@ -37,6 +37,7 @@ flutter_test.log
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
@@ -46,6 +47,9 @@ flutter_test.log
 *.freezed.dart
 *.mocks.dart
 *.config.dart
+**/generated_plugin_registrant.*
+**/GeneratedPluginRegistrant.*
+**/generated_plugins.cmake
 
 # Symbolication related
 app.*.symbols
