@@ -53,7 +53,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
     );
   }
 
-  void _submitForm() async {
+  void _submitDoctor() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -555,7 +555,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   borderRadius: BorderRadius.circular(32)),
                               elevation: 0,
                             ),
-                            onPressed: _isLoading ? null : _submitForm,
+                            onPressed: _isLoading ? null : _submitDoctor,
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 20,
@@ -577,10 +577,15 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         const SizedBox(height: 15),
 
                         // Link "Ja tens un compte? Login"
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/login');
+
                           },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'Ja tens un compte? Login',
                             style: TextStyle(
@@ -588,8 +593,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               color: AppColors.getPrimaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
-                              decorationColor:
-                                  AppColors.getPrimaryTextColor(isDarkMode),
+                              decorationColor: AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),

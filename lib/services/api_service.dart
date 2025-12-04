@@ -63,6 +63,10 @@ class ApiService {
     };
   }
 
+  ApiService._privateConstructor();
+  static final ApiService _instance = ApiService._privateConstructor();
+  static ApiService get instance => _instance;
+
   static Future<PatientRegistrationResponse> registerPatient(
     PatientRegistrationRequest request,
   ) async {

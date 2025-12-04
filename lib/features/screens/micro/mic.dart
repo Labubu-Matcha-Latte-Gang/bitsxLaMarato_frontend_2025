@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/universal_html.dart' as html;
+import '../../../services/api_service.dart';
 
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});

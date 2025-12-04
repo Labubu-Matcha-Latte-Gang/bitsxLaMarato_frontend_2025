@@ -76,7 +76,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
       });
     } else {
       // Última página - enviar datos
-      _submitForm();
+      _submitPacient();
     }
   }
 
@@ -90,13 +90,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
     }
   }
 
-  void _navigateToHome() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const MicScreen()),
-      (_) => false,
-    );
-  }
-
+  void _submitPacient() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
   String _normalizeGender(String? value) {
     final normalized = (value ?? '').trim().toLowerCase();
     if (normalized == 'male' || normalized == 'home') return 'male';

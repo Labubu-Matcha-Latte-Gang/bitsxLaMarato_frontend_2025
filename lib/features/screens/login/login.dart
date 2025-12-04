@@ -62,14 +62,31 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      if (response.user != null) {
-        await SessionManager.saveUserData({
-          'id': response.user!.id,
-          'name': response.user!.name,
-          'surname': response.user!.surname,
-          'email': response.user!.email,
-          'user_type': response.user!.userType,
-        });
+        if (tokenSaved) {
+          // Mostrar mensaje de éxito y navegar
+          final userName = response.user?.name ?? 'Usuario';
+          final userSurname = response.user?.surname ?? '';
+          _showSuccessDialog(
+            'Sessió iniciada amb èxit!',
+            'Benvingut/da $userName $userSurname'.trim(),
+          );
+        } else {
+          _showErrorDialog('Error guardant la sessió');
+        }
+      } catch (e) {
+        String errorMessage = 'Error en iniciar sessió';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        } else {
+          errorMessage = 'Error de connexió: ${e.toString()}';
+        }
+        _showErrorDialog(errorMessage);
+      } finally {
+        if (mounted){
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
 
       if (!mounted) return;
@@ -146,12 +163,16 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                // TODO: Arreglar la navegación a la pantalla principal
+                Navigator.push(
+                  context,
                   MaterialPageRoute(
-                    builder: (context) => const MicScreen(),
+                      builder: (context) => const MicScreen()
                   ),
                 );
+                print(
+                    'Usuario logueado exitosamente - navegar a pantalla principal');
               },
               child: Text(
                 'D\'acord',
@@ -451,36 +472,54 @@ class _LoginScreenState extends State<LoginScreen> {
                               elevation: 0,
                             ),
                             onPressed: _isLoading ? null : _submitLogin,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                            child: _isLoading ?
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.getPrimaryButtonTextColor(isDarkMode),
+                                        ),
+                                        strokeWidth: 2.0,
                                       ),
                                     ),
-                                  )
-                                : const Text(
-                                    'INICIA SESSIÓ',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1,
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Iniciant sessió...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1,
+                                      ),
                                     ),
+                                  ],
+                                ) :
+                                const Text(
+                                  'INICIA SESSIÓ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 1,
                                   ),
-                          ),
+                                ),
+                            ),
                         ),
 
                         const SizedBox(height: 15),
 
                         // Link "Nou a LMLG? Registra't"
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(
-                                context); // Volver atrás para registrarse
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/register');
+
                           },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'Nou a LMLG? Registra\'t',
                             style: TextStyle(
@@ -488,8 +527,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: AppColors.getPrimaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
-                              decorationColor:
-                                  AppColors.getPrimaryTextColor(isDarkMode),
+                              decorationColor: AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
