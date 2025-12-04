@@ -10,7 +10,34 @@ import '../config.dart';
 import 'session_manager.dart';
 
 class ApiService {
-  static String get baseUrl => '${Config.apiUrl}/api/v1';
+  static http.Client _client = http.Client();
+  static String? _baseUrlOverride;
+
+  static http.Client get client => _client;
+
+  static String get baseUrl => '${_baseUrlOverride ?? Config.apiUrl}/api/v1';
+
+  static void configure({
+    http.Client? client,
+    String? baseUrl,
+  }) {
+    if (client != null) {
+      _client = client;
+    }
+    if (baseUrl != null && baseUrl.isNotEmpty) {
+      _baseUrlOverride = baseUrl;
+    }
+  }
+
+  static void reset({bool closeExistingClient = false}) {
+    if (closeExistingClient) {
+      try {
+        _client.close();
+      } catch (_) {}
+    }
+    _client = http.Client();
+    _baseUrlOverride = null;
+  }
 
   static Future<Map<String, String>> _authHeaders() async {
     final token = await SessionManager.getToken();
@@ -35,7 +62,7 @@ class ApiService {
       print('DEBUG - API Request URL: $baseUrl/user/patient');
       print('DEBUG - API Request Body: $requestBody');
 
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/user/patient'),
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +144,7 @@ class ApiService {
         uri = uri.replace(queryParameters: params);
       }
 
-      final response = await http.get(uri, headers: headers);
+      final response = await client.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         final List<dynamic> responseData = json.decode(response.body);
@@ -142,7 +169,7 @@ class ApiService {
   static Future<Activity> getActivity(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/activity/$id'),
         headers: headers,
       );
@@ -168,7 +195,7 @@ class ApiService {
   static Future<Activity> createActivity(ActivityCreateRequest request) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/activity'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -197,7 +224,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/activity/bulk'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -240,7 +267,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.put(
+      final response = await client.put(
         Uri.parse('$baseUrl/activity/$id'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -270,7 +297,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.patch(
+      final response = await client.patch(
         Uri.parse('$baseUrl/activity/$id'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -297,7 +324,7 @@ class ApiService {
   static Future<void> deleteActivity(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.delete(
+      final response = await client.delete(
         Uri.parse('$baseUrl/activity/$id'),
         headers: headers,
       );
@@ -322,7 +349,7 @@ class ApiService {
   static Future<Activity> getRecommendedActivity() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/activity/recommended'),
         headers: headers,
       );
@@ -350,7 +377,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/activity/complete'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -377,7 +404,7 @@ class ApiService {
   static Future<Question> getDailyQuestion() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/question/daily'),
         headers: headers,
       );
@@ -411,7 +438,7 @@ class ApiService {
         uri = uri.replace(queryParameters: params);
       }
 
-      final response = await http.get(uri, headers: headers);
+      final response = await client.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
@@ -439,7 +466,7 @@ class ApiService {
   static Future<Question> getQuestion(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/question/$id'),
         headers: headers,
       );
@@ -465,7 +492,7 @@ class ApiService {
   static Future<Question> createQuestion(QuestionCreateRequest request) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/question'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -494,7 +521,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/question/bulk'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -537,7 +564,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.put(
+      final response = await client.put(
         Uri.parse('$baseUrl/question/$id'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -567,7 +594,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.patch(
+      final response = await client.patch(
         Uri.parse('$baseUrl/question/$id'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -594,7 +621,7 @@ class ApiService {
   static Future<void> deleteQuestion(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.delete(
+      final response = await client.delete(
         Uri.parse('$baseUrl/question/$id'),
         headers: headers,
       );
@@ -624,7 +651,7 @@ class ApiService {
       print('DEBUG - Doctor API Request URL: $baseUrl/user/doctor');
       print('DEBUG - Doctor API Request Body: $requestBody');
 
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/user/doctor'),
         headers: {
           'Content-Type': 'application/json',
@@ -701,7 +728,7 @@ class ApiService {
       print('DEBUG - Login Request URL: $baseUrl/user/login');
       print('DEBUG - Login Request Body: $requestBody');
 
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/user/login'),
         headers: {
           'Content-Type': 'application/json',
@@ -796,7 +823,7 @@ class ApiService {
   static Future<UserProfile> getCurrentUser() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/user'),
         headers: headers,
       );
@@ -824,7 +851,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.put(
+      final response = await client.put(
         Uri.parse('$baseUrl/user'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -853,7 +880,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.patch(
+      final response = await client.patch(
         Uri.parse('$baseUrl/user'),
         headers: headers,
         body: json.encode(request.toJson()),
@@ -880,7 +907,7 @@ class ApiService {
   static Future<void> deleteCurrentUser() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.delete(
+      final response = await client.delete(
         Uri.parse('$baseUrl/user'),
         headers: headers,
       );
@@ -905,7 +932,7 @@ class ApiService {
   static Future<PatientDataResponse> getPatientData(String email) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/user/$email'),
         headers: headers,
       );
@@ -951,7 +978,7 @@ class ApiService {
         ),
       );
 
-      final streamedResponse = await multipartRequest.send();
+      final streamedResponse = await multipartRequest.send(client);
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
@@ -978,7 +1005,7 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/transcription/complete'),
         headers: headers,
         body: json.encode(request.toJson()),
