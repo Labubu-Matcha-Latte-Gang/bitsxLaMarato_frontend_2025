@@ -488,6 +488,59 @@ class ApiService {
       );
     }
   }
+
+  static ApiException _activityApiException(
+    http.Response response,
+    String fallbackMessage,
+  ) {
+    String message = fallbackMessage;
+
+    switch (response.statusCode) {
+      case 401:
+        message = 'Falta o és invàlid el token de sessió.';
+        break;
+      case 403:
+        message = 'No tens permisos per accedir a aquest recurs.';
+        break;
+      case 404:
+        message = 'Recurs no trobat.';
+        break;
+      case 422:
+        message = 'El cos de la sol·licitud no ha superat la validació.';
+        break;
+      case 500:
+        message = 'Error inesperat del servidor.';
+        break;
+      default:
+        message = fallbackMessage;
+    }
+
+    try {
+      if (response.body.isNotEmpty) {
+        final errorData = json.decode(response.body);
+        if (errorData is Map<String, dynamic>) {
+          if (response.statusCode == 422 &&
+              errorData['errors'] is Map<String, dynamic>) {
+            final errors = errorData['errors'] as Map<String, dynamic>;
+            final errorDetails =
+                errors.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+            message = 'Errors de validació:\n$errorDetails';
+          } else if (errorData['message'] is String &&
+              (errorData['message'] as String).isNotEmpty) {
+            message = errorData['message'];
+          }
+        }
+      }
+    } catch (_) {}
+
+    return ApiException(message, response.statusCode);
+  }
+
+  static Uri _activityUriWithId(String id) {
+    return Uri.parse('$baseUrl/activity').replace(
+      queryParameters: {'id': id},
+    );
+  }
 }
 
 class ApiException implements Exception {
