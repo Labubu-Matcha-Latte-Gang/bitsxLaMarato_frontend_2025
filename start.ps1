@@ -31,7 +31,7 @@ while ($true) {
     elseif ($selection -eq "3") {
         $workdir = (Get-Location).Path
         Write-Host "Running flutter tests inside container..." -ForegroundColor Cyan
-        docker run --rm -v "$workdir:/app" -w /app ghcr.io/cirruslabs/flutter:3.27.1 bash -lc "flutter pub get && flutter test"
+        docker run --rm -v "${workdir}:/app" -w /app ghcr.io/cirruslabs/flutter:3.27.1 bash -lc "flutter pub get && flutter test"
     }
     elseif ($selection -eq "4") {
         docker-compose down
