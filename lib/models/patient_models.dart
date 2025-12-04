@@ -184,3 +184,87 @@ class DoctorRole {
     );
   }
 }
+
+// Models for Login
+class LoginRequest {
+  final String email;
+  final String password;
+
+  LoginRequest({
+    required this.email,
+    required this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'password': password,
+    };
+  }
+}
+
+class LoginResponse {
+  final String accessToken;
+  final User? user;
+
+  LoginResponse({
+    required this.accessToken,
+    this.user,
+  });
+
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    print('DEBUG - LoginResponse.fromJson received: $json');
+
+    if (json['access_token'] == null) {
+      throw Exception('access_token is missing from login response');
+    }
+
+    // Si no hay user en la respuesta, creamos uno básico
+    User? user;
+    if (json['user'] != null) {
+      user = User.fromJson(json['user'] as Map<String, dynamic>);
+    } else {
+      // Crear usuario básico si no viene en la respuesta
+      user = User(
+        id: '',
+        name: 'Usuario',
+        surname: '',
+        email: '',
+        userType: 'unknown',
+      );
+    }
+
+    return LoginResponse(
+      accessToken: json['access_token'] as String,
+      user: user,
+    );
+  }
+}
+
+class User {
+  final String id;
+  final String name;
+  final String surname;
+  final String email;
+  final String userType;
+
+  User({
+    required this.id,
+    required this.name,
+    required this.surname,
+    required this.email,
+    required this.userType,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    print('DEBUG - User.fromJson received: $json');
+
+    return User(
+      id: json['_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      surname: json['surname']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      userType: json['user_type']?.toString() ?? '',
+    );
+  }
+}

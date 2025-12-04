@@ -163,6 +163,104 @@ class ApiService {
       );
     }
   }
+
+  static Future<LoginResponse> loginUser(LoginRequest request) async {
+    try {
+      final requestBody = json.encode(request.toJson());
+      print('DEBUG - Login Request URL: $baseUrl/user/login');
+      print('DEBUG - Login Request Body: $requestBody');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/login'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      );
+
+      print('DEBUG - Login Response Status: ${response.statusCode}');
+      print('DEBUG - Login Response Body: ${response.body}');
+      print('DEBUG - Login Response Body Length: ${response.body.length}');
+      print('DEBUG - Login Response Headers: ${response.headers}');
+
+      if (response.statusCode == 200) {
+        // Verificar si el body no está vacío
+        if (response.body.isEmpty) {
+          throw ApiException('La resposta de la API està buida', 200);
+        }
+
+        try {
+          final responseData = json.decode(response.body);
+          print('DEBUG - Parsed Response Data: $responseData');
+
+          // Verificar que responseData no sea null
+          if (responseData == null) {
+            throw ApiException('La resposta de la API és null', 200);
+          }
+
+          return LoginResponse.fromJson(responseData);
+        } catch (e) {
+          print('DEBUG - Error parsing JSON: $e');
+          throw ApiException(
+              'Error processant la resposta: ${e.toString()}', 200);
+        }
+      } else {
+        // Manejo de errores específicos
+        String errorMessage;
+
+        switch (response.statusCode) {
+          case 400:
+            errorMessage = 'Falten credencials o són incorrectes.';
+            break;
+          case 401:
+            errorMessage = 'Credencials incorrectes.';
+            break;
+          case 404:
+            errorMessage = 'Usuari no trobat.';
+            break;
+          case 422:
+            try {
+              final errorData = json.decode(response.body);
+              if (errorData['errors'] != null) {
+                List<String> validationErrors = [];
+                errorData['errors'].forEach((field, messages) {
+                  if (messages is List) {
+                    validationErrors.addAll(messages.cast<String>());
+                  }
+                });
+                errorMessage =
+                    'Errors de validació:\n${validationErrors.join('\n')}';
+              } else {
+                errorMessage =
+                    'Error de validació: El cos de la sol·licitud no ha superat la validació.';
+              }
+            } catch (e) {
+              errorMessage =
+                  'Error de validació: El cos de la sol·licitud no ha superat la validació.';
+            }
+            break;
+          case 500:
+            errorMessage = 'Error inesperat del servidor en iniciar sessió.';
+            break;
+          default:
+            errorMessage =
+                'Error desconegut (${response.statusCode}): ${response.body}';
+        }
+
+        print('DEBUG - Login API Error: $errorMessage');
+        throw ApiException(errorMessage, response.statusCode);
+      }
+    } catch (e) {
+      if (e is ApiException) {
+        rethrow;
+      }
+      print('DEBUG - Login Exception: $e');
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
 }
 
 class ApiException implements Exception {
