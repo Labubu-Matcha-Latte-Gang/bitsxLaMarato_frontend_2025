@@ -103,37 +103,6 @@ class ApiService {
     }
   }
 
-  static Future<List<Activity>> createActivities(
-    ActivityBulkCreateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/activity'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 201) {
-        final List<dynamic> responseData = json.decode(response.body);
-        return responseData
-            .map((activity) => Activity.fromJson(activity))
-            .toList();
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'han pogut crear les activitats.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
   static Future<List<Activity>> listActivities({
     ActivityQueryParams? query,
   }) async {
@@ -157,96 +126,6 @@ class ApiService {
       throw _apiExceptionFromResponse(
         response,
         'No s\'han pogut recuperar les activitats.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Activity> updateActivity(
-    String id,
-    ActivityCreateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.put(
-        _activityUriWithId(id),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Activity> patchActivity(
-    String id,
-    ActivityPartialUpdateRequest request,
-  ) async {
-    try {
-      final body = request.toJson();
-      if (body.isEmpty) {
-        throw ApiException(
-          'No s\'ha proporcionat cap camp per actualitzar.',
-          400,
-        );
-      }
-      final headers = await _authHeaders();
-      final response = await http.patch(
-        _activityUriWithId(id),
-        headers: headers,
-        body: json.encode(body),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar parcialment l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<void> deleteActivity(String id) async {
-    try {
-      final headers = await _authHeaders();
-      final response =
-          await http.delete(_activityUriWithId(id), headers: headers);
-
-      if (response.statusCode == 204) {
-        return;
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut eliminar l\'activitat.',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -560,12 +439,6 @@ class ApiService {
     } catch (_) {}
 
     return ApiException(message, response.statusCode);
-  }
-
-  static Uri _activityUriWithId(String id) {
-    return Uri.parse('$baseUrl/activity').replace(
-      queryParameters: {'id': id},
-    );
   }
 }
 
