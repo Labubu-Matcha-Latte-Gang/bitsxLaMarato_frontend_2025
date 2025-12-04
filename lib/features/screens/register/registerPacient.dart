@@ -4,6 +4,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
+import '../login/login.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -225,7 +226,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
-                Navigator.of(context).pop(); // Volver a la pantalla anterior
+                // Navegar a la pantalla de login
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
+                  ),
+                );
               },
               child: Text(
                 'D\'acord',
