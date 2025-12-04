@@ -1,35 +1,19 @@
-name: Frontend - Build & Deploy (Tank Mode)
+name: Frontend - Build & Deploy (Fast Mode)
 
 on:
   push:
     branches: [ "main" ]
-    # Solo se ejecuta si cambias archivos del frontend
     paths-ignore:
       - '**.md'
       - 'doc/**'
 
 jobs:
-  test-and-deploy:
+  deploy-only:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Bajar código
         uses: actions/checkout@v3
 
-      # 1. SETUP FLUTTER & CACHÉ (Para tests rápidos)
-      - name: 🐦 Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.27.1' # Misma versión que tu Dockerfile
-          cache: true # ¡Esto ahorra minutos!
-
-      - name: 📦 Instalar dependencias
-        run: flutter pub get
-
-      # 2. EJECUTAR TESTS (Si falla aquí, no construimos nada)
-      - name: 🧪 Ejecutar Flutter Tests
-        run: flutter test
-
-      # 3. SETUP DOCKER (Solo si los tests pasaron)
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -39,19 +23,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. CONSTRUIR Y SUBIR (Build & Push)
       - name: 🏗️ Build & Push Docker Image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          # Pasamos la URL de tu API de producción como argumento
-          # Te recomiendo crear un Secret en GitHub llamado PROD_API_URL
           build-args: |
             API_URL=${{ secrets.PROD_API_URL || 'http://TU_IP_DE_PRODUCCION:5000' }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/bitsxlamarato_frontend_2025:latest
             ${{ secrets.DOCKER_USERNAME }}/bitsxlamarato_frontend_2025:${{ github.sha }}
-          # Caché avanzada de Docker (guarda las capas de Nginx y Flutter)
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -3,6 +3,9 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
+import '../../../services/api_service.dart';
+import '../../../models/patient_models.dart';
+import '../../../services/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -19,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -37,6 +41,130 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+  }
+
+  void _submitLogin() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // Crear el request para la API
+        final request = LoginRequest(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        print('DEBUG - Login Form data being sent:');
+        print('  Email: ${request.email}');
+        print('  Password: ${request.password}');
+
+        // Llamar a la API
+        final response = await ApiService.loginUser(request);
+
+        // Guardar el token en sesión
+        bool tokenSaved = await SessionManager.saveToken(response.accessToken);
+
+        if (tokenSaved) {
+          // Mostrar mensaje de éxito y navegar
+          final userName = response.user?.name ?? 'Usuario';
+          final userSurname = response.user?.surname ?? '';
+          _showSuccessDialog(
+            'Sessió iniciada amb èxit!',
+            'Benvingut/da $userName $userSurname'.trim(),
+          );
+        } else {
+          _showErrorDialog('Error guardant la sessió');
+        }
+      } catch (e) {
+        String errorMessage = 'Error en iniciar sessió';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        } else {
+          errorMessage = 'Error de connexió: ${e.toString()}';
+        }
+        _showErrorDialog(errorMessage);
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                // TODO: Navegar a la pantalla principal de la app
+                // Por ahora solo cerramos el diálogo
+                print(
+                    'Usuario logueado exitosamente - navegar a pantalla principal');
+              },
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
