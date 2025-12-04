@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/patient_models.dart';
+import '../models/activity_models.dart';
 import '../config.dart';
+import 'session_manager.dart';
 
 class ApiService {
   static String get baseUrl => '${Config.apiUrl}/api/v1';
