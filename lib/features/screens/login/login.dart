@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../micro/mic.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -327,6 +328,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // TODO: Implementar lógica de login
                                 print('Login: ${_emailController.text}');
                               }
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MicScreen()
+                                ),
+                              );
                             },
                             child: const Text(
                               'INICIA SESSIÓ',
