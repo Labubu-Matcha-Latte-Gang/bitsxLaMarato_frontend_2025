@@ -181,7 +181,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
             ),
           ),
 
-          // Sistema de partículas
+          // Sistema de partículas usando el widget reutilizable
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -196,12 +196,13 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           SafeArea(
             child: Column(
               children: [
-                // Header con botones
+                // Header con botón de tema y back
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Botón de back
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -224,6 +225,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           },
                         ),
                       ),
+                      // Botón de tema
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -250,12 +252,12 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
-                // Logo
+                // Logo pequeño en la parte superior
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: SizedBox(
-                    height: 100,
-                    width: 150,
+                    height: 80,
+                    width: 120,
                     child: Image.asset(
                       isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
@@ -270,14 +272,15 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
+                // Spacer para empujar el contenido hacia arriba
                 const Spacer(),
               ],
             ),
           ),
 
-          // Formulario posicionado
+          // Recuadro de formulario posicionado a 1/6 desde el final
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
+            bottom: MediaQuery.of(context).size.height / 8,
             left: 0,
             right: 0,
             child: Container(
@@ -291,7 +294,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 30.0, vertical: 25.0),
+                    horizontal: 30.0, vertical: 20.0),
                 child: SingleChildScrollView(
                   child: Form(
                     key: _formKey,
@@ -300,7 +303,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                       children: [
                         // Título
                         Text(
-                          'Registre de Metge',
+                          'Registra\'t a LMLG!',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -308,7 +311,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           ),
                         ),
 
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 20),
 
                         // Row con Nom y Cognom
                         Row(
@@ -348,7 +351,14 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Introdueix el nom';
+                                          return 'Si us plau, introdueix el nom';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Si us plau, introdueix el cognom';
                                         }
                                         return null;
                                       },
@@ -378,8 +388,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   Container(
                                     height: 45,
                                     decoration: BoxDecoration(
-                                      color: AppColors.getFieldBackgroundColor(
-                                          isDarkMode),
+                                      color: isDarkMode
+                                          ? const Color(0xFF7289DA)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: TextFormField(
@@ -390,15 +401,10 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                             horizontal: 15, vertical: 12),
                                       ),
                                       style: TextStyle(
-                                        color: AppColors.getInputTextColor(
-                                            isDarkMode),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF1E3A8A),
                                       ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Introdueix el cognom';
-                                        }
-                                        return null;
-                                      },
                                     ),
                                   ),
                                 ],
@@ -417,8 +423,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Email',
                               style: TextStyle(
                                 fontSize: 14,
-                                color:
-                                    AppColors.getSecondaryTextColor(isDarkMode),
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF1E3A8A),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -426,8 +433,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: AppColors.getFieldBackgroundColor(
-                                    isDarkMode),
+                                color: isDarkMode
+                                    ? const Color(0xFF7289DA)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -439,25 +447,16 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                       horizontal: 15, vertical: 12),
                                   suffixIcon: Icon(
                                     Icons.email_outlined,
-                                    color: AppColors.getSecondaryTextColor(
-                                        isDarkMode),
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : const Color(0xFF1E3A8A),
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color:
-                                      AppColors.getInputTextColor(isDarkMode),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1E3A8A),
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Si us plau, introdueix l\'email';
-                                  }
-                                  if (!RegExp(
-                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                      .hasMatch(value)) {
-                                    return 'Si us plau, introdueix un email vàlid';
-                                  }
-                                  return null;
-                                },
                               ),
                             ),
                           ],
@@ -473,8 +472,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Password',
                               style: TextStyle(
                                 fontSize: 14,
-                                color:
-                                    AppColors.getSecondaryTextColor(isDarkMode),
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF1E3A8A),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -482,8 +482,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: AppColors.getFieldBackgroundColor(
-                                    isDarkMode),
+                                color: isDarkMode
+                                    ? const Color(0xFF7289DA)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -498,8 +499,9 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                       _isPasswordVisible
                                           ? Icons.visibility
                                           : Icons.visibility_off,
-                                      color: AppColors.getSecondaryTextColor(
-                                          isDarkMode),
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF1E3A8A),
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -510,26 +512,16 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color:
-                                      AppColors.getInputTextColor(isDarkMode),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF1E3A8A),
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Si us plau, introdueix la contrasenya';
-                                  }
-                                  if (!RegExp(
-                                          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$')
-                                      .hasMatch(value)) {
-                                    return 'Contrasenya: 8+ caràcters, majúscula, minúscula, número';
-                                  }
-                                  return null;
-                                },
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 25),
 
                         // Botón REGISTER
                         SizedBox(
@@ -537,22 +529,30 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  AppColors.getPrimaryButtonColor(isDarkMode),
-                              foregroundColor:
-                                  AppColors.getPrimaryButtonTextColor(
-                                      isDarkMode),
+                              backgroundColor: isDarkMode
+                                  ? const Color(0xFF7289DA)
+                                  : const Color(0xFF0077B6),
+                              foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32)),
+                                borderRadius: BorderRadius.circular(32),
+                              ),
                               elevation: 0,
                             ),
-                            onPressed: _isLoading ? null : _submitForm,
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    if (_formKey.currentState!.validate()) {
+                                      _submitForm();
+                                    }
+                                  },
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2),
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'REGISTER',
@@ -570,17 +570,17 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         // Link "Ja tens un compte? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Volver atrás
                           },
                           child: Text(
                             'Ja tens un compte? Login',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                              fontWeight: FontWeight.w500,
+                              color: isDarkMode
+                                  ? Colors.white60
+                                  : const Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
-                              decorationColor:
-                                  AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
