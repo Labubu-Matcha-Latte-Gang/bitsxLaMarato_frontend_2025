@@ -8,6 +8,21 @@ import 'session_manager.dart';
 class ApiService {
   static String get baseUrl => '${Config.apiUrl}/api/v1';
 
+  static Future<Map<String, String>> _authHeaders() async {
+    final token = await SessionManager.getToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Sessió no trobada o caducada. Torna a iniciar sessió.',
+        401,
+      );
+    }
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
   static Future<PatientRegistrationResponse> registerPatient(
     PatientRegistrationRequest request,
   ) async {
