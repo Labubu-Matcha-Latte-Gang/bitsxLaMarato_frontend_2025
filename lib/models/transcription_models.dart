@@ -29,16 +29,22 @@ class TranscriptionCompleteRequest {
 class TranscriptionResponse {
   final String status;
   final String? transcription;
+  final String? partialText;
+  final Map<String, dynamic> analysis;
 
   TranscriptionResponse({
     required this.status,
     this.transcription,
+    this.partialText,
+    this.analysis = const {},
   });
 
   factory TranscriptionResponse.fromJson(Map<String, dynamic> json) {
     return TranscriptionResponse(
       status: json['status']?.toString() ?? '',
       transcription: json['transcription']?.toString(),
+      partialText: json['partial_text']?.toString(),
+      analysis: (json['analysis'] as Map<String, dynamic>?) ?? const {},
     );
   }
 }

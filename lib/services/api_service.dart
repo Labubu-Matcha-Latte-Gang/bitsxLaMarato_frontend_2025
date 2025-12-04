@@ -944,7 +944,7 @@ class ApiService {
       multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
       multipartRequest.files.add(
         http.MultipartFile.fromBytes(
-          'file',
+          'audio_blob',
           request.audioBytes,
           filename: request.filename,
           contentType: MediaType.parse(request.contentType),
