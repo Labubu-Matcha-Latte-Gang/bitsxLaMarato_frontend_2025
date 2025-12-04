@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../../../services/api_service.dart';
+import '../../../models/patient_models.dart';
+import '../login/login.dart';
 
 class RegisterDoctor extends StatefulWidget {
   final bool isDarkMode;
@@ -20,6 +23,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
   final _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -42,6 +46,129 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
     });
   }
 
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // Crear el request para la API
+        final request = DoctorRegistrationRequest(
+          name: _nameController.text.trim(),
+          surname: _surnameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          patients: [], // Por defecto sin pacientes asignados
+        );
+
+        print('DEBUG - Doctor Form data being sent:');
+        print('  Name: ${request.name}');
+        print('  Surname: ${request.surname}');
+        print('  Email: ${request.email}');
+        print('  Password: ${request.password}');
+        print('  Patients: ${request.patients}');
+
+        // Llamar a la API
+        final response = await ApiService.registerDoctor(request);
+
+        // Si llega aquí, el registro fue exitoso
+        _showSuccessDialog(
+          'Metge registrat amb èxit!',
+          'Benvingut/da Dr. ${response.name} ${response.surname}',
+        );
+      } catch (e) {
+        String errorMessage = 'Error en registrar el metge';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        } else {
+          errorMessage = 'Error de connexió: ${e.toString()}';
+        }
+        _showErrorDialog(errorMessage);
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+            ),
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+                // Navegar a la pantalla de login
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
+                  ),
+                );
+              },
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,7 +181,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
             ),
           ),
 
-          // Sistema de partículas usando el widget reutilizable
+          // Sistema de partículas
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -69,13 +196,12 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           SafeArea(
             child: Column(
               children: [
-                // Header con botón de tema y back
+                // Header con botones
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Botón de back
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -98,7 +224,6 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           },
                         ),
                       ),
-                      // Botón de tema
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -125,12 +250,12 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
-                // Logo pequeño en la parte superior
+                // Logo
                 Container(
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 20),
                   child: SizedBox(
-                    height: 80,
-                    width: 120,
+                    height: 100,
+                    width: 150,
                     child: Image.asset(
                       isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
@@ -145,15 +270,14 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
-                // Spacer para empujar el contenido hacia arriba
                 const Spacer(),
               ],
             ),
           ),
 
-          // Recuadro de formulario posicionado a 1/6 desde el final
+          // Formulario posicionado
           Positioned(
-            bottom: MediaQuery.of(context).size.height / 8,
+            top: MediaQuery.of(context).size.height * 0.25,
             left: 0,
             right: 0,
             child: Container(
@@ -167,7 +291,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 30.0, vertical: 20.0),
+                    horizontal: 30.0, vertical: 25.0),
                 child: SingleChildScrollView(
                   child: Form(
                     key: _formKey,
@@ -176,7 +300,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                       children: [
                         // Título
                         Text(
-                          'Registra\'t a LMLG!',
+                          'Registre de Metge',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -184,7 +308,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 25),
 
                         // Row con Nom y Cognom
                         Row(
@@ -222,6 +346,12 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                         color: AppColors.getInputTextColor(
                                             isDarkMode),
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Introdueix el nom';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ),
                                 ],
@@ -248,9 +378,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   Container(
                                     height: 45,
                                     decoration: BoxDecoration(
-                                      color: isDarkMode
-                                          ? const Color(0xFF7289DA)
-                                          : Colors.white,
+                                      color: AppColors.getFieldBackgroundColor(
+                                          isDarkMode),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: TextFormField(
@@ -261,10 +390,15 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                             horizontal: 15, vertical: 12),
                                       ),
                                       style: TextStyle(
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : const Color(0xFF1E3A8A),
+                                        color: AppColors.getInputTextColor(
+                                            isDarkMode),
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Introdueix el cognom';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ),
                                 ],
@@ -283,9 +417,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Email',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : const Color(0xFF1E3A8A),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -293,9 +426,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF7289DA)
-                                    : Colors.white,
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -307,16 +439,25 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                       horizontal: 15, vertical: 12),
                                   suffixIcon: Icon(
                                     Icons.email_outlined,
-                                    color: isDarkMode
-                                        ? Colors.white70
-                                        : const Color(0xFF1E3A8A),
+                                    color: AppColors.getSecondaryTextColor(
+                                        isDarkMode),
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF1E3A8A),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Si us plau, introdueix l\'email';
+                                  }
+                                  if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                      .hasMatch(value)) {
+                                    return 'Si us plau, introdueix un email vàlid';
+                                  }
+                                  return null;
+                                },
                               ),
                             ),
                           ],
@@ -332,9 +473,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Password',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : const Color(0xFF1E3A8A),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -342,9 +482,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF7289DA)
-                                    : Colors.white,
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: TextFormField(
@@ -359,9 +498,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                       _isPasswordVisible
                                           ? Icons.visibility
                                           : Icons.visibility_off,
-                                      color: isDarkMode
-                                          ? Colors.white70
-                                          : const Color(0xFF1E3A8A),
+                                      color: AppColors.getSecondaryTextColor(
+                                          isDarkMode),
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -372,16 +510,26 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                   ),
                                 ),
                                 style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF1E3A8A),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Si us plau, introdueix la contrasenya';
+                                  }
+                                  if (!RegExp(
+                                          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$')
+                                      .hasMatch(value)) {
+                                    return 'Contrasenya: 8+ caràcters, majúscula, minúscula, número';
+                                  }
+                                  return null;
+                                },
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 25),
+                        const SizedBox(height: 30),
 
                         // Botón REGISTER
                         SizedBox(
@@ -389,30 +537,31 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDarkMode
-                                  ? const Color(0xFF7289DA)
-                                  : const Color(0xFF0077B6),
-                              foregroundColor: Colors.white,
+                              backgroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonTextColor(
+                                      isDarkMode),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
+                                  borderRadius: BorderRadius.circular(32)),
                               elevation: 0,
                             ),
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // TODO: Implementar lógica de registro
-                                print(
-                                    'Doctor register: ${_emailController.text}');
-                              }
-                            },
-                            child: const Text(
-                              'REGISTER',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                            onPressed: _isLoading ? null : _submitForm,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Text(
+                                    'REGISTER',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -421,17 +570,17 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         // Link "Ja tens un compte? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context); // Volver atrás
+                            Navigator.pop(context);
                           },
                           child: Text(
                             'Ja tens un compte? Login',
                             style: TextStyle(
                               fontSize: 14,
-                              color: isDarkMode
-                                  ? Colors.white60
-                                  : const Color(0xFF1E3A8A),
-                              fontWeight: FontWeight.w400,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
+                              decorationColor:
+                                  AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
