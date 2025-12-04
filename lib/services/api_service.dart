@@ -10,14 +10,23 @@ import '../config.dart';
 import 'session_manager.dart';
 
 class ApiService {
-  static http.Client _client = http.Client();
-  static String? _baseUrlOverride;
+  static final ApiService _instance = ApiService._internal();
+  late http.Client _client;
+  String? _baseUrlOverride;
 
-  static http.Client get client => _client;
+  ApiService._internal() {
+    _client = http.Client();
+  }
 
-  static String get baseUrl => '${_baseUrlOverride ?? Config.apiUrl}/api/v1';
+  factory ApiService() {
+    return _instance;
+  }
 
-  static void configure({
+  http.Client get client => _client;
+
+  String get baseUrl => '${_baseUrlOverride ?? Config.apiUrl}/api/v1';
+
+  void configure({
     http.Client? client,
     String? baseUrl,
   }) {
