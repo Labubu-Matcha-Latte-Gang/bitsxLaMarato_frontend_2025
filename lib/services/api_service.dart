@@ -1,10 +1,27 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/patient_models.dart';
+import '../models/activity_models.dart';
 import '../config.dart';
+import 'session_manager.dart';
 
 class ApiService {
   static String get baseUrl => '${Config.apiUrl}/api/v1';
+
+  static Future<Map<String, String>> _authHeaders() async {
+    final token = await SessionManager.getToken();
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        'Sessió no trobada o caducada. Torna a iniciar sessió.',
+        401,
+      );
+    }
+
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
 
   static Future<PatientRegistrationResponse> registerPatient(
     PatientRegistrationRequest request,
@@ -78,6 +95,215 @@ class ApiService {
       if (e is ApiException) {
         rethrow;
       }
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<List<Activity>> createActivities(
+    ActivityBulkCreateRequest request,
+  ) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/activity'),
+        headers: headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 201) {
+        final List<dynamic> responseData = json.decode(response.body);
+        return responseData
+            .map((activity) => Activity.fromJson(activity))
+            .toList();
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'han pogut crear les activitats.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<List<Activity>> listActivities({
+    ActivityQueryParams? query,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      Uri uri = Uri.parse('$baseUrl/activity');
+      final params = query?.toQueryParameters() ?? {};
+      if (params.isNotEmpty) {
+        uri = uri.replace(queryParameters: params);
+      }
+
+      final response = await http.get(uri, headers: headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        return responseData
+            .map((activity) => Activity.fromJson(activity))
+            .toList();
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'han pogut recuperar les activitats.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Activity> updateActivity(
+    String id,
+    ActivityCreateRequest request,
+  ) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.put(
+        _activityUriWithId(id),
+        headers: headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Activity.fromJson(responseData);
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'ha pogut actualitzar l\'activitat.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Activity> patchActivity(
+    String id,
+    ActivityPartialUpdateRequest request,
+  ) async {
+    try {
+      final body = request.toJson();
+      if (body.isEmpty) {
+        throw ApiException(
+          'No s\'ha proporcionat cap camp per actualitzar.',
+          400,
+        );
+      }
+      final headers = await _authHeaders();
+      final response = await http.patch(
+        _activityUriWithId(id),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Activity.fromJson(responseData);
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'ha pogut actualitzar parcialment l\'activitat.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<void> deleteActivity(String id) async {
+    try {
+      final headers = await _authHeaders();
+      final response =
+          await http.delete(_activityUriWithId(id), headers: headers);
+
+      if (response.statusCode == 204) {
+        return;
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'ha pogut eliminar l\'activitat.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Activity> getRecommendedActivity() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/activity/recommended'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Activity.fromJson(responseData);
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'ha pogut recuperar l\'activitat recomanada.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<ActivityCompleteResponse> completeActivity(
+    ActivityCompleteRequest request,
+  ) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/activity/complete'),
+        headers: headers,
+        body: json.encode(request.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return ActivityCompleteResponse.fromJson(responseData);
+      }
+
+      throw _activityApiException(
+        response,
+        'No s\'ha pogut marcar l\'activitat com a completada.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
       throw ApiException(
         'Error de connexió amb el servidor: ${e.toString()}',
         0,
@@ -260,6 +486,59 @@ class ApiService {
         0,
       );
     }
+  }
+
+  static ApiException _activityApiException(
+    http.Response response,
+    String fallbackMessage,
+  ) {
+    String message = fallbackMessage;
+
+    switch (response.statusCode) {
+      case 401:
+        message = 'Falta o és invàlid el token de sessió.';
+        break;
+      case 403:
+        message = 'No tens permisos per accedir a aquest recurs.';
+        break;
+      case 404:
+        message = 'Recurs no trobat.';
+        break;
+      case 422:
+        message = 'El cos de la sol·licitud no ha superat la validació.';
+        break;
+      case 500:
+        message = 'Error inesperat del servidor.';
+        break;
+      default:
+        message = fallbackMessage;
+    }
+
+    try {
+      if (response.body.isNotEmpty) {
+        final errorData = json.decode(response.body);
+        if (errorData is Map<String, dynamic>) {
+          if (response.statusCode == 422 &&
+              errorData['errors'] is Map<String, dynamic>) {
+            final errors = errorData['errors'] as Map<String, dynamic>;
+            final errorDetails =
+                errors.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+            message = 'Errors de validació:\n$errorDetails';
+          } else if (errorData['message'] is String &&
+              (errorData['message'] as String).isNotEmpty) {
+            message = errorData['message'];
+          }
+        }
+      }
+    } catch (_) {}
+
+    return ApiException(message, response.statusCode);
+  }
+
+  static Uri _activityUriWithId(String id) {
+    return Uri.parse('$baseUrl/activity').replace(
+      queryParameters: {'id': id},
+    );
   }
 }
 
