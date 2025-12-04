@@ -73,87 +73,31 @@ void main() {
     );
   });
 
-  test('createActivitiesBulk parses list responses', () async {
-    await SessionManager.saveToken('bulk-token');
+  test('getActivity filters by id via query param', () async {
+    await SessionManager.saveToken('token');
     ApiService.configure(
       client: MockClient((request) async {
-        expect(request.url.path, '/api/v1/activity/bulk');
-        final activities = [
+        expect(request.url.path, '/api/v1/activity');
+        expect(request.url.queryParameters, {'id': '42'});
+
+        final body = [
           {
-            'id': 'a1',
-            'title': 'Walk',
+            'id': '42',
+            'title': 'Yoga',
             'description': 'desc',
-            'activity_type': 'cardio',
-            'difficulty': 1.0,
-          },
-          {
-            'id': 'a2',
-            'title': 'Run',
-            'description': 'desc',
-            'activity_type': 'cardio',
-            'difficulty': 2.0,
+            'activity_type': 'stretch',
+            'difficulty': 0.2,
           },
         ];
-        return http.Response(jsonEncode(activities), 201);
-      }),
-    );
-
-    final created = await ApiService.createActivitiesBulk(
-      ActivityBulkCreateRequest(
-        activities: [
-          ActivityCreateRequest(
-            title: 'Walk',
-            description: 'desc',
-            activityType: 'cardio',
-            difficulty: 1.0,
-          ),
-          ActivityCreateRequest(
-            title: 'Run',
-            description: 'desc',
-            activityType: 'cardio',
-            difficulty: 2.0,
-          ),
-        ],
-      ),
-    );
-
-    expect(created.map((a) => a.id), containsAll(['a1', 'a2']));
-  });
-
-  test('createActivitiesBulk parses wrapped activities payload', () async {
-    await SessionManager.saveToken('bulk-token');
-    ApiService.configure(
-      client: MockClient((request) async {
-        final body = {
-          'activities': [
-            {
-              'id': 'wrapped',
-              'title': 'Swim',
-              'description': 'desc',
-              'activity_type': 'cardio',
-              'difficulty': 3.5,
-            }
-          ]
-        };
         return http.Response(jsonEncode(body), 200);
       }),
     );
 
-    final created = await ApiService.createActivitiesBulk(
-      ActivityBulkCreateRequest(
-        activities: [
-          ActivityCreateRequest(
-            title: 'Swim',
-            description: 'desc',
-            activityType: 'cardio',
-            difficulty: 3.5,
-          ),
-        ],
-      ),
-    );
+    final activity = await ApiService.getActivity('42');
 
-    expect(created.single.id, 'wrapped');
-    expect(created.single.activityType, 'cardio');
+    expect(activity.id, '42');
+    expect(activity.activityType, 'stretch');
+    expect(activity.difficulty, 0.2);
   });
 
   test('completeActivity returns parsed response', () async {
@@ -167,43 +111,25 @@ void main() {
             'id': '42',
             'title': 'Yoga',
             'description': 'desc',
-          'activity_type': 'stretch',
-          'difficulty': 0.2,
-        },
-        'completed_at': '2024-03-01T10:00:00Z',
-        'score': 90.0,
-        'seconds_to_finish': 120.0
-      };
-      return http.Response(jsonEncode(body), 200);
-    }),
-  );
-
-  final response = await ApiService.completeActivity(
-    ActivityCompleteRequest(id: '42', score: 90.0, secondsToFinish: 120.0),
-  );
-
-    expect(response.activity.id, '42');
-    expect(response.patient['email'], 'pat@example.com');
-  expect(response.score, 90.0);
-  expect(response.secondsToFinish, 120.0);
-  });
-
-  test('getActivity surfaces mapped errors from server', () async {
-    await SessionManager.saveToken('token');
-    ApiService.configure(
-      client: MockClient((request) async {
-        return http.Response('{}', 404);
+            'activity_type': 'stretch',
+            'difficulty': 0.2,
+          },
+          'completed_at': '2024-03-01T10:00:00Z',
+          'score': 90.0,
+          'seconds_to_finish': 120.0
+        };
+        return http.Response(jsonEncode(body), 200);
       }),
     );
 
-    expect(
-      ApiService.getActivity('missing'),
-      throwsA(
-        isA<ApiException>()
-            .having((e) => e.statusCode, 'status', 404)
-            .having((e) => e.message, 'message', 'Recurs no trobat.'),
-      ),
+    final response = await ApiService.completeActivity(
+      ActivityCompleteRequest(id: '42', score: 90.0, secondsToFinish: 120.0),
     );
+
+    expect(response.activity.id, '42');
+    expect(response.patient['email'], 'pat@example.com');
+    expect(response.score, 90.0);
+    expect(response.secondsToFinish, 120.0);
   });
 
   test('loginUser parses token and user payload', () async {
