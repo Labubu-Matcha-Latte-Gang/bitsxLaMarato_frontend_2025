@@ -10,7 +10,7 @@ while ($true) {
     Write-Host "2. Stop Preview"
     Write-Host "3. Exit"
     Write-Host "----------------------------------------"
-    
+
     $selection = Read-Host "Select option"
 
     if ($selection -eq "1") {

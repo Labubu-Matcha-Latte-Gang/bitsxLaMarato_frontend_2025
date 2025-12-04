@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../micro/mic.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
 import '../../../services/session_manager.dart';
@@ -450,22 +451,27 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            onPressed: _isLoading ? null : _submitLogin,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Text(
-                                    'INICIA SESSIÓ',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                // TODO: Implementar lógica de login
+                                print('Login: ${_emailController.text}');
+                              }
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MicScreen()
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'INICIA SESSIÓ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
                           ),
                         ),
 
