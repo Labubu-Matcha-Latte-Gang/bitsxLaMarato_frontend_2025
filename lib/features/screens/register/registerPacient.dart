@@ -21,6 +21,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
   final _diagnosticController = TextEditingController();
   final _sexeController = TextEditingController();
   final _tractamentController = TextEditingController();
+  String? _selectedGender;
 
   // Controladores para la segunda página
   final _edatController = TextEditingController();
@@ -117,11 +118,17 @@ class _RegisterPacientState extends State<RegisterPacient> {
       }
 
       if (_diagnosticController.text.trim().isEmpty ||
-          _sexeController.text.trim().isEmpty ||
           _tractamentController.text.trim().isEmpty ||
           _emailController.text.trim().isEmpty ||
           _passwordController.text.isEmpty) {
         _showErrorDialog('Si us plau, completa tots els camps obligatoris.');
+        return;
+      }
+
+      final genderValue = (_selectedGender ?? '').trim().toLowerCase();
+      if (genderValue != 'male' && genderValue != 'female') {
+        _showErrorDialog(
+            'El camp sexe ha de tenir el valor "male" o "female" (Home/Dona).');
         return;
       }
 
@@ -131,7 +138,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         ailments: _diagnosticController.text.trim(),
-        gender: _sexeController.text.trim().toLowerCase(),
+        gender: genderValue,
         age: age,
         treatments: _tractamentController.text.trim(),
         heightCm: height,
@@ -310,8 +317,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonFormField<String>(
-                value:
-                    _sexeController.text.isEmpty ? null : _sexeController.text,
+                value: _selectedGender,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding:
@@ -334,11 +340,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 ],
                 onChanged: (String? value) {
                   setState(() {
+                    _selectedGender = value;
                     _sexeController.text = value ?? '';
                   });
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (_selectedGender == null || _selectedGender!.isEmpty) {
                     return 'Si us plau, selecciona el sexe';
                   }
                   return null;
