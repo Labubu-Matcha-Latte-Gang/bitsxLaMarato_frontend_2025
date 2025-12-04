@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/patient_models.dart';
 import '../models/activity_models.dart';
+import '../models/question_models.dart';
 import '../config.dart';
 import 'session_manager.dart';
 
@@ -120,7 +121,7 @@ class ApiService {
             .toList();
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'han pogut crear les activitats.',
       );
@@ -153,7 +154,7 @@ class ApiService {
             .toList();
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'han pogut recuperar les activitats.',
       );
@@ -183,7 +184,7 @@ class ApiService {
         return Activity.fromJson(responseData);
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut actualitzar l\'activitat.',
       );
@@ -220,7 +221,7 @@ class ApiService {
         return Activity.fromJson(responseData);
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut actualitzar parcialment l\'activitat.',
       );
@@ -243,7 +244,7 @@ class ApiService {
         return;
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut eliminar l\'activitat.',
       );
@@ -269,7 +270,7 @@ class ApiService {
         return Activity.fromJson(responseData);
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut recuperar l\'activitat recomanada.',
       );
@@ -298,9 +299,35 @@ class ApiService {
         return ActivityCompleteResponse.fromJson(responseData);
       }
 
-      throw _activityApiException(
+      throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut marcar l\'activitat com a completada.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Question> getDailyQuestion() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/question/daily'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Question.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut recuperar la pregunta diària.',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -488,7 +515,7 @@ class ApiService {
     }
   }
 
-  static ApiException _activityApiException(
+  static ApiException _apiExceptionFromResponse(
     http.Response response,
     String fallbackMessage,
   ) {
