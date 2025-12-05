@@ -1,6 +1,5 @@
 import '../../../models/patient_models.dart';
 import '../../../services/api_service.dart';
-import '../../../services/session_manager.dart';
 
 class PatientRegistrationFormData {
   final String name;
@@ -52,9 +51,8 @@ sealed class PatientRegistrationResult {
 
 class PatientRegistrationSuccess extends PatientRegistrationResult {
   final PatientRegistrationResponse response;
-  final LoginResponse login;
 
-  const PatientRegistrationSuccess(this.response, this.login);
+  const PatientRegistrationSuccess(this.response);
 }
 
 class PatientRegistrationFailure extends PatientRegistrationResult {
@@ -78,48 +76,7 @@ class PatientRegistrationService {
     try {
       final response = await ApiService.registerPatient(form.toRequest());
 
-      try {
-        final loginResponse = await ApiService.loginUser(
-          LoginRequest(
-            email: form.email.trim(),
-            password: form.password,
-          ),
-        );
-
-        final tokenSaved =
-            await SessionManager.saveToken(loginResponse.accessToken);
-        if (!tokenSaved) {
-          return const PatientRegistrationFailure(
-            'El registre s\'ha completat però no s\'ha pogut guardar la sessió localment.',
-          );
-        }
-
-        if (loginResponse.user != null) {
-          await SessionManager.saveUserData({
-            'id': loginResponse.user!.id,
-            'name': loginResponse.user!.name,
-            'surname': loginResponse.user!.surname,
-            'email': loginResponse.user!.email,
-            'user_type': loginResponse.user!.userType,
-          });
-        }
-
-        return PatientRegistrationSuccess(response, loginResponse);
-      } on ApiException catch (e) {
-        final message = e.message.isNotEmpty
-            ? 'Registre complet, però error iniciant sessió: ${e.message}'
-            : 'Registre complet, però no s\'ha pogut iniciar sessió automàticament.';
-        return PatientRegistrationFailure(
-          message,
-          statusCode: e.statusCode,
-          cause: e,
-        );
-      } catch (e) {
-        return PatientRegistrationFailure(
-          'Registre complet, però no s\'ha pogut iniciar sessió automàticament: ${e.toString()}',
-          cause: e,
-        );
-      }
+      return PatientRegistrationSuccess(response);
     } on ApiException catch (e) {
       final message = e.message.isNotEmpty
           ? e.message
