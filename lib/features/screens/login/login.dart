@@ -451,18 +451,41 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               if (_formKey.currentState!.validate()) {
-                                // TODO: Implementar lógica de login
-                                print('Login: ${_emailController.text}');
+                                // Implementar lógica de login
+                                final email = _emailController.text;
+                                final password = _passwordController.text;
+                                try {
+                                  // Call the login API
+                                  final user = await ApiService.login(email, password);
+                                  if (user != null) {
+                                    // Optionally save session
+                                    await SessionManager.saveUser(user);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const MicScreen()
+                                      ),
+                                    );
+                                  } else {
+                                    // Show error if login fails
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Credencials incorrectes. Torna-ho a intentar.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error d\'autenticació: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MicScreen()
-                                ),
-                              );
                             },
                             child: const Text(
                               'INICIA SESSIÓ',
