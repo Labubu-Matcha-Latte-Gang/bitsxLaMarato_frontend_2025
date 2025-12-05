@@ -30,7 +30,9 @@ class _MicScreenState extends State<MicScreen> {
   bool _isRecording = false;
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
+  Timer? _chunkTimer;
   String? _recordedFilePath;
+  String? _currentChunkPath;
 
   html.MediaRecorder? _webRecorder;
   html.MediaStream? _webStream;
@@ -41,6 +43,12 @@ class _MicScreenState extends State<MicScreen> {
   // Uploading UI state
   bool _isUploading = false;
   String? _transcriptionText;
+  String? _currentSessionId;
+  int _nextChunkIndex = 0;
+  final List<Future<void>> _pendingChunkUploads = [];
+  bool _isProcessingChunk = false;
+  bool _hasUploadError = false;
+  static const int _maxChunkSeconds = 15;
 
   late final Future<Question> _dailyQuestionFuture;
 
