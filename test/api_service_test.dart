@@ -185,6 +185,52 @@ void main() {
     );
   });
 
+  test('registerPatient parses access token and role data', () async {
+    ApiService.configure(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/user/patient');
+        final body = {
+          'email': 'pat@example.com',
+          'name': 'Pat',
+          'surname': 'Smith',
+          'access_token': 'reg-token',
+          'role': {
+            'ailments': 'none',
+            'gender': 'male',
+            'age': 30,
+            'treatments': 'none',
+            'height_cm': 170.0,
+            'weight_kg': 70.0,
+            'doctors': [],
+          },
+        };
+        return http.Response(jsonEncode(body), 201);
+      }),
+    );
+
+    final req = PatientRegistrationRequest(
+      name: 'Pat',
+      surname: 'Smith',
+      email: 'pat@example.com',
+      password: 'secret',
+      ailments: 'none',
+      gender: 'male',
+      age: 30,
+      treatments: 'none',
+      heightCm: 170.0,
+      weightKg: 70.0,
+      doctors: const [],
+    );
+
+    final response = await ApiService.registerPatient(req);
+
+    expect(response.accessToken, 'reg-token');
+    expect(response.role.age, 30);
+    expect(response.role.heightCm, 170.0);
+    expect(await SessionManager.getToken(), 'reg-token');
+  });
+
   test('registerPatient surfaces validation errors from server payload', () async {
     ApiService.configure(
       client: MockClient((request) async {
@@ -193,19 +239,19 @@ void main() {
       }),
     );
 
-  final req = PatientRegistrationRequest(
-    name: 'Pat',
-    surname: 'Smith',
-    email: 'pat@example.com',
-    password: 'secret',
-    ailments: 'none',
-    gender: 'm',
-    age: 30,
-    treatments: 'none',
-    heightCm: 170.0,
-    weightKg: 70.0,
-    doctors: const [],
-  );
+    final req = PatientRegistrationRequest(
+      name: 'Pat',
+      surname: 'Smith',
+      email: 'pat@example.com',
+      password: 'secret',
+      ailments: 'none',
+      gender: 'm',
+      age: 30,
+      treatments: 'none',
+      heightCm: 170.0,
+      weightKg: 70.0,
+      doctors: const [],
+    );
 
     expect(
       ApiService.registerPatient(req),
@@ -219,6 +265,39 @@ void main() {
             ),
       ),
     );
+  });
+
+  test('registerDoctor parses access token and role data', () async {
+    ApiService.configure(
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/user/doctor');
+        final body = {
+          'email': 'doc@example.com',
+          'name': 'Doc',
+          'surname': 'Who',
+          'access_token': 'doctor-token',
+          'role': {
+            'patients': ['p1', 'p2'],
+          },
+        };
+        return http.Response(jsonEncode(body), 201);
+      }),
+    );
+
+    final req = DoctorRegistrationRequest(
+      name: 'Doc',
+      surname: 'Who',
+      email: 'doc@example.com',
+      password: 'secret',
+      patients: const [],
+    );
+
+    final response = await ApiService.registerDoctor(req);
+
+    expect(response.accessToken, 'doctor-token');
+    expect(response.role.patients, ['p1', 'p2']);
+    expect(await SessionManager.getToken(), 'doctor-token');
   });
 
   test('getPatientData maps nested payloads', () async {
