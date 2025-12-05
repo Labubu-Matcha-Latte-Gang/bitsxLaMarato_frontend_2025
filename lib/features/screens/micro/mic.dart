@@ -5,6 +5,7 @@ import '../../../utils/effects/particle_system.dart';
 import 'dart:async';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import '../activities/activities_page.dart';
 
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});
@@ -181,6 +182,29 @@ class _MicScreenState extends State<MicScreen> {
                               _isRecording ? Colors.redAccent : Colors.green,
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 24.0),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ActivitiesPage(
+                                  initialDarkMode: isDarkMode,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                AppColors.getPrimaryButtonColor(isDarkMode),
+                            foregroundColor:
+                                AppColors.getPrimaryButtonTextColor(isDarkMode),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          icon: const Icon(Icons.local_activity_outlined),
+                          label: const Text('Activitats'),
                         ),
                       ],
                     ),
