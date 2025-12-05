@@ -379,40 +379,56 @@ class _MicScreenState extends State<MicScreen> {
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         //Maybe change RawMaterialButton?
                         //Microphone button
                         FutureBuilder<Question>(
-                          future:_dailyQuestionFuture,
+                          future: _dailyQuestionFuture,
                           builder: (context, snapshot) {
-                            if(snapshot.connectionState == ConnectionState.waiting) {
-                              return Text(
+                            Widget child;
+
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              child = Text(
                                 'Carregant...',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: AppColors.getPrimaryTextColor(isDarkMode),
                                   fontSize: 18.0,
                                 ),
                               );
-                            }
-                            if(snapshot.hasError) {
-                              return Text(
+                            } else if (snapshot.hasError) {
+                              child = Text(
                                 'Error',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: AppColors.getPrimaryTextColor(isDarkMode),
                                   fontSize: 18.0,
                                 ),
                               );
+                            } else {
+                              final question = snapshot.data;
+                              child = Text(
+                                question?.text ?? 'No hi ha cap pregunta avui. Relata una experiència teva!',
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                                style: TextStyle(
+                                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              );
                             }
-                            final question = snapshot.data;
-                            return Text(
-                              question?.text ?? 'No hi ha cap pregunta avui. Relata una experiència teva!',
-                              style: TextStyle(
-                                color: AppColors.getPrimaryTextColor(isDarkMode),
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.w500,
+
+                            // Constrain the width on wide screens and apply horizontal padding
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 720),
+                                child: child,
                               ),
                             );
-                          }
+                          },
                         ),
                         RawMaterialButton(
                           onPressed: _isRecording ? _stopRecording : _startRecording,
