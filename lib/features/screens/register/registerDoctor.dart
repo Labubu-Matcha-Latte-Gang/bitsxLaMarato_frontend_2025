@@ -4,7 +4,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
-import '../login/login.dart';
+import '../micro/mic.dart';
 
 class RegisterDoctor extends StatefulWidget {
   final bool isDarkMode;
@@ -46,6 +46,13 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
     });
   }
 
+  void _navigateToHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const MicScreen()),
+      (_) => false,
+    );
+  }
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -72,10 +79,16 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         // Llamar a la API
         final response = await ApiService.registerDoctor(request);
 
-        // Si llega aquí, el registro fue exitoso
+        if (!mounted) return;
+
+        final welcomeName = [
+          response.user?.name ?? response.name,
+          response.user?.surname ?? response.surname,
+        ].where((part) => part.trim().isNotEmpty).join(' ');
+
         _showSuccessDialog(
-          'Metge registrat amb èxit!',
-          'Benvingut/da Dr. ${response.name} ${response.surname}',
+          'Compte creat i sessió iniciada!',
+          'Benvingut/da Dr. $welcomeName',
         );
       } catch (e) {
         String errorMessage = 'Error en registrar el metge';
@@ -86,6 +99,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         }
         _showErrorDialog(errorMessage);
       } finally {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
@@ -149,12 +163,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
-                // Navegar a la pantalla de login
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
-                  ),
-                );
+                _navigateToHome();
               },
               child: Text(
                 'D\'acord',
