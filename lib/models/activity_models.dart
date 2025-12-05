@@ -24,64 +24,6 @@ class Activity {
   }
 }
 
-class ActivityCreateRequest {
-  final String title;
-  final String description;
-  final String activityType;
-  final double difficulty;
-
-  ActivityCreateRequest({
-    required this.title,
-    required this.description,
-    required this.activityType,
-    required this.difficulty,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'description': description,
-      'activity_type': activityType,
-      'difficulty': difficulty,
-    };
-  }
-}
-
-class ActivityBulkCreateRequest {
-  final List<ActivityCreateRequest> activities;
-
-  ActivityBulkCreateRequest({required this.activities});
-
-  Map<String, dynamic> toJson() {
-    return {
-      'activities': activities.map((a) => a.toJson()).toList(),
-    };
-  }
-}
-
-class ActivityPartialUpdateRequest {
-  final String? title;
-  final String? description;
-  final String? activityType;
-  final double? difficulty;
-
-  ActivityPartialUpdateRequest({
-    this.title,
-    this.description,
-    this.activityType,
-    this.difficulty,
-  });
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    if (title != null) data['title'] = title;
-    if (description != null) data['description'] = description;
-    if (activityType != null) data['activity_type'] = activityType;
-    if (difficulty != null) data['difficulty'] = difficulty;
-    return data;
-  }
-}
-
 class ActivityQueryParams {
   final String? id;
   final String? title;

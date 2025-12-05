@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
-import '../../../services/api_service.dart';
-import '../../../models/patient_models.dart';
-import '../login/login.dart';
+import 'patient_registration_service.dart';
+import '../micro/mic.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -22,6 +21,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
   final _diagnosticController = TextEditingController();
   final _sexeController = TextEditingController();
   final _tractamentController = TextEditingController();
+  String? _selectedGender;
 
   // Controladores para la segunda página
   final _edatController = TextEditingController();
@@ -39,6 +39,8 @@ class _RegisterPacientState extends State<RegisterPacient> {
   final int _totalPages = 3;
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final PatientRegistrationService _registrationService =
+      const PatientRegistrationService();
 
   @override
   void initState() {
@@ -88,85 +90,113 @@ class _RegisterPacientState extends State<RegisterPacient> {
     }
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  void _navigateToHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const MicScreen()),
+      (_) => false,
+    );
+  }
 
-      try {
-        // Validar que todos los campos numéricos sean válidos
-        final age = int.tryParse(_edatController.text);
-        final height = double.tryParse(_alturaController.text);
-        final weight = double.tryParse(_pesController.text);
+  String _normalizeGender(String? value) {
+    final normalized = (value ?? '').trim().toLowerCase();
+    if (normalized == 'male' || normalized == 'home') return 'male';
+    if (normalized == 'female' || normalized == 'dona') return 'female';
+    return '';
+  }
 
-        if (age == null || height == null || weight == null) {
-          _showErrorDialog(
-              'Si us plau, introdueix valors numèrics vàlids per a l\'edat, altura i pes.');
-          return;
-        }
+  Future<void> _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
-        // Validar campos de texto obligatorios
-        if (_diagnosticController.text.trim().isEmpty ||
-            _sexeController.text.trim().isEmpty ||
-            _tractamentController.text.trim().isEmpty ||
-            _nomController.text.trim().isEmpty ||
-            _cognomController.text.trim().isEmpty ||
-            _emailController.text.trim().isEmpty ||
-            _passwordController.text.isEmpty) {
-          _showErrorDialog('Si us plau, completa tots els camps obligatoris.');
-          return;
-        }
+    setState(() {
+      _isLoading = true;
+    });
 
-        // Crear el request para la API
-        final request = PatientRegistrationRequest(
-          name: _nomController.text.trim(),
-          surname: _cognomController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          ailments: _diagnosticController.text.trim(),
-          gender: _sexeController.text.trim().toLowerCase(),
-          age: age,
-          treatments: _tractamentController.text.trim(),
-          heightCm: height,
-          weightKg: weight,
-          doctors: [],
-        );
+    try {
+      final age = int.tryParse(_edatController.text);
+      final height = double.tryParse(_alturaController.text);
+      final weight = double.tryParse(_pesController.text);
 
-        print('DEBUG - Form data being sent:');
-        print('  Name: ${request.name}');
-        print('  Surname: ${request.surname}');
-        print('  Email: ${request.email}');
-        print('  Password: ${request.password}');
-        print('  Ailments: ${request.ailments}');
-        print('  Gender: ${request.gender}');
-        print('  Age: ${request.age}');
-        print('  Treatments: ${request.treatments}');
-        print('  Height: ${request.heightCm}');
-        print('  Weight: ${request.weightKg}');
-        print('  Doctors: ${request.doctors}');
-
-        // Llamar a la API
-        final response = await ApiService.registerPatient(request);
-
-        // Si llega aquí, el registro fue exitoso
-        _showSuccessDialog(
-          'Pacient registrat amb èxit!',
-          'Benvingut/da ${response.name} ${response.surname}',
-        );
-      } catch (e) {
-        String errorMessage = 'Error en registrar el pacient';
-        if (e is ApiException) {
-          errorMessage = e.message;
-        } else {
-          errorMessage = 'Error de connexió: ${e.toString()}';
-        }
-        _showErrorDialog(errorMessage);
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
+      if (age == null || height == null || weight == null) {
+        _showErrorDialog(
+            'Si us plau, introdueix valors numèrics vàlids per a l\'edat, altura i pes.');
+        return;
       }
+
+      if (_nomController.text.trim().isEmpty ||
+          _cognomController.text.trim().isEmpty) {
+        _showErrorDialog(
+            'Omple el nom i els cognoms per separat per continuar.');
+        return;
+      }
+
+      if (_diagnosticController.text.trim().isEmpty ||
+          _tractamentController.text.trim().isEmpty ||
+          _emailController.text.trim().isEmpty ||
+          _passwordController.text.isEmpty) {
+        _showErrorDialog('Si us plau, completa tots els camps obligatoris.');
+        return;
+      }
+
+      final genderValue = _normalizeGender(_selectedGender);
+      if (genderValue.isEmpty) {
+        _showErrorDialog(
+            'El camp sexe ha de tenir el valor "male" o "female" (Home/Dona).');
+        return;
+      }
+
+      final formData = PatientRegistrationFormData(
+        name: _nomController.text.trim(),
+        surname: _cognomController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        ailments: _diagnosticController.text.trim(),
+        gender: genderValue,
+        age: age,
+        treatments: _tractamentController.text.trim(),
+        heightCm: height,
+        weightKg: weight,
+        doctors: const [],
+      );
+
+      print('DEBUG - Form data being sent:');
+      print('  Name: ${formData.name}');
+      print('  Surname: ${formData.surname}');
+      print('  Email: ${formData.email}');
+      print('  Password: ${formData.password}');
+      print('  Ailments: ${formData.ailments}');
+      print('  Gender: ${formData.gender}');
+      print('  Age: ${formData.age}');
+      print('  Treatments: ${formData.treatments}');
+      print('  Height: ${formData.heightCm}');
+      print('  Weight: ${formData.weightKg}');
+      print('  Doctors: ${formData.doctors}');
+
+      final result = await _registrationService.register(formData);
+
+      if (result is PatientRegistrationSuccess) {
+        final welcomeName = [
+          result.login.user?.name ?? result.response.name,
+          result.login.user?.surname ?? result.response.surname,
+        ].where((part) => part.trim().isNotEmpty).join(' ');
+
+        _showSuccessDialog(
+          'Compte creat i sessió iniciada!',
+          'Benvingut/da $welcomeName',
+        );
+      } else if (result is PatientRegistrationFailure) {
+        _showErrorDialog(result.message);
+      }
+    } catch (e) {
+      _showErrorDialog(
+        'S\'ha produït un error inesperat en processar el registre: ${e.toString()}',
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -226,15 +256,10 @@ class _RegisterPacientState extends State<RegisterPacient> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
-                // Navegar a la pantalla de login
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
-                  ),
-                );
+                _navigateToHome();
               },
               child: Text(
-                'D\'acord',
+                'Començar',
                 style: TextStyle(
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
@@ -306,8 +331,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonFormField<String>(
-                value:
-                    _sexeController.text.isEmpty ? null : _sexeController.text,
+                value: _selectedGender,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding:
@@ -330,11 +354,12 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 ],
                 onChanged: (String? value) {
                   setState(() {
+                    _selectedGender = value;
                     _sexeController.text = value ?? '';
                   });
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (_selectedGender == null || _selectedGender!.isEmpty) {
                     return 'Si us plau, selecciona el sexe';
                   }
                   return null;
@@ -556,7 +581,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cognom',
+                    'Cognoms',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.getSecondaryTextColor(isDarkMode),

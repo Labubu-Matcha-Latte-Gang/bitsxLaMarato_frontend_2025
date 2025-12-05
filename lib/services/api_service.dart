@@ -10,7 +10,43 @@ import '../config.dart';
 import 'session_manager.dart';
 
 class ApiService {
-  static String get baseUrl => '${Config.apiUrl}/api/v1';
+  static final ApiService _instance = ApiService._internal();
+  late http.Client _client;
+  String? _baseUrlOverride;
+
+  ApiService._internal() {
+    _client = http.Client();
+  }
+
+  factory ApiService() {
+    return _instance;
+  }
+
+  static http.Client get _sharedClient => _instance._client;
+  static String get _baseUrl =>
+      '${_instance._baseUrlOverride ?? Config.apiUrl}/api/v1';
+
+  static void configure({
+    http.Client? client,
+    String? baseUrl,
+  }) {
+    if (client != null) {
+      _instance._client = client;
+    }
+    if (baseUrl != null && baseUrl.isNotEmpty) {
+      _instance._baseUrlOverride = baseUrl;
+    }
+  }
+
+  static void reset({bool closeExistingClient = false}) {
+    if (closeExistingClient) {
+      try {
+        _instance._client.close();
+      } catch (_) {}
+    }
+    _instance._client = http.Client();
+    _instance._baseUrlOverride = null;
+  }
 
   static Future<Map<String, String>> _authHeaders() async {
     final token = await SessionManager.getToken();
@@ -32,11 +68,11 @@ class ApiService {
   ) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - API Request URL: $baseUrl/user/patient');
+      print('DEBUG - API Request URL: $_baseUrl/user/patient');
       print('DEBUG - API Request Body: $requestBody');
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/user/patient'),
+      final response = await _sharedClient.post(
+        Uri.parse('$_baseUrl/user/patient'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -111,13 +147,13 @@ class ApiService {
   }) async {
     try {
       final headers = await _authHeaders();
-      Uri uri = Uri.parse('$baseUrl/activity');
+      Uri uri = Uri.parse('$_baseUrl/activity');
       final params = query?.toQueryParameters() ?? {};
       if (params.isNotEmpty) {
         uri = uri.replace(queryParameters: params);
       }
 
-      final response = await http.get(uri, headers: headers);
+      final response = await _sharedClient.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         final List<dynamic> responseData = json.decode(response.body);
@@ -142,14 +178,24 @@ class ApiService {
   static Future<Activity> getActivity(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/activity/$id'),
-        headers: headers,
-      );
+      final uri = Uri.parse('$_baseUrl/activity')
+          .replace(queryParameters: {'id': id});
+
+      final response = await _sharedClient.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
+        final decoded = json.decode(response.body);
+        if (decoded is List && decoded.isNotEmpty) {
+          final first = decoded.first;
+          if (first is Map<String, dynamic>) {
+            return Activity.fromJson(first);
+          }
+        }
+
+        throw ApiException(
+          'No s\'ha trobat l\'activitat sol·licitada.',
+          404,
+        );
       }
 
       throw _apiExceptionFromResponse(
@@ -165,165 +211,11 @@ class ApiService {
     }
   }
 
-  static Future<Activity> createActivity(ActivityCreateRequest request) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/activity'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 201) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut crear l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<List<Activity>> createActivitiesBulk(
-    ActivityBulkCreateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/activity/bulk'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded is List) {
-          return decoded
-              .whereType<Map<String, dynamic>>()
-              .map(Activity.fromJson)
-              .toList();
-        }
-        if (decoded is Map<String, dynamic> &&
-            decoded['activities'] is List<dynamic>) {
-          final activities = decoded['activities'] as List<dynamic>;
-          return activities
-              .whereType<Map<String, dynamic>>()
-              .map(Activity.fromJson)
-              .toList();
-        }
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'han pogut crear les activitats.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Activity> updateActivity(
-    String id,
-    ActivityUpdateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.put(
-        Uri.parse('$baseUrl/activity/$id'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Activity> patchActivity(
-    String id,
-    ActivityPartialUpdateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.patch(
-        Uri.parse('$baseUrl/activity/$id'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Activity.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar parcialment l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<void> deleteActivity(String id) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.delete(
-        Uri.parse('$baseUrl/activity/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 204) {
-        return;
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut eliminar l\'activitat.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
   static Future<Activity> getRecommendedActivity() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/activity/recommended'),
+      final response = await _sharedClient.get(
+        Uri.parse('$_baseUrl/activity/recommended'),
         headers: headers,
       );
 
@@ -350,8 +242,8 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/activity/complete'),
+      final response = await _sharedClient.post(
+        Uri.parse('$_baseUrl/activity/complete'),
         headers: headers,
         body: json.encode(request.toJson()),
       );
@@ -377,8 +269,8 @@ class ApiService {
   static Future<Question> getDailyQuestion() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/question/daily'),
+      final response = await _sharedClient.get(
+        Uri.parse('$_baseUrl/question/daily'),
         headers: headers,
       );
 
@@ -400,232 +292,16 @@ class ApiService {
     }
   }
 
-  static Future<List<Question>> listQuestions({
-    QuestionQueryParams? query,
-  }) async {
-    try {
-      final headers = await _authHeaders();
-      Uri uri = Uri.parse('$baseUrl/question');
-      final params = query?.toQueryParameters() ?? {};
-      if (params.isNotEmpty) {
-        uri = uri.replace(queryParameters: params);
-      }
-
-      final response = await http.get(uri, headers: headers);
-
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded is List) {
-          return decoded
-              .whereType<Map<String, dynamic>>()
-              .map(Question.fromJson)
-              .toList();
-        }
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'han pogut recuperar les preguntes.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Question> getQuestion(String id) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/question/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Question.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut recuperar la pregunta sol·licitada.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Question> createQuestion(QuestionCreateRequest request) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/question'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 201) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Question.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut crear la pregunta.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<List<Question>> createQuestionsBulk(
-    QuestionBulkCreateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/question/bulk'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        if (decoded is List) {
-          return decoded
-              .whereType<Map<String, dynamic>>()
-              .map(Question.fromJson)
-              .toList();
-        }
-        if (decoded is Map<String, dynamic> &&
-            decoded['questions'] is List<dynamic>) {
-          final questions = decoded['questions'] as List<dynamic>;
-          return questions
-              .whereType<Map<String, dynamic>>()
-              .map(Question.fromJson)
-              .toList();
-        }
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'han pogut crear les preguntes.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Question> updateQuestion(
-    String id,
-    QuestionUpdateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.put(
-        Uri.parse('$baseUrl/question/$id'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Question.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar la pregunta.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<Question> patchQuestion(
-    String id,
-    QuestionPartialUpdateRequest request,
-  ) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.patch(
-        Uri.parse('$baseUrl/question/$id'),
-        headers: headers,
-        body: json.encode(request.toJson()),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        return Question.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut actualitzar parcialment la pregunta.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<void> deleteQuestion(String id) async {
-    try {
-      final headers = await _authHeaders();
-      final response = await http.delete(
-        Uri.parse('$baseUrl/question/$id'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 204) {
-        return;
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut eliminar la pregunta.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
   static Future<DoctorRegistrationResponse> registerDoctor(
     DoctorRegistrationRequest request,
   ) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - Doctor API Request URL: $baseUrl/user/doctor');
+      print('DEBUG - Doctor API Request URL: $_baseUrl/user/doctor');
       print('DEBUG - Doctor API Request Body: $requestBody');
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/user/doctor'),
+      final response = await _sharedClient.post(
+        Uri.parse('$_baseUrl/user/doctor'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -698,11 +374,11 @@ class ApiService {
   static Future<LoginResponse> loginUser(LoginRequest request) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - Login Request URL: $baseUrl/user/login');
+      print('DEBUG - Login Request URL: $_baseUrl/user/login');
       print('DEBUG - Login Request Body: $requestBody');
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/user/login'),
+      final response = await _sharedClient.post(
+        Uri.parse('$_baseUrl/user/login'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -796,8 +472,8 @@ class ApiService {
   static Future<UserProfile> getCurrentUser() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/user'),
+      final response = await _sharedClient.get(
+        Uri.parse('$_baseUrl/user'),
         headers: headers,
       );
 
@@ -824,8 +500,8 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.put(
-        Uri.parse('$baseUrl/user'),
+      final response = await _sharedClient.put(
+        Uri.parse('$_baseUrl/user'),
         headers: headers,
         body: json.encode(request.toJson()),
       );
@@ -853,8 +529,8 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.patch(
-        Uri.parse('$baseUrl/user'),
+      final response = await _sharedClient.patch(
+        Uri.parse('$_baseUrl/user'),
         headers: headers,
         body: json.encode(request.toJson()),
       );
@@ -880,8 +556,8 @@ class ApiService {
   static Future<void> deleteCurrentUser() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.delete(
-        Uri.parse('$baseUrl/user'),
+      final response = await _sharedClient.delete(
+        Uri.parse('$_baseUrl/user'),
         headers: headers,
       );
 
@@ -905,8 +581,8 @@ class ApiService {
   static Future<PatientDataResponse> getPatientData(String email) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse('$baseUrl/user/$email'),
+      final response = await _sharedClient.get(
+        Uri.parse('$_baseUrl/user/$email'),
         headers: headers,
       );
 
@@ -937,7 +613,7 @@ class ApiService {
 
       final multipartRequest = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/transcription/chunk'),
+        Uri.parse('$_baseUrl/transcription/chunk'),
       );
       multipartRequest.headers.addAll(headers);
       multipartRequest.fields['session_id'] = request.sessionId;
@@ -951,7 +627,7 @@ class ApiService {
         ),
       );
 
-      final streamedResponse = await multipartRequest.send();
+      final streamedResponse = await _sharedClient.send(multipartRequest);
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
@@ -978,8 +654,8 @@ class ApiService {
   ) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.post(
-        Uri.parse('$baseUrl/transcription/complete'),
+      final response = await _sharedClient.post(
+        Uri.parse('$_baseUrl/transcription/complete'),
         headers: headers,
         body: json.encode(request.toJson()),
       );
