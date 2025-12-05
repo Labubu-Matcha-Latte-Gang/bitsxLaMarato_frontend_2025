@@ -1,21 +1,24 @@
 // lib/features/screens/micro/mic.dart
-import 'package:flutter/material.dart';
+
+import 'dart:async';
+import 'dart:io' show File;
+import 'dart:math';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+import 'package:universal_html/universal_html.dart' as html;
+import 'package:uuid/uuid.dart';
+
 import '../../../models/question_models.dart';
+import '../../../models/transcription_models.dart';
+import '../../../services/api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
-import 'dart:async';
-import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
 import '../activities/activities_page.dart';
-import 'package:universal_html/universal_html.dart' as html;
-import '../../../services/api_service.dart';
-import 'dart:typed_data';
-import 'dart:io' show File;
-import 'dart:math';
-import 'package:uuid/uuid.dart';
-import '../../../models/transcription_models.dart';
 
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});
@@ -31,25 +34,30 @@ class _MicScreenState extends State<MicScreen> {
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
   Timer? _chunkTimer;
-  String? _recordedFilePath;
+
+  // Ruta temporal del fragment actual en dispositius mòbils
   String? _currentChunkPath;
 
+  // Components per a la gravació al web
   html.MediaRecorder? _webRecorder;
   html.MediaStream? _webStream;
-  final List<html.Blob> _webChunks = [];
-  String? _webBlobUrl;
-  // Completer to wait for web MediaRecorder 'stop' event before uploading
-  Completer<void>? _webStopCompleter;
-  // Uploading UI state
+
+  // Estat de càrrega i transcripció
   bool _isUploading = false;
   String? _transcriptionText;
+  bool _hasUploadError = false;
+
+  // Sessió i índex de fragment
   String? _currentSessionId;
   int _nextChunkIndex = 0;
+
+  // Llista de càrregues pendents per esperar-les abans de finalitzar
   final List<Future<void>> _pendingChunkUploads = [];
-  bool _isProcessingChunk = false;
-  bool _hasUploadError = false;
+
+  // Màxim de segons per fragment
   static const int _maxChunkSeconds = 15;
 
+  // Pregunta diària carregada des de l'API
   late final Future<Question> _dailyQuestionFuture;
 
   @override
@@ -64,147 +72,240 @@ class _MicScreenState extends State<MicScreen> {
     });
   }
 
-  Future<void> uploadRecording() async {
-    // Upload in smaller chunks to avoid server errors for long files
-    setState(() => _isUploading = true);
-    try {
-      // Generate a UUIDv4 session id to avoid collisions
-      final String sessionId = const Uuid().v4();
-      const int chunkSize = 64 * 1024; // 64 KB per chunk (more conservative)
-      int chunkIndex = 0;
-      const int maxAttempts = 3;
-      const Duration betweenChunksDelay = Duration(milliseconds: 500);
+  // Mostra un missatge d'error de forma uniforme
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
-      print('DEBUG - Starting upload session: $sessionId');
+  Future<Question> _getDailyQuestion() async {
+    return await ApiService.getDailyQuestion();
+  }
 
-      if (kIsWeb) {
-        if (_webChunks.isEmpty) return;
+  /// Inicia la gravació. Es genera un nou session_id i es configuren els
+  /// temporitzadors per enviar fragments de veu de 15 segons al backend.
+  Future<void> _startRecording() async {
+    if (_isRecording) return;
+    // Reinicialitza estat de la sessió
+    _transcriptionText = null;
+    _hasUploadError = false;
+    _currentSessionId = const Uuid().v4();
+    _nextChunkIndex = 0;
+    _pendingChunkUploads.clear();
 
-        // Upload each Blob we collected; further split each blob into smaller parts
-        // compute total bytes and estimated chunk count for logging
-        int totalBytesEstimate = 0;
-        for (final b in _webChunks) {
-          try {
-            totalBytesEstimate += (b as dynamic).size as int? ?? 0;
-          } catch (_) {}
-        }
-        final int estChunks = (totalBytesEstimate / chunkSize).ceil();
-        print('DEBUG - Session $sessionId estimated bytes=$totalBytesEstimate estChunks=$estChunks webChunks=${_webChunks.length}');
-        for (final blob in List<html.Blob>.from(_webChunks)) {
-          final Uint8List blobBytes = await _readBlobAsUint8List(blob);
-          int offset = 0;
-          while (offset < blobBytes.length) {
-            final end = min(offset + chunkSize, blobBytes.length);
-            final part = blobBytes.sublist(offset, end);
-
-            final chunkRequest = TranscriptionChunkRequest(
-              sessionId: sessionId,
-              chunkIndex: chunkIndex,
-              audioBytes: part,
-              filename: 'recording.webm',
-              contentType: 'audio/webm',
-            );
-
-            // per-chunk retry with exponential backoff
-            int attempt = 0;
-            while (true) {
-              attempt += 1;
-              try {
-                await ApiService.uploadTranscriptionChunk(chunkRequest);
-                break;
-              } catch (e) {
-                if (attempt >= maxAttempts) rethrow;
-                final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
-                await Future.delayed(backoff);
-              }
-            }
-
-            chunkIndex += 1;
-            offset = end;
-            await Future.delayed(betweenChunksDelay);
-          }
-        }
-      } else {
-        final path = _recordedFilePath;
-        if (path == null || path.isEmpty) return;
-        final file = File(path);
-        final Uint8List allBytes = await file.readAsBytes();
-        final int totalBytes = allBytes.length;
-        final int estChunks = (totalBytes / chunkSize).ceil();
-        print('DEBUG - Session $sessionId totalBytes=$totalBytes estChunks=$estChunks');
-
-        int offset = 0;
-        while (offset < allBytes.length) {
-          final end = min(offset + chunkSize, allBytes.length);
-          final part = allBytes.sublist(offset, end);
-
-          final chunkRequest = TranscriptionChunkRequest(
-            sessionId: sessionId,
-            chunkIndex: chunkIndex,
-            audioBytes: part,
-            filename: file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'recording.m4a',
-            contentType: 'audio/mp4',
-          );
-
-          int attempt = 0;
-          while (true) {
-            attempt += 1;
-            try {
-              await ApiService.uploadTranscriptionChunk(chunkRequest);
-              break;
-            } catch (e) {
-              if (attempt >= maxAttempts) rethrow;
-              final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
-              await Future.delayed(backoff);
-            }
-          }
-
-          chunkIndex += 1;
-          offset = end;
-          await Future.delayed(betweenChunksDelay);
-        }
+    if (kIsWeb) {
+      // Gravació al navegador utilitzant MediaRecorder
+      final md = html.window.navigator.mediaDevices;
+      if (md == null) {
+        _showError('No s’ha pogut accedir al micròfon.');
+        return;
+      }
+      try {
+        _webStream = await md.getUserMedia({'audio': true});
+      } catch (e) {
+        _showError('No s’ha pogut accedir al micròfon.');
+        return;
       }
 
-      // Tell server we're done and get the final transcription
-      TranscriptionResponse completeResp;
-      int completeAttempt = 0;
-      while (true) {
-        completeAttempt += 1;
+      // Configuració del MediaRecorder amb timeslice per generar fragments
+      _webRecorder = html.MediaRecorder(_webStream!, {'mimeType': 'audio/webm'});
+
+      // Quan arriba un fragment, s'envia al backend
+      _webRecorder!.addEventListener('dataavailable', (event) {
         try {
-          completeResp = await ApiService.completeTranscriptionSession(
-            TranscriptionCompleteRequest(sessionId: sessionId),
-          );
-          break;
-        } catch (e) {
-          if (completeAttempt >= 2) rethrow;
-          await Future.delayed(const Duration(milliseconds: 500));
+          final dynamic data = (event as dynamic).data;
+          if (data != null && data is html.Blob) {
+            final Future<void> f = _sendWebChunk(data);
+            _pendingChunkUploads.add(f);
+            f.whenComplete(() => _pendingChunkUploads.remove(f));
+          }
+        } catch (_) {
+          // ignore unexpected event shape
         }
+      });
+
+      // No cal processar res especial a l'esdeveniment stop;
+      _webRecorder!.addEventListener('stop', (event) {});
+
+      // Iniciar la gravació amb fragments de 15 segons (en ms)
+      try {
+        _webRecorder!.start(_maxChunkSeconds * 1000);
+      } catch (e) {
+        _showError('No s’ha pogut iniciar la gravació.');
+        return;
       }
 
-      final String? extracted = completeResp.transcription ?? completeResp.partialText ?? (completeResp.status.isNotEmpty ? 'Status: ${completeResp.status}' : null);
+      setState(() {
+        _isRecording = true;
+        _recordDuration = Duration.zero;
+      });
 
-      if (mounted) {
-        setState(() => _transcriptionText = extracted);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(extracted != null ? 'Processed: ${_shortPreview(extracted)}' : 'Upload complete')),
-        );
-      }
+      // Temporitzador per actualitzar la durada visible
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() {
+          _recordDuration += const Duration(seconds: 1);
+        });
+      });
 
-      // debug log: use toString() which now returns useful text or JSON
-      print('Transcription response: $completeResp');
+      return;
+    }
+
+    // Gravació en dispositius mòbils/escriptori
+    final hasPermission = await _recorder.hasPermission();
+    if (!hasPermission) {
+      _showError('No s’ha pogut accedir al micròfon.');
+      return;
+    }
+
+    // Iniciar el primer fragment
+    try {
+      await _startNewMobileRecording();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: ${e.toString()}')),
-        );
+      _showError('No s’ha pogut iniciar la gravació.');
+      return;
+    }
+
+    setState(() {
+      _isRecording = true;
+      _recordDuration = Duration.zero;
+    });
+
+    // Temporitzador de la UI
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _recordDuration += const Duration(seconds: 1);
+      });
+    });
+
+    // Temporitzador que envia un fragment cada _maxChunkSeconds segons
+    _chunkTimer?.cancel();
+    _chunkTimer = Timer.periodic(
+      const Duration(seconds: _maxChunkSeconds),
+      (_) {
+        // Enviar el fragment actual i reiniciar-ne un de nou
+        final Future<void> f = _sendCurrentMobileChunk(restart: true);
+        _pendingChunkUploads.add(f);
+        f.whenComplete(() => _pendingChunkUploads.remove(f));
+      },
+    );
+  }
+
+  /// Atura la gravació. Es cancel·len els temporitzadors, s'envia el
+  /// darrer fragment pendent i, finalment, es notifica al servidor que
+  /// la sessió ha finalitzat.
+  Future<void> _stopRecording() async {
+    if (!_isRecording) return;
+
+    // Cancel·lar els temporitzadors de durada i fragments
+    _timer?.cancel();
+    _timer = null;
+    _chunkTimer?.cancel();
+    _chunkTimer = null;
+
+    if (kIsWeb) {
+      // Aturar el MediaRecorder (generarà l'últim dataavailable)
+      try {
+        _webRecorder?.stop();
+      } catch (_) {}
+      // Esperar una mica per permetre que arribin els darrers esdeveniments
+      await Future.delayed(const Duration(milliseconds: 100));
+      // Alliberar recursos del microfon
+      try {
+        _webStream?.getTracks().forEach((t) => t.stop());
+      } catch (_) {}
+      _webStream = null;
+      _webRecorder = null;
+    } else {
+      // Aturar la gravació en dispositius mòbils i enviar el darrer fragment
+      try {
+        // Enviar l'últim fragment sense reiniciar la gravació
+        final Future<void> f = _sendCurrentMobileChunk(restart: false);
+        _pendingChunkUploads.add(f);
+        await f;
+        _pendingChunkUploads.remove(f);
+      } catch (_) {}
+    }
+
+    setState(() {
+      _isRecording = false;
+      _recordDuration = Duration.zero;
+    });
+
+    // Esperar que es completin totes les càrregues pendents
+    try {
+      if (_pendingChunkUploads.isNotEmpty) {
+        await Future.wait(List<Future<void>>.from(_pendingChunkUploads));
       }
+    } catch (_) {}
+
+    // Finalitzar la sessió de transcripció
+    await _completeTranscription();
+  }
+
+  /// Inicia una nova gravació en un dispositiu mòbil, creant un fitxer
+  /// temporal per emmagatzemar el fragment actual.
+  Future<void> _startNewMobileRecording() async {
+    final dir = await getTemporaryDirectory();
+    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    _currentChunkPath = filePath;
+    await _recorder.start(
+      path: filePath,
+      encoder: AudioEncoder.aacLc,
+    );
+  }
+
+  /// Envia el fragment actual enregistrat en dispositius mòbils. Si
+  /// [restart] és cert, després de l'enviament es torna a iniciar una nova
+  /// gravació. S'actualitzen els indicadors de càrrega i es gestionen
+  /// possibles errors.
+  Future<void> _sendCurrentMobileChunk({bool restart = true}) async {
+    if (_currentSessionId == null) return;
+    try {
+      // Finalitzar la gravació i obtenir el fitxer
+      final String? path = await _recorder.stop();
+      final String? filePath = path ?? _currentChunkPath;
+      if (filePath == null) return;
+
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
+
+      setState(() => _isUploading = true);
+
+      final chunkRequest = TranscriptionChunkRequest(
+        sessionId: _currentSessionId!,
+        chunkIndex: _nextChunkIndex,
+        audioBytes: bytes,
+        filename: file.uri.pathSegments.isNotEmpty
+            ? file.uri.pathSegments.last
+            : 'fragment.m4a',
+        contentType: 'audio/mp4',
+      );
+
+      await ApiService.uploadTranscriptionChunk(chunkRequest);
+      _nextChunkIndex += 1;
+
+      // Esborra el fitxer temporal
+      await file.delete().catchError((_) {});
+    } catch (e) {
+      _hasUploadError = true;
+      _showError('Error en enviar l’àudio. Torna-ho a provar.');
     } finally {
-      _webChunks.clear();
-      if (mounted) setState(() => _isUploading = false);
+      setState(() => _isUploading = false);
+      // Iniciar la següent gravació si cal
+      if (restart && _isRecording) {
+        try {
+          await _startNewMobileRecording();
+        } catch (_) {}
+      }
     }
   }
 
-  // Helper to read a web Blob into a Uint8List
+  /// Llegeix un [html.Blob] com a [Uint8List]. S'utilitza per a la
+  /// gravació al web.
   Future<Uint8List> _readBlobAsUint8List(html.Blob blob) async {
     final reader = html.FileReader();
     final completer = Completer<Uint8List>();
@@ -216,7 +317,7 @@ class _MicScreenState extends State<MicScreen> {
       } else if (result is List<int>) {
         completer.complete(Uint8List.fromList(result));
       } else {
-        completer.completeError('Unable to read Blob result');
+        completer.completeError('No s’ha pogut llegir el blob');
       }
     });
     reader.onError.listen((event) {
@@ -227,153 +328,80 @@ class _MicScreenState extends State<MicScreen> {
     return completer.future;
   }
 
+  /// Envia un fragment enregistrat al web com a [html.Blob].
+  Future<void> _sendWebChunk(html.Blob blob) async {
+    if (_currentSessionId == null) return;
+    try {
+      final Uint8List bytes = await _readBlobAsUint8List(blob);
+      setState(() => _isUploading = true);
+      final chunkRequest = TranscriptionChunkRequest(
+        sessionId: _currentSessionId!,
+        chunkIndex: _nextChunkIndex,
+        audioBytes: bytes,
+        filename: 'fragment.webm',
+        contentType: 'audio/webm',
+      );
+      await ApiService.uploadTranscriptionChunk(chunkRequest);
+      _nextChunkIndex += 1;
+    } catch (e) {
+      _hasUploadError = true;
+      _showError('Error en enviar l’àudio. Torna-ho a provar.');
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
+
+  /// Completa la sessió actual enviant una petició al backend perquè combini
+  /// tots els fragments i retorni la transcripció. Actualitza l’estat de
+  /// transcripció i mostra un missatge adequat.
+  Future<void> _completeTranscription() async {
+    final String? sessionId = _currentSessionId;
+    if (sessionId == null) return;
+    try {
+      setState(() => _isUploading = true);
+      final response = await ApiService.completeTranscriptionSession(
+        TranscriptionCompleteRequest(sessionId: sessionId),
+      );
+      final extracted = response.transcription ?? response.partialText ?? '';
+      setState(() {
+        _transcriptionText = extracted;
+      });
+      if (extracted.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Transcripció: ${_shortPreview(extracted)}')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La transcripció s’ha completat.')),
+        );
+      }
+    } catch (e) {
+      _showError('No s’ha pogut completar la transcripció.');
+    } finally {
+      setState(() => _isUploading = false);
+      // Reinicialitzar la sessió per a una nova gravació
+      _currentSessionId = null;
+      _nextChunkIndex = 0;
+    }
+  }
+
   String _shortPreview(String text, [int max = 120]) {
     if (text.length <= max) return text;
     return '${text.substring(0, max)}...';
   }
 
-  Future<void> _startRecording() async {
-    if (kIsWeb) {
-      try {
-        final md = html.window.navigator.mediaDevices;
-        if (md == null) return;
-        _webStream = await md.getUserMedia({'audio': true});
-      } catch (e) {
-        // permission denied or unsupported
-        return;
-      }
-
-      _webChunks.clear();
-      // create a completer that will be completed when the stop event fires
-      _webStopCompleter = Completer<void>();
-      _webRecorder = html.MediaRecorder(_webStream!);
-
-      // `addEventListener` is used because some universal_html implementations
-      // don't expose typed `onDataAvailable` / `onStop` getters.
-      _webRecorder!.addEventListener('dataavailable', (event) {
-        try {
-          final data = (event as dynamic).data;
-          if (data != null && data is html.Blob) {
-            _webChunks.add(data);
-          }
-        } catch (_) {
-          // ignore unexpected event shape
-        }
-      });
-
-      _webRecorder!.addEventListener('stop', (event) {
-        final blob = html.Blob(_webChunks, 'audio/webm');
-        _webBlobUrl = html.Url.createObjectUrlFromBlob(blob);
-        setState(() {
-          _recordedFilePath = _webBlobUrl;
-        });
-        // notify any waiter that stop has completed
-        try {
-          if (_webStopCompleter != null && !_webStopCompleter!.isCompleted) {
-            _webStopCompleter!.complete();
-          }
-        } catch (_) {}
-      });
-
-      _webRecorder!.start();
-      setState(() {
-        _isRecording = true;
-        _recordDuration = Duration.zero;
-        _recordedFilePath = null;
-      });
-
-      _timer?.cancel();
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        setState(() {
-          _recordDuration += const Duration(seconds: 1);
-        });
-      });
-
-      return;
-    }
-
-    // existing mobile/desktop implementation
-    final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) return;
-
-    final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-    await _recorder.start(
-      path: filePath,
-      encoder: AudioEncoder.aacLc,
-    );
-
-    setState(() {
-      _isRecording = true;
-      _recordDuration = Duration.zero;
-      _recordedFilePath = filePath;
-    });
-
+  @override
+  void dispose() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        _recordDuration += const Duration(seconds: 1);
-      });
-    });
+    _chunkTimer?.cancel();
+    _recorder.dispose();
+    try {
+      _webStream?.getTracks().forEach((t) => t.stop());
+    } catch (_) {}
+    super.dispose();
   }
 
-  Future<Question> _getDailyQuestion() async {
-    return await ApiService.getDailyQuestion();
-  }
-
-  Future<void> _stopRecording() async {
-    if (kIsWeb) {
-      try {
-        _webRecorder?.stop();
-      } catch (_) {}
-
-      // wait for the stop event to complete and fill _webChunks/_webBlobUrl
-      try {
-        if (_webStopCompleter != null) {
-          // wait up to 5 seconds for the browser events to fire
-          await _webStopCompleter!.future.timeout(const Duration(seconds: 5));
-        }
-      } catch (_) {}
-
-      // stop tracks to release microphone
-      try {
-        _webStream?.getTracks().forEach((t) => t.stop());
-      } catch (_) {}
-
-      _webStream = null;
-      _webRecorder = null;
-
-      _timer?.cancel();
-      _timer = null;
-
-      setState(() {
-        _isRecording = false;
-        _recordDuration = Duration.zero;
-        _recordedFilePath = _webBlobUrl;
-      });
-
-      // upload the recording that was just stopped
-      await uploadRecording();
-      // clear completer reference
-      _webStopCompleter = null;
-      return;
-    }
-
-    final path = await _recorder.stop();
-    _timer?.cancel();
-    _timer = null;
-
-    setState(() {
-      _isRecording = false;
-      _recordDuration = Duration.zero;
-      _recordedFilePath = path ?? _recordedFilePath;
-    });
-
-    // upload the recorded file for processing
-    await uploadRecording();
-  }
-
+  /// Formata la durada en minuts i segons.
   String _formatDuration(Duration d) {
     final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -381,34 +409,18 @@ class _MicScreenState extends State<MicScreen> {
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    _recorder.dispose();
-    try {
-      _webStream?.getTracks().forEach((t) => t.stop());
-    } catch (_) {}
-    // ensure any waiting completer is completed to avoid dangling futures
-    try {
-      if (_webStopCompleter != null && !_webStopCompleter!.isCompleted) {
-        _webStopCompleter!.complete();
-      }
-    } catch (_) {}
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        // Background gradient
         children: [
+          // Fons amb gradient
           Container(
             decoration: BoxDecoration(
               gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
 
-          //Particle System Effect by Ernest
+          // Sistema de partícules decoratives
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -419,24 +431,24 @@ class _MicScreenState extends State<MicScreen> {
             minOpacity: 0.2,
           ),
 
-          //Container with all of the content: logo @ top left, theme toggle @ top right, mic image @ center
+          // Contingut principal
           SafeArea(
             child: Column(
               children: [
-                //Header with logo and theme toggle
+                // Capçalera amb logotip i commutador de tema
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      //Logo
+                      // Logotip
                       Image.asset(
                         isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                         width: 40,
                         height: 40,
                       ),
 
-                      //Theme toggle button
+                      // Botó per canviar el tema
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -460,23 +472,21 @@ class _MicScreenState extends State<MicScreen> {
                     ],
                   ),
                 ),
-                //Container with microphone button and timer and question
+                // Cos amb pregunta, micròfon i controls
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        //Maybe change RawMaterialButton?
-                        //Microphone button
+                        // Pregunta del dia
                         FutureBuilder<Question>(
                           future: _dailyQuestionFuture,
                           builder: (context, snapshot) {
                             Widget child;
-
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               child = Text(
-                                'Carregant...',
+                                'Carregant…',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -495,7 +505,8 @@ class _MicScreenState extends State<MicScreen> {
                             } else {
                               final question = snapshot.data;
                               child = Text(
-                                question?.text ?? 'No hi ha cap pregunta avui. Relata una experiència teva!',
+                                question?.text ??
+                                    'No hi ha cap pregunta avui. Relata una experiència teva!',
                                 textAlign: TextAlign.center,
                                 softWrap: true,
                                 style: TextStyle(
@@ -506,7 +517,6 @@ class _MicScreenState extends State<MicScreen> {
                               );
                             }
 
-                            // Constrain the width on wide screens and apply horizontal padding
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 28.0),
                               child: ConstrainedBox(
@@ -516,6 +526,7 @@ class _MicScreenState extends State<MicScreen> {
                             );
                           },
                         ),
+                        // Botó de micròfon
                         RawMaterialButton(
                           onPressed: _isRecording ? _stopRecording : _startRecording,
                           fillColor: _isRecording ? Colors.red : Colors.white,
@@ -531,8 +542,8 @@ class _MicScreenState extends State<MicScreen> {
                             color: _isRecording ? Colors.white : Colors.black,
                           ),
                         ),
-                        // Spacer between button and timer
                         const SizedBox(height: 12.0),
+                        // Temporitzador que mostra el temps de gravació
                         Text(
                           _formatDuration(_recordDuration),
                           style: TextStyle(
@@ -541,9 +552,8 @@ class _MicScreenState extends State<MicScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
-                        // Uploading indicator and transcription preview
                         const SizedBox(height: 8.0),
+                        // Indicador de càrrega i vista prèvia de la transcripció
                         if (_isUploading) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -555,7 +565,7 @@ class _MicScreenState extends State<MicScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Uploading...',
+                                'Pujant…',
                                 style: TextStyle(
                                   color: AppColors.getPrimaryTextColor(isDarkMode),
                                 ),
@@ -577,9 +587,8 @@ class _MicScreenState extends State<MicScreen> {
                             ),
                           ),
                         ],
-
                         const SizedBox(height: 8.0),
-
+                        // Barra de progrés amb duració màxima de 60 segons (per exemple)
                         SizedBox(
                           width: 200.0,
                           child: LinearProgressIndicator(
@@ -602,10 +611,8 @@ class _MicScreenState extends State<MicScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.getPrimaryButtonColor(isDarkMode),
-                            foregroundColor:
-                                AppColors.getPrimaryButtonTextColor(isDarkMode),
+                            backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                            foregroundColor: AppColors.getPrimaryButtonTextColor(isDarkMode),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
@@ -616,10 +623,10 @@ class _MicScreenState extends State<MicScreen> {
                       ],
                     ),
                   ),
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
