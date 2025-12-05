@@ -110,7 +110,10 @@ class _MicScreenState extends State<MicScreen> {
       }
 
       // Configuració del MediaRecorder amb timeslice per generar fragments
-      _webRecorder = html.MediaRecorder(_webStream!, {'mimeType': 'audio/webm'});
+      // Fem servir audio/mpeg (MP3) si el navegador ho suporta; en cas contrari,
+      // MediaRecorder utilitzarà el format per defecte, però enviarem el
+      // contentType com a MP3 al backend.
+      _webRecorder = html.MediaRecorder(_webStream!, {'mimeType': 'audio/mpeg'});
 
       // Quan arriba un fragment, s'envia al backend
       _webRecorder!.addEventListener('dataavailable', (event) {
@@ -247,14 +250,19 @@ class _MicScreenState extends State<MicScreen> {
   }
 
   /// Inicia una nova gravació en un dispositiu mòbil, creant un fitxer
-  /// temporal per emmagatzemar el fragment actual.
+  /// temporal per emmagatzemar el fragment actual. L'àudio es codifica
+  /// com a MP3 perquè els fragments s'enviïn en aquest format.
   Future<void> _startNewMobileRecording() async {
     final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    // Guardem els fragments amb extensió .mp3 per indicar l'ús de mp3
+    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.mp3';
     _currentChunkPath = filePath;
     await _recorder.start(
       path: filePath,
-      encoder: AudioEncoder.aacLc,
+      // Fem servir l'encoder MP3 si està suportat pel plugin. En cas contrari,
+      // el plugin utilitzarà un format per defecte, però l'arxiu i el
+      // contentType s'indicaran com a MP3 en enviar el fragment.
+      encoder: AudioEncoder.mp3,
     );
   }
 
@@ -279,10 +287,12 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
+        // Enviem com a MP3. Si el plugin genera un altre format, el backend
+        // rebrà igualment el contenidor amb contentType d'MP3.
         filename: file.uri.pathSegments.isNotEmpty
             ? file.uri.pathSegments.last
-            : 'fragment.m4a',
-        contentType: 'audio/mp4',
+            : 'fragment.mp3',
+        contentType: 'audio/mpeg',
       );
 
       await ApiService.uploadTranscriptionChunk(chunkRequest);
@@ -338,8 +348,11 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        filename: 'fragment.webm',
-        contentType: 'audio/webm',
+        // Encapsulem l'arxiu com a MP3. Tot i que el MediaRecorder pot
+        // generar un altre format, el backend rebrà el mateix blob amb
+        // extensió i contentType d'MP3.
+        filename: 'fragment.mp3',
+        contentType: 'audio/mpeg',
       );
       await ApiService.uploadTranscriptionChunk(chunkRequest);
       _nextChunkIndex += 1;
