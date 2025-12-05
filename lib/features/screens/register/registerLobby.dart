@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../initialPage/initialPage.dart';
 import 'registerDoctor.dart';
 import 'registerPacient.dart';
 
@@ -80,7 +81,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const InitialPage(),
+                              ),
+                            );
                           },
                         ),
                       ),

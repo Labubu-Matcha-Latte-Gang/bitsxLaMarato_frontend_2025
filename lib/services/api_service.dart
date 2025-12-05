@@ -689,6 +689,44 @@ class ApiService {
     }
   }
 
+  static Future<TranscriptionResponse> uploadRecordingFromBytes(
+      List<int> bytes, {
+        String filename = 'recording.wav',
+        String contentType = 'audio/wav',
+        int chunkSize = 512 * 1024,
+      }) async {
+    try {
+      final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+      final total = bytes.length;
+      int chunkIndex = 0;
+
+      while(chunkIndex * chunkSize < total) {
+        final start = chunkIndex * chunkSize;
+        final end = (start + chunkSize) > total ? total : (start + chunkSize);
+        final chunkBytes = bytes.sublist(start, end);
+
+        final chunkRequest = TranscriptionChunkRequest(
+          sessionId: sessionId,
+          chunkIndex: chunkIndex,
+          audioBytes: chunkBytes,
+          filename: filename,
+          contentType: contentType,
+        );
+
+        await uploadTranscriptionChunk(chunkRequest);
+        chunkIndex += 1;
+      }
+
+      final completeResponse = await completeTranscriptionSession(
+        TranscriptionCompleteRequest(sessionId: sessionId),
+      );
+      return completeResponse;
+    } catch (e) {
+      if(e is ApiException) rethrow;
+      throw ApiException('Error uploading recording: ${e.toString()}', 0);
+    }
+  }
+
   static Future<void> _persistSession(
     String accessToken,
     Map<String, dynamic> userData,

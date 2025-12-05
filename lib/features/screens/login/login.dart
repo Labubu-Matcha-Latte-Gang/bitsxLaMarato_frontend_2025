@@ -6,6 +6,7 @@ import '../micro/mic.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
 import '../../../services/session_manager.dart';
+import '../register/registerLobby.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -478,8 +479,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Link "Nou a LMLG? Registra't"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(
-                                context); // Volver atrás para registrarse
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterLobby(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Nou a LMLG? Registra\'t',

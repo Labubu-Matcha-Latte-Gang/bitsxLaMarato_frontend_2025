@@ -152,12 +152,8 @@ class _InitialPageState extends State<InitialPage> {
                           constraints:
                               BoxConstraints(minHeight: footerHeight),
                           decoration: BoxDecoration(
-                            color: AppColors.getSecondaryBackgroundColor(
-                                isDarkMode),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(32),
-                              topRight: Radius.circular(32),
-                            ),
+                            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+                            borderRadius: const BorderRadius.all(Radius.circular(32)),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class TranscriptionChunkRequest {
   final String sessionId;
   final int chunkIndex;
@@ -46,5 +48,31 @@ class TranscriptionResponse {
       partialText: json['partial_text']?.toString(),
       analysis: (json['analysis'] as Map<String, dynamic>?) ?? const {},
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      if (transcription != null) 'transcription': transcription,
+      if (partialText != null) 'partial_text': partialText,
+      if (analysis.isNotEmpty) 'analysis': analysis,
+    };
+  }
+
+  @override
+  String toString() {
+    // Prefer showing the full transcription if available, then partial, then status
+    if (transcription != null && transcription!.isNotEmpty) {
+      return transcription!;
+    }
+    if (partialText != null && partialText!.isNotEmpty) {
+      return partialText!;
+    }
+    // Fallback to a compact JSON representation
+    try {
+      return jsonEncode(toJson());
+    } catch (_) {
+      return 'TranscriptionResponse(status: $status)';
+    }
   }
 }
