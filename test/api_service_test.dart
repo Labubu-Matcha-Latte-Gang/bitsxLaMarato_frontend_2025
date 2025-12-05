@@ -14,16 +14,16 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    ApiService.reset(closeExistingClient: true);
+    ApiService.instance.reset(closeExistingClient: true);
   });
 
   tearDown(() {
-    ApiService.reset(closeExistingClient: true);
+    ApiService.instance.reset(closeExistingClient: true);
   });
 
   test('listActivities builds auth headers and query parameters', () async {
     await SessionManager.saveToken('token-123');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.method, 'GET');
         expect(request.headers['Authorization'], 'Bearer token-123');
@@ -49,7 +49,7 @@ void main() {
       }),
     );
 
-    final activities = await ApiService.listActivities(
+    final activities = await ApiService.instance.listActivities(
       query: ActivityQueryParams(title: 'Puzzle', difficultyMin: 0.5),
     );
 
@@ -59,14 +59,14 @@ void main() {
   });
 
   test('listActivities throws when auth token is missing', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         return http.Response('[]', 200);
       }),
     );
 
     expect(
-      ApiService.listActivities(),
+      ApiService.instance.listActivities(),
       throwsA(
         isA<ApiException>().having((e) => e.statusCode, 'status', 401),
       ),
@@ -75,7 +75,7 @@ void main() {
 
   test('getActivity filters by id via query param', () async {
     await SessionManager.saveToken('token');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/activity');
         expect(request.url.queryParameters, {'id': '42'});
@@ -93,7 +93,7 @@ void main() {
       }),
     );
 
-    final activity = await ApiService.getActivity('42');
+    final activity = await ApiService.instance.getActivity('42');
 
     expect(activity.id, '42');
     expect(activity.activityType, 'stretch');
@@ -102,7 +102,7 @@ void main() {
 
   test('completeActivity returns parsed response', () async {
     await SessionManager.saveToken('complete-token');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/activity/complete');
         final body = {
@@ -122,7 +122,7 @@ void main() {
       }),
     );
 
-    final response = await ApiService.completeActivity(
+    final response = await ApiService.instance.completeActivity(
       ActivityCompleteRequest(id: '42', score: 90.0, secondsToFinish: 120.0),
     );
 
@@ -133,7 +133,7 @@ void main() {
   });
 
   test('loginUser parses token and user payload', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         final body = {
           'access_token': 'jwt-token',
@@ -149,7 +149,7 @@ void main() {
       }),
     );
 
-    final response = await ApiService.loginUser(
+    final response = await ApiService.instance.loginUser(
       LoginRequest(email: 'doc@example.com', password: 'secret'),
     );
 
@@ -159,7 +159,7 @@ void main() {
   });
 
   test('loginUser maps validation errors from server', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         final errors = {
           'email': ['Invalid email'],
@@ -170,7 +170,7 @@ void main() {
     );
 
     expect(
-      ApiService.loginUser(
+      ApiService.instance.loginUser(
         LoginRequest(email: 'bad', password: 'x'),
       ),
       throwsA(
@@ -186,7 +186,7 @@ void main() {
   });
 
   test('registerPatient parses access token and role data', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.url.path, '/api/v1/user/patient');
@@ -223,7 +223,7 @@ void main() {
       doctors: const [],
     );
 
-    final response = await ApiService.registerPatient(req);
+    final response = await ApiService.instance.registerPatient(req);
 
     expect(response.accessToken, 'reg-token');
     expect(response.role.age, 30);
@@ -232,7 +232,7 @@ void main() {
   });
 
   test('registerPatient surfaces validation errors from server payload', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         final errors = {'email': 'already used', 'password': 'weak'};
         return http.Response(jsonEncode({'errors': errors}), 422);
@@ -254,7 +254,7 @@ void main() {
     );
 
     expect(
-      ApiService.registerPatient(req),
+      ApiService.instance.registerPatient(req),
       throwsA(
         isA<ApiException>()
             .having((e) => e.statusCode, 'status', 422)
@@ -268,7 +268,7 @@ void main() {
   });
 
   test('registerDoctor parses access token and role data', () async {
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.url.path, '/api/v1/user/doctor');
@@ -293,7 +293,7 @@ void main() {
       patients: const [],
     );
 
-    final response = await ApiService.registerDoctor(req);
+    final response = await ApiService.instance.registerDoctor(req);
 
     expect(response.accessToken, 'doctor-token');
     expect(response.role.patients, ['p1', 'p2']);
@@ -302,7 +302,7 @@ void main() {
 
   test('getPatientData maps nested payloads', () async {
     await SessionManager.saveToken('token');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         final body = {
           'patient': {
@@ -353,7 +353,7 @@ void main() {
       }),
     );
 
-    final response = await ApiService.getPatientData('pat@example.com');
+    final response = await ApiService.instance.getPatientData('pat@example.com');
 
     expect(response.patient.email, 'pat@example.com');
     expect(response.scores.single.activityTitle, 'Walk');
@@ -364,7 +364,7 @@ void main() {
   test('uploadTranscriptionChunk sends multipart data and parses response',
       () async {
     await SessionManager.saveToken('token');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.url.path, '/api/v1/transcription/chunk');
@@ -383,7 +383,7 @@ void main() {
       }),
     );
 
-    final response = await ApiService.uploadTranscriptionChunk(
+    final response = await ApiService.instance.uploadTranscriptionChunk(
       TranscriptionChunkRequest(
         sessionId: 's1',
         chunkIndex: 1,
@@ -398,7 +398,7 @@ void main() {
 
   test('completeTranscriptionSession parses response', () async {
     await SessionManager.saveToken('token');
-    ApiService.configure(
+    ApiService.instance.configure(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/transcription/complete');
         return http.Response(
@@ -408,7 +408,7 @@ void main() {
       }),
     );
 
-    final response = await ApiService.completeTranscriptionSession(
+    final response = await ApiService.instance.completeTranscriptionSession(
       TranscriptionCompleteRequest(sessionId: 's1'),
     );
 

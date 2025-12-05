@@ -77,7 +77,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         print('  Patients: ${request.patients}');
 
         // Llamar a la API
-        final response = await ApiService.registerDoctor(request);
+        final response = await ApiService.instance.registerDoctor(request);
 
         if (!mounted) return;
 

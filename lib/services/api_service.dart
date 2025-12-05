@@ -22,33 +22,34 @@ class ApiService {
     return _instance;
   }
 
-  static http.Client get _sharedClient => _instance._client;
-  static String get _baseUrl =>
-      '${_instance._baseUrlOverride ?? Config.apiUrl}/api/v1';
+  static ApiService get instance => _instance;
 
-  static void configure({
+  http.Client get _sharedClient => _client;
+  String get _baseUrl => '${_baseUrlOverride ?? Config.apiUrl}/api/v1';
+
+  void configure({
     http.Client? client,
     String? baseUrl,
   }) {
     if (client != null) {
-      _instance._client = client;
+      _client = client;
     }
     if (baseUrl != null && baseUrl.isNotEmpty) {
-      _instance._baseUrlOverride = baseUrl;
+      _baseUrlOverride = baseUrl;
     }
   }
 
-  static void reset({bool closeExistingClient = false}) {
+  void reset({bool closeExistingClient = false}) {
     if (closeExistingClient) {
       try {
-        _instance._client.close();
+        _client.close();
       } catch (_) {}
     }
-    _instance._client = http.Client();
-    _instance._baseUrlOverride = null;
+    _client = http.Client();
+    _baseUrlOverride = null;
   }
 
-  static Future<Map<String, String>> _authHeaders() async {
+  Future<Map<String, String>> _authHeaders() async {
     final token = await SessionManager.getToken();
     if (token == null || token.isEmpty) {
       throw ApiException(
@@ -63,11 +64,7 @@ class ApiService {
     };
   }
 
-  ApiService._privateConstructor();
-  static final ApiService _instance = ApiService._privateConstructor();
-  static ApiService get instance => _instance;
-
-  static Future<PatientRegistrationResponse> registerPatient(
+  Future<PatientRegistrationResponse> registerPatient(
     PatientRegistrationRequest request,
   ) async {
     try {
@@ -152,7 +149,7 @@ class ApiService {
     }
   }
 
-  static Future<List<Activity>> listActivities({
+  Future<List<Activity>> listActivities({
     ActivityQueryParams? query,
   }) async {
     try {
@@ -185,7 +182,7 @@ class ApiService {
     }
   }
 
-  static Future<Activity> getActivity(String id) async {
+  Future<Activity> getActivity(String id) async {
     try {
       final headers = await _authHeaders();
       final uri = Uri.parse('$_baseUrl/activity')
@@ -221,7 +218,7 @@ class ApiService {
     }
   }
 
-  static Future<Activity> getRecommendedActivity() async {
+  Future<Activity> getRecommendedActivity() async {
     try {
       final headers = await _authHeaders();
       final response = await _sharedClient.get(
@@ -247,7 +244,7 @@ class ApiService {
     }
   }
 
-  static Future<ActivityCompleteResponse> completeActivity(
+  Future<ActivityCompleteResponse> completeActivity(
     ActivityCompleteRequest request,
   ) async {
     try {
@@ -276,7 +273,7 @@ class ApiService {
     }
   }
 
-  static Future<Question> getDailyQuestion() async {
+  Future<Question> getDailyQuestion() async {
     try {
       final headers = await _authHeaders();
       final response = await _sharedClient.get(
@@ -302,7 +299,7 @@ class ApiService {
     }
   }
 
-  static Future<DoctorRegistrationResponse> registerDoctor(
+  Future<DoctorRegistrationResponse> registerDoctor(
     DoctorRegistrationRequest request,
   ) async {
     try {
@@ -386,7 +383,7 @@ class ApiService {
     }
   }
 
-  static Future<LoginResponse> loginUser(LoginRequest request) async {
+  Future<LoginResponse> loginUser(LoginRequest request) async {
     try {
       final requestBody = json.encode(request.toJson());
       print('DEBUG - Login Request URL: $_baseUrl/user/login');
@@ -484,7 +481,7 @@ class ApiService {
     }
   }
 
-  static Future<UserProfile> getCurrentUser() async {
+  Future<UserProfile> getCurrentUser() async {
     try {
       final headers = await _authHeaders();
       final response = await _sharedClient.get(
@@ -510,7 +507,7 @@ class ApiService {
     }
   }
 
-  static Future<UserProfile> updateCurrentUser(
+  Future<UserProfile> updateCurrentUser(
     UserUpdateRequest request,
   ) async {
     try {
@@ -539,7 +536,7 @@ class ApiService {
     }
   }
 
-  static Future<UserProfile> patchCurrentUser(
+  Future<UserProfile> patchCurrentUser(
     UserPartialUpdateRequest request,
   ) async {
     try {
@@ -568,7 +565,7 @@ class ApiService {
     }
   }
 
-  static Future<void> deleteCurrentUser() async {
+  Future<void> deleteCurrentUser() async {
     try {
       final headers = await _authHeaders();
       final response = await _sharedClient.delete(
@@ -593,7 +590,7 @@ class ApiService {
     }
   }
 
-  static Future<PatientDataResponse> getPatientData(String email) async {
+  Future<PatientDataResponse> getPatientData(String email) async {
     try {
       final headers = await _authHeaders();
       final response = await _sharedClient.get(
@@ -619,7 +616,7 @@ class ApiService {
     }
   }
 
-  static Future<TranscriptionResponse> uploadTranscriptionChunk(
+  Future<TranscriptionResponse> uploadTranscriptionChunk(
     TranscriptionChunkRequest request,
   ) async {
     try {
@@ -664,7 +661,7 @@ class ApiService {
     }
   }
 
-  static Future<TranscriptionResponse> completeTranscriptionSession(
+  Future<TranscriptionResponse> completeTranscriptionSession(
     TranscriptionCompleteRequest request,
   ) async {
     try {
@@ -693,7 +690,7 @@ class ApiService {
     }
   }
 
-  static Future<void> _persistSession(
+  Future<void> _persistSession(
     String accessToken,
     Map<String, dynamic> userData,
   ) async {
@@ -715,7 +712,7 @@ class ApiService {
     }
   }
 
-  static ApiException _apiExceptionFromResponse(
+  ApiException _apiExceptionFromResponse(
     http.Response response,
     String fallbackMessage,
   ) {

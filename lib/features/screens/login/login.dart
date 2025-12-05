@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      final response = await ApiService.loginUser(request);
+      final response = await ApiService.instance.loginUser(request);
 
       final tokenSaved = await SessionManager.saveToken(response.accessToken);
       if (!tokenSaved) {

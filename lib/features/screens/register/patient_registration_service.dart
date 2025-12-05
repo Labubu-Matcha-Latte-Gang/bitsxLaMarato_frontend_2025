@@ -74,7 +74,7 @@ class PatientRegistrationService {
     PatientRegistrationFormData form,
   ) async {
     try {
-      final response = await ApiService.registerPatient(form.toRequest());
+      final response = await ApiService.instance.registerPatient(form.toRequest());
 
       return PatientRegistrationSuccess(response);
     } on ApiException catch (e) {
