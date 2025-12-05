@@ -31,6 +31,7 @@ class ActivityQueryParams {
   final double? difficulty;
   final double? difficultyMin;
   final double? difficultyMax;
+  final String? search;
 
   ActivityQueryParams({
     this.id,
@@ -39,12 +40,14 @@ class ActivityQueryParams {
     this.difficulty,
     this.difficultyMin,
     this.difficultyMax,
+    this.search,
   });
 
   Map<String, String> toQueryParameters() {
     final Map<String, String> params = {};
     if (id != null && id!.isNotEmpty) params['id'] = id!;
     if (title != null && title!.isNotEmpty) params['title'] = title!;
+    if (search != null && search!.isNotEmpty) params['search'] = search!;
     if (activityType != null && activityType!.isNotEmpty) {
       params['activity_type'] = activityType!;
     }
