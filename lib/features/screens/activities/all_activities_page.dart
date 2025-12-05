@@ -25,7 +25,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
   final ActivitiesApiService _api = const ActivitiesApiService();
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _idController = TextEditingController();
   Timer? _debounce;
 
   bool isDarkMode = false;
@@ -54,7 +53,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     _debounce?.cancel();
     _searchController.dispose();
     _titleController.dispose();
-    _idController.dispose();
     super.dispose();
   }
 
@@ -77,7 +75,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
 
     final queryText = _searchController.text.trim();
     final titleText = _titleController.text.trim();
-    final idText = _idController.text.trim();
 
     double? difficulty;
     double? difficultyMin;
@@ -99,7 +96,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         difficulty: difficulty,
         difficultyMin: difficultyMin,
         difficultyMax: difficultyMax,
-        id: idText.isEmpty ? null : idText,
         title: titleText.isEmpty ? null : titleText,
       );
       setState(() {
@@ -289,7 +285,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     _difficultyRange = const RangeValues(0, 5);
                     _exactDifficulty = 2.5;
                     _titleController.clear();
-                    _idController.clear();
                   });
                   _fetchActivities();
                 },
@@ -303,51 +298,58 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             ],
           ),
           const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            value: _selectedType,
-            decoration: InputDecoration(
-              labelText: 'Tipus d\'activitat',
-              filled: true,
-              fillColor: AppColors.getFieldBackgroundColor(isDarkMode),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          SizedBox(
+            height: 60,
+            child: DropdownButtonFormField<String>(
+              value: _selectedType,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Tipus d\'activitat',
+                filled: true,
+                fillColor: AppColors.getFieldBackgroundColor(isDarkMode),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                labelStyle: TextStyle(
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
-              labelStyle: TextStyle(
-                color: AppColors.getSecondaryTextColor(isDarkMode),
+              dropdownColor:
+                  AppColors.getSecondaryBackgroundColor(isDarkMode),
+              iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
               ),
-            ),
-            dropdownColor:
-                AppColors.getSecondaryBackgroundColor(isDarkMode),
-            iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-            items: const [
-              'concentration',
-              'speed',
-              'words',
-              'sorting',
-              'multitasking',
-            ]
-                .map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(
-                      type,
-                      style: TextStyle(
-                        color: AppColors.getPrimaryTextColor(isDarkMode),
+              items: const [
+                'concentration',
+                'speed',
+                'words',
+                'sorting',
+                'multitasking',
+              ]
+                  .map(
+                    (type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(
+                        type,
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
                       ),
                     ),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedType = value;
-              });
-              _scheduleSearch();
-            },
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedType = value;
+                });
+                _scheduleSearch();
+              },
+            ),
           ),
           const SizedBox(height: 14),
           SwitchListTile(
@@ -488,13 +490,6 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               controller: _titleController,
               label: 'Títol exacte',
               icon: Icons.title,
-            ),
-            const SizedBox(height: 10),
-            _buildAdvancedField(
-              controller: _idController,
-              label: 'ID d’activitat (UUID)',
-              icon: Icons.confirmation_number_outlined,
-              keyboardType: TextInputType.visiblePassword,
             ),
           ],
         ],
