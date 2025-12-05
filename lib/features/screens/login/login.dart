@@ -44,51 +44,49 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submitLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        // Crear el request para la API
-        final request = LoginRequest(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+    setState(() => _isLoading = true);
 
-        print('DEBUG - Login Form data being sent:');
-        print('  Email: ${request.email}');
-        print('  Password: ${request.password}');
+    try {
+      final request = LoginRequest(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-        // Llamar a la API
-        final response = await ApiService.loginUser(request);
+      final response = await ApiService.loginUser(request);
 
-        // Guardar el token en sesión
-        bool tokenSaved = await SessionManager.saveToken(response.accessToken);
+      final tokenSaved = await SessionManager.saveToken(response.accessToken);
+      if (!tokenSaved) {
+        _showErrorDialog('Error guardant la sessió');
+        return;
+      }
 
-        if (tokenSaved) {
-          // Mostrar mensaje de éxito y navegar
-          final userName = response.user?.name ?? 'Usuario';
-          final userSurname = response.user?.surname ?? '';
-          _showSuccessDialog(
-            'Sessió iniciada amb èxit!',
-            'Benvingut/da $userName $userSurname'.trim(),
-          );
-        } else {
-          _showErrorDialog('Error guardant la sessió');
-        }
-      } catch (e) {
-        String errorMessage = 'Error en iniciar sessió';
-        if (e is ApiException) {
-          errorMessage = e.message;
-        } else {
-          errorMessage = 'Error de connexió: ${e.toString()}';
-        }
-        _showErrorDialog(errorMessage);
-      } finally {
-        setState(() {
-          _isLoading = false;
+      if (response.user != null) {
+        await SessionManager.saveUserData({
+          'id': response.user!.id,
+          'name': response.user!.name,
+          'surname': response.user!.surname,
+          'email': response.user!.email,
+          'user_type': response.user!.userType,
         });
+      }
+
+      if (!mounted) return;
+
+      final userName = response.user?.name ?? 'Usuari';
+      final userSurname = response.user?.surname ?? '';
+      _showSuccessDialog(
+        'Sessió iniciada amb èxit!',
+        'Benvingut/da $userName $userSurname'.trim(),
+      );
+    } on ApiException catch (e) {
+      _showErrorDialog(e.message);
+    } catch (e) {
+      _showErrorDialog('Error de connexió: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -148,11 +146,12 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-                // TODO: Navegar a la pantalla principal de la app
-                // Por ahora solo cerramos el diálogo
-                print(
-                    'Usuario logueado exitosamente - navegar a pantalla principal');
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const MicScreen(),
+                  ),
+                );
               },
               child: Text(
                 'D\'acord',
@@ -451,50 +450,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                // Implementar lógica de login
-                                final email = _emailController.text;
-                                final password = _passwordController.text;
-                                try {
-                                  // Call the login API
-                                  final user = await ApiService.login(email, password);
-                                  if (user != null) {
-                                    // Optionally save session
-                                    await SessionManager.saveUser(user);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const MicScreen()
+                            onPressed: _isLoading ? null : _submitLogin,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
                                       ),
-                                    );
-                                  } else {
-                                    // Show error if login fails
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Credencials incorrectes. Torna-ho a intentar.'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error d\'autenticació: $e'),
-                                      backgroundColor: Colors.red,
                                     ),
-                                  );
-                                }
-                              }
-                            },
-                            child: const Text(
-                              'INICIA SESSIÓ',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                                  )
+                                : const Text(
+                                    'INICIA SESSIÓ',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
                           ),
                         ),
 

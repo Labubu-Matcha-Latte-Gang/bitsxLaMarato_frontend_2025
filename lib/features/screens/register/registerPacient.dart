@@ -177,8 +177,8 @@ class _RegisterPacientState extends State<RegisterPacient> {
 
       if (result is PatientRegistrationSuccess) {
         final welcomeName = [
-          result.login.user?.name ?? result.response.name,
-          result.login.user?.surname ?? result.response.surname,
+          result.response.user?.name ?? result.response.name,
+          result.response.user?.surname ?? result.response.surname,
         ].where((part) => part.trim().isNotEmpty).join(' ');
 
         _showSuccessDialog(

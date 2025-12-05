@@ -46,22 +46,49 @@ class PatientRegistrationResponse {
   final String email;
   final String name;
   final String surname;
+  final String accessToken;
+  final User? user;
   final PatientRole role;
 
   PatientRegistrationResponse({
     required this.email,
     required this.name,
     required this.surname,
+    required this.accessToken,
+    this.user,
     required this.role,
   });
 
   factory PatientRegistrationResponse.fromJson(Map<String, dynamic> json) {
+    final token = json['access_token']?.toString();
+    if (token == null || token.isEmpty) {
+      throw Exception('access_token is missing from patient registration response');
+    }
+
+    User? user;
+    if (json['user'] is Map<String, dynamic>) {
+      user = User.fromJson(json['user'] as Map<String, dynamic>);
+    }
+
     return PatientRegistrationResponse(
       email: json['email'],
       name: json['name'],
       surname: json['surname'],
+      accessToken: token,
+      user: user,
       role: PatientRole.fromJson(json['role']),
     );
+  }
+
+  Map<String, dynamic> toUserData() {
+    final userType = user?.userType ?? '';
+    return {
+      'id': user?.id ?? '',
+      'name': user?.name ?? name,
+      'surname': user?.surname ?? surname,
+      'email': user?.email ?? email,
+      'user_type': userType.isNotEmpty ? userType : 'patient',
+    };
   }
 }
 
@@ -152,22 +179,49 @@ class DoctorRegistrationResponse {
   final String email;
   final String name;
   final String surname;
+  final String accessToken;
+  final User? user;
   final DoctorRole role;
 
   DoctorRegistrationResponse({
     required this.email,
     required this.name,
     required this.surname,
+    required this.accessToken,
+    this.user,
     required this.role,
   });
 
   factory DoctorRegistrationResponse.fromJson(Map<String, dynamic> json) {
+    final token = json['access_token']?.toString();
+    if (token == null || token.isEmpty) {
+      throw Exception('access_token is missing from doctor registration response');
+    }
+
+    User? user;
+    if (json['user'] is Map<String, dynamic>) {
+      user = User.fromJson(json['user'] as Map<String, dynamic>);
+    }
+
     return DoctorRegistrationResponse(
       email: json['email'],
       name: json['name'],
       surname: json['surname'],
+      accessToken: token,
+      user: user,
       role: DoctorRole.fromJson(json['role']),
     );
+  }
+
+  Map<String, dynamic> toUserData() {
+    final userType = user?.userType ?? '';
+    return {
+      'id': user?.id ?? '',
+      'name': user?.name ?? name,
+      'surname': user?.surname ?? surname,
+      'email': user?.email ?? email,
+      'user_type': userType.isNotEmpty ? userType : 'doctor',
+    };
   }
 }
 
