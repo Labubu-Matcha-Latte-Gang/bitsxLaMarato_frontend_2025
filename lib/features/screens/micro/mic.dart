@@ -61,6 +61,10 @@ class _MicScreenState extends State<MicScreen> {
 
   late final Future<Question> _dailyQuestionFuture;
   
+  // Constants for retry logic
+  static const int _maxUploadAttempts = 3;
+  static const int _baseBackoffMs = 200;
+  
   // Helper getters for backwards compatibility
   bool get _isRecording => _recordingState == RecordingState.recording;
   bool get _isUploading => _recordingState == RecordingState.uploading;
@@ -93,7 +97,6 @@ class _MicScreenState extends State<MicScreen> {
   Future<void> _uploadChunk(List<int> audioBytes, String filename, String contentType) async {
     if (_currentSessionId == null) return;
     
-    const int maxAttempts = 3;
     final chunkRequest = TranscriptionChunkRequest(
       sessionId: _currentSessionId!,
       chunkIndex: _nextChunkIndex,
@@ -112,11 +115,11 @@ class _MicScreenState extends State<MicScreen> {
         _nextChunkIndex += 1;
         break;
       } catch (e) {
-        if (attempt >= maxAttempts) {
+        if (attempt >= _maxUploadAttempts) {
           _hasUploadError = true;
           rethrow;
         }
-        final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
+        final backoff = Duration(milliseconds: _baseBackoffMs * (1 << (attempt - 1)));
         await Future.delayed(backoff);
       }
     }
