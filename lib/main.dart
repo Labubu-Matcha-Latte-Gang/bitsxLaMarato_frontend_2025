@@ -20,6 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
+      home: const InitialPage(),
       routes: {
         '/home': (context) => const InitialPage(),
         '/register': (context) => const RegisterLobby(),
