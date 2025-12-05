@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../micro/mic.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
 import '../../../services/session_manager.dart';
@@ -450,22 +451,50 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 0,
                             ),
-                            onPressed: _isLoading ? null : _submitLogin,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Text(
-                                    'INICIA SESSIÓ',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1,
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                // Implementar lógica de login
+                                final email = _emailController.text;
+                                final password = _passwordController.text;
+                                try {
+                                  // Call the login API
+                                  final user = await ApiService.login(email, password);
+                                  if (user != null) {
+                                    // Optionally save session
+                                    await SessionManager.saveUser(user);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const MicScreen()
+                                      ),
+                                    );
+                                  } else {
+                                    // Show error if login fails
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Credencials incorrectes. Torna-ho a intentar.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error d\'autenticació: $e'),
+                                      backgroundColor: Colors.red,
                                     ),
-                                  ),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text(
+                              'INICIA SESSIÓ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                            ),
                           ),
                         ),
 

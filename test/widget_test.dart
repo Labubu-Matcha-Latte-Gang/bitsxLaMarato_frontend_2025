@@ -5,26 +5,29 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:bitsxlamarato_frontend_2025/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:bitsxlamarato_frontend_2025/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Initial page shows the landing actions',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Començem!'), findsOneWidget);
+    expect(find.text('ENTRAR'), findsOneWidget);
+    expect(find.text('REGISTRAR-SE'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('Theme toggle updates the icon', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+
+    final darkModeToggle = find.byIcon(Icons.nightlight_round);
+    expect(darkModeToggle, findsOneWidget);
+
+    await tester.tap(darkModeToggle);
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
   });
 }
