@@ -638,8 +638,13 @@ class ApiService {
         ),
       );
 
+      print('DEBUG - Uploading transcription chunk: session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length}');
+
       final streamedResponse = await _sharedClient.send(multipartRequest);
       final response = await http.Response.fromStream(streamedResponse);
+
+      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
+      print('DEBUG - Chunk upload response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =

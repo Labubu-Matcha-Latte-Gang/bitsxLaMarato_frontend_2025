@@ -13,6 +13,9 @@ import 'package:universal_html/universal_html.dart' as html;
 import '../../../services/api_service.dart';
 import 'dart:typed_data';
 import 'dart:io' show File;
+import 'dart:math';
+import 'package:uuid/uuid.dart';
+import '../../../models/transcription_models.dart';
 
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});
@@ -54,72 +57,123 @@ class _MicScreenState extends State<MicScreen> {
   }
 
   Future<void> uploadRecording() async {
+    // Upload in smaller chunks to avoid server errors for long files
     setState(() => _isUploading = true);
     try {
-      Uint8List bytes;
-      String filename;
-      String contentType;
+      // Generate a UUIDv4 session id to avoid collisions
+      final String sessionId = const Uuid().v4();
+      const int chunkSize = 64 * 1024; // 64 KB per chunk (more conservative)
+      int chunkIndex = 0;
+      const int maxAttempts = 3;
+      const Duration betweenChunksDelay = Duration(milliseconds: 500);
 
-      if(kIsWeb) {
-        if(_webChunks.isEmpty) return;
+      print('DEBUG - Starting upload session: $sessionId');
 
-        final blob = html.Blob(_webChunks, 'audio/webm');
-        final reader = html.FileReader();
-        final completer = Completer<Uint8List>();
+      if (kIsWeb) {
+        if (_webChunks.isEmpty) return;
 
-        reader.onLoadEnd.listen((_) {
-          final result = reader.result;
-          if(result is ByteBuffer) {
-            completer.complete(Uint8List.view(result));
-          } else if (result is List<int>) {
-            completer.complete(Uint8List.fromList(result));
-          } else {
-            completer.completeError('Unable to read Blob result');
-          }
-        });
-        reader.onError.listen((event) {
-          completer.completeError(event);
-        });
-
-        reader.readAsArrayBuffer(blob);
-        bytes = await completer.future;
-        filename = 'recording.webm';
-        contentType = 'audio/webm';
-      } else {
-        final path = _recordedFilePath;
-        if(path == null || path.isEmpty) return;
-        final file = File(path);
-        bytes = await file.readAsBytes();
-        filename = file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'recording.m4a';
-        contentType = 'audio/mp4';
-      }
-
-      final transcriptionResponse = await ApiService.uploadRecordingFromBytes(
-        bytes,
-        filename: filename,
-        contentType: contentType,
-      );
-
-      // extract a readable transcription/message if possible
-      String? extracted;
-      try {
-        final dynamic resp = transcriptionResponse;
-        if (resp == null) {
-          extracted = null;
-        } else if (resp is Map<String, dynamic>) {
-          extracted = resp['text']?.toString() ?? resp['transcription']?.toString() ?? resp['message']?.toString();
-        } else {
-          // try common field names on typed object
+        // Upload each Blob we collected; further split each blob into smaller parts
+        // compute total bytes and estimated chunk count for logging
+        int totalBytesEstimate = 0;
+        for (final b in _webChunks) {
           try {
-            extracted = resp.text ?? resp.transcription ?? resp.message;
-            if (extracted != null) extracted = extracted.toString();
-          } catch (_) {
-            extracted = resp.toString();
+            totalBytesEstimate += (b as dynamic).size as int? ?? 0;
+          } catch (_) {}
+        }
+        final int estChunks = (totalBytesEstimate / chunkSize).ceil();
+        print('DEBUG - Session $sessionId estimated bytes=$totalBytesEstimate estChunks=$estChunks webChunks=${_webChunks.length}');
+        for (final blob in List<html.Blob>.from(_webChunks)) {
+          final Uint8List blobBytes = await _readBlobAsUint8List(blob);
+          int offset = 0;
+          while (offset < blobBytes.length) {
+            final end = min(offset + chunkSize, blobBytes.length);
+            final part = blobBytes.sublist(offset, end);
+
+            final chunkRequest = TranscriptionChunkRequest(
+              sessionId: sessionId,
+              chunkIndex: chunkIndex,
+              audioBytes: part,
+              filename: 'recording.webm',
+              contentType: 'audio/webm',
+            );
+
+            // per-chunk retry with exponential backoff
+            int attempt = 0;
+            while (true) {
+              attempt += 1;
+              try {
+                await ApiService.uploadTranscriptionChunk(chunkRequest);
+                break;
+              } catch (e) {
+                if (attempt >= maxAttempts) rethrow;
+                final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
+                await Future.delayed(backoff);
+              }
+            }
+
+            chunkIndex += 1;
+            offset = end;
+            await Future.delayed(betweenChunksDelay);
           }
         }
-      } catch (_) {
-        extracted = transcriptionResponse.toString();
+      } else {
+        final path = _recordedFilePath;
+        if (path == null || path.isEmpty) return;
+        final file = File(path);
+        final Uint8List allBytes = await file.readAsBytes();
+        final int totalBytes = allBytes.length;
+        final int estChunks = (totalBytes / chunkSize).ceil();
+        print('DEBUG - Session $sessionId totalBytes=$totalBytes estChunks=$estChunks');
+
+        int offset = 0;
+        while (offset < allBytes.length) {
+          final end = min(offset + chunkSize, allBytes.length);
+          final part = allBytes.sublist(offset, end);
+
+          final chunkRequest = TranscriptionChunkRequest(
+            sessionId: sessionId,
+            chunkIndex: chunkIndex,
+            audioBytes: part,
+            filename: file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'recording.m4a',
+            contentType: 'audio/mp4',
+          );
+
+          int attempt = 0;
+          while (true) {
+            attempt += 1;
+            try {
+              await ApiService.uploadTranscriptionChunk(chunkRequest);
+              break;
+            } catch (e) {
+              if (attempt >= maxAttempts) rethrow;
+              final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
+              await Future.delayed(backoff);
+            }
+          }
+
+          chunkIndex += 1;
+          offset = end;
+          await Future.delayed(betweenChunksDelay);
+        }
       }
+
+      // Tell server we're done and get the final transcription
+      TranscriptionResponse completeResp;
+      int completeAttempt = 0;
+      while (true) {
+        completeAttempt += 1;
+        try {
+          completeResp = await ApiService.completeTranscriptionSession(
+            TranscriptionCompleteRequest(sessionId: sessionId),
+          );
+          break;
+        } catch (e) {
+          if (completeAttempt >= 2) rethrow;
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+      }
+
+      final String? extracted = completeResp.transcription ?? completeResp.partialText ?? (completeResp.status.isNotEmpty ? 'Status: ${completeResp.status}' : null);
 
       if (mounted) {
         setState(() => _transcriptionText = extracted);
@@ -127,8 +181,9 @@ class _MicScreenState extends State<MicScreen> {
           SnackBar(content: Text(extracted != null ? 'Processed: ${_shortPreview(extracted)}' : 'Upload complete')),
         );
       }
-      // debug log
-      print('Transcription response: $transcriptionResponse');
+
+      // debug log: use toString() which now returns useful text or JSON
+      print('Transcription response: $completeResp');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +194,29 @@ class _MicScreenState extends State<MicScreen> {
       _webChunks.clear();
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  // Helper to read a web Blob into a Uint8List
+  Future<Uint8List> _readBlobAsUint8List(html.Blob blob) async {
+    final reader = html.FileReader();
+    final completer = Completer<Uint8List>();
+
+    reader.onLoadEnd.listen((_) {
+      final result = reader.result;
+      if (result is ByteBuffer) {
+        completer.complete(Uint8List.view(result));
+      } else if (result is List<int>) {
+        completer.complete(Uint8List.fromList(result));
+      } else {
+        completer.completeError('Unable to read Blob result');
+      }
+    });
+    reader.onError.listen((event) {
+      completer.completeError(event);
+    });
+
+    reader.readAsArrayBuffer(blob);
+    return completer.future;
   }
 
   String _shortPreview(String text, [int max = 120]) {
