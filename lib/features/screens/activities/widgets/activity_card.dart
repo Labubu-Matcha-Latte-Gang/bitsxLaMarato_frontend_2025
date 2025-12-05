@@ -81,11 +81,6 @@ class ActivityCard extends StatelessWidget {
                 icon: Icons.speed_outlined,
                 isDarkMode: isDarkMode,
               ),
-              _InfoChip(
-                label: 'ID: ${activity.id}',
-                icon: Icons.confirmation_number_outlined,
-                isDarkMode: isDarkMode,
-              ),
             ],
           ),
         ],
