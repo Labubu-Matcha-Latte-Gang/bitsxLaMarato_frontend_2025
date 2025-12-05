@@ -17,6 +17,14 @@ import 'dart:math';
 import 'package:uuid/uuid.dart';
 import '../../../models/transcription_models.dart';
 
+/// Recording state enum for clear UI states
+enum RecordingState {
+  idle,       // Not recording
+  recording,  // Actively recording audio
+  uploading,  // Uploading chunks / completing session
+  error,      // Error occurred
+}
+
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});
 
@@ -27,7 +35,7 @@ class MicScreen extends StatefulWidget {
 class _MicScreenState extends State<MicScreen> {
   bool isDarkMode = false;
   final Record _recorder = Record();
-  bool _isRecording = false;
+  RecordingState _recordingState = RecordingState.idle;
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
   Timer? _chunkTimer;
@@ -41,16 +49,21 @@ class _MicScreenState extends State<MicScreen> {
   // Completer to wait for web MediaRecorder 'stop' event before uploading
   Completer<void>? _webStopCompleter;
   // Uploading UI state
-  bool _isUploading = false;
   String? _transcriptionText;
+  String? _errorMessage;
   String? _currentSessionId;
   int _nextChunkIndex = 0;
   final List<Future<void>> _pendingChunkUploads = [];
-  bool _isProcessingChunk = false;
   bool _hasUploadError = false;
   static const int _maxChunkSeconds = 15;
+  // Track seconds since last chunk upload (for 15-second chunks)
+  int _secondsSinceLastChunk = 0;
 
   late final Future<Question> _dailyQuestionFuture;
+  
+  // Helper getters for backwards compatibility
+  bool get _isRecording => _recordingState == RecordingState.recording;
+  bool get _isUploading => _recordingState == RecordingState.uploading;
 
   @override
   void initState() {
@@ -64,32 +77,101 @@ class _MicScreenState extends State<MicScreen> {
     });
   }
 
-  Future<void> uploadRecording() async {
-    // Upload in smaller chunks to avoid server errors for long files
-    setState(() => _isUploading = true);
-    try {
-      // Generate a UUIDv4 session id to avoid collisions
-      final String sessionId = const Uuid().v4();
-      const int chunkSize = 64 * 1024; // 64 KB per chunk (more conservative)
-      int chunkIndex = 0;
-      const int maxAttempts = 3;
-      const Duration betweenChunksDelay = Duration(milliseconds: 500);
+  /// Reset recording state for a new session
+  void _resetRecordingSession() {
+    _currentSessionId = const Uuid().v4();
+    _nextChunkIndex = 0;
+    _secondsSinceLastChunk = 0;
+    _hasUploadError = false;
+    _errorMessage = null;
+    _transcriptionText = null;
+    _webChunks.clear();
+    _pendingChunkUploads.clear();
+  }
 
-      print('DEBUG - Starting upload session: $sessionId');
+  /// Upload a single audio chunk to the backend
+  Future<void> _uploadChunk(List<int> audioBytes, String filename, String contentType) async {
+    if (_currentSessionId == null) return;
+    
+    const int maxAttempts = 3;
+    final chunkRequest = TranscriptionChunkRequest(
+      sessionId: _currentSessionId!,
+      chunkIndex: _nextChunkIndex,
+      audioBytes: audioBytes,
+      filename: filename,
+      contentType: contentType,
+    );
+
+    print('DEBUG - Uploading chunk: session=${_currentSessionId} index=${_nextChunkIndex} size=${audioBytes.length}');
+
+    int attempt = 0;
+    while (true) {
+      attempt += 1;
+      try {
+        await ApiService.uploadTranscriptionChunk(chunkRequest);
+        _nextChunkIndex += 1;
+        break;
+      } catch (e) {
+        if (attempt >= maxAttempts) {
+          _hasUploadError = true;
+          rethrow;
+        }
+        final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
+        await Future.delayed(backoff);
+      }
+    }
+  }
+
+  /// Complete the transcription session after all chunks are sent
+  Future<TranscriptionResponse> _completeSession() async {
+    if (_currentSessionId == null) {
+      throw ApiException("No s'ha trobat cap sessió activa.", 0);
+    }
+
+    print('DEBUG - Completing session: ${_currentSessionId}');
+
+    TranscriptionResponse completeResp;
+    int completeAttempt = 0;
+    const int maxAttempts = 2;
+
+    while (true) {
+      completeAttempt += 1;
+      try {
+        completeResp = await ApiService.completeTranscriptionSession(
+          TranscriptionCompleteRequest(sessionId: _currentSessionId!),
+        );
+        break;
+      } catch (e) {
+        if (completeAttempt >= maxAttempts) rethrow;
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+    }
+
+    return completeResp;
+  }
+
+  /// Upload recording at the end and complete the session
+  Future<void> uploadRecording() async {
+    setState(() {
+      _recordingState = RecordingState.uploading;
+      _errorMessage = null;
+    });
+    
+    try {
+      // Generate new session if we don't have one
+      _currentSessionId ??= const Uuid().v4();
+      const int chunkSize = 64 * 1024; // 64 KB per chunk
+      const Duration betweenChunksDelay = Duration(milliseconds: 300);
+
+      print('DEBUG - Finalizing upload session: $_currentSessionId');
 
       if (kIsWeb) {
-        if (_webChunks.isEmpty) return;
+        if (_webChunks.isEmpty) {
+          setState(() => _recordingState = RecordingState.idle);
+          return;
+        }
 
         // Upload each Blob we collected; further split each blob into smaller parts
-        // compute total bytes and estimated chunk count for logging
-        int totalBytesEstimate = 0;
-        for (final b in _webChunks) {
-          try {
-            totalBytesEstimate += (b as dynamic).size as int? ?? 0;
-          } catch (_) {}
-        }
-        final int estChunks = (totalBytesEstimate / chunkSize).ceil();
-        print('DEBUG - Session $sessionId estimated bytes=$totalBytesEstimate estChunks=$estChunks webChunks=${_webChunks.length}');
         for (final blob in List<html.Blob>.from(_webChunks)) {
           final Uint8List blobBytes = await _readBlobAsUint8List(blob);
           int offset = 0;
@@ -97,110 +179,78 @@ class _MicScreenState extends State<MicScreen> {
             final end = min(offset + chunkSize, blobBytes.length);
             final part = blobBytes.sublist(offset, end);
 
-            final chunkRequest = TranscriptionChunkRequest(
-              sessionId: sessionId,
-              chunkIndex: chunkIndex,
-              audioBytes: part,
-              filename: 'recording.webm',
-              contentType: 'audio/webm',
-            );
-
-            // per-chunk retry with exponential backoff
-            int attempt = 0;
-            while (true) {
-              attempt += 1;
-              try {
-                await ApiService.uploadTranscriptionChunk(chunkRequest);
-                break;
-              } catch (e) {
-                if (attempt >= maxAttempts) rethrow;
-                final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
-                await Future.delayed(backoff);
-              }
-            }
-
-            chunkIndex += 1;
-            offset = end;
+            await _uploadChunk(part, 'recording.webm', 'audio/webm');
             await Future.delayed(betweenChunksDelay);
+            offset = end;
           }
         }
       } else {
         final path = _recordedFilePath;
-        if (path == null || path.isEmpty) return;
+        if (path == null || path.isEmpty) {
+          setState(() => _recordingState = RecordingState.idle);
+          return;
+        }
         final file = File(path);
         final Uint8List allBytes = await file.readAsBytes();
-        final int totalBytes = allBytes.length;
-        final int estChunks = (totalBytes / chunkSize).ceil();
-        print('DEBUG - Session $sessionId totalBytes=$totalBytes estChunks=$estChunks');
 
         int offset = 0;
         while (offset < allBytes.length) {
           final end = min(offset + chunkSize, allBytes.length);
           final part = allBytes.sublist(offset, end);
-
-          final chunkRequest = TranscriptionChunkRequest(
-            sessionId: sessionId,
-            chunkIndex: chunkIndex,
-            audioBytes: part,
-            filename: file.uri.pathSegments.isNotEmpty ? file.uri.pathSegments.last : 'recording.m4a',
-            contentType: 'audio/mp4',
-          );
-
-          int attempt = 0;
-          while (true) {
-            attempt += 1;
-            try {
-              await ApiService.uploadTranscriptionChunk(chunkRequest);
-              break;
-            } catch (e) {
-              if (attempt >= maxAttempts) rethrow;
-              final backoff = Duration(milliseconds: 200 * (1 << (attempt - 1)));
-              await Future.delayed(backoff);
-            }
-          }
-
-          chunkIndex += 1;
-          offset = end;
+          
+          final filename = file.uri.pathSegments.isNotEmpty 
+              ? file.uri.pathSegments.last 
+              : 'recording.m4a';
+          
+          await _uploadChunk(part, filename, 'audio/mp4');
           await Future.delayed(betweenChunksDelay);
+          offset = end;
         }
       }
 
       // Tell server we're done and get the final transcription
-      TranscriptionResponse completeResp;
-      int completeAttempt = 0;
-      while (true) {
-        completeAttempt += 1;
-        try {
-          completeResp = await ApiService.completeTranscriptionSession(
-            TranscriptionCompleteRequest(sessionId: sessionId),
-          );
-          break;
-        } catch (e) {
-          if (completeAttempt >= 2) rethrow;
-          await Future.delayed(const Duration(milliseconds: 500));
-        }
-      }
+      final completeResp = await _completeSession();
 
-      final String? extracted = completeResp.transcription ?? completeResp.partialText ?? (completeResp.status.isNotEmpty ? 'Status: ${completeResp.status}' : null);
+      final String? extracted = completeResp.transcription ?? 
+          completeResp.partialText ?? 
+          (completeResp.status.isNotEmpty ? completeResp.status : null);
 
       if (mounted) {
-        setState(() => _transcriptionText = extracted);
+        setState(() {
+          _transcriptionText = extracted;
+          _recordingState = RecordingState.idle;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(extracted != null ? 'Processed: ${_shortPreview(extracted)}' : 'Upload complete')),
+          SnackBar(
+            content: Text(
+              extracted != null 
+                  ? 'Processat: ${_shortPreview(extracted)}' 
+                  : 'Àudio enviat correctament'
+            ),
+          ),
         );
       }
 
-      // debug log: use toString() which now returns useful text or JSON
       print('Transcription response: $completeResp');
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _recordingState = RecordingState.error;
+          _errorMessage = "Error en enviar l'àudio. Torna-ho a provar.";
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: ${e.toString()}')),
+          SnackBar(
+            content: Text("Error en enviar l'àudio: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
       _webChunks.clear();
-      if (mounted) setState(() => _isUploading = false);
+      if (mounted && _recordingState == RecordingState.uploading) {
+        setState(() => _recordingState = RecordingState.idle);
+      }
     }
   }
 
@@ -233,13 +283,26 @@ class _MicScreenState extends State<MicScreen> {
   }
 
   Future<void> _startRecording() async {
+    // Reset session for new recording
+    _resetRecordingSession();
+    
     if (kIsWeb) {
       try {
         final md = html.window.navigator.mediaDevices;
-        if (md == null) return;
+        if (md == null) {
+          setState(() {
+            _recordingState = RecordingState.error;
+            _errorMessage = "No s'ha pogut accedir al micròfon.";
+          });
+          return;
+        }
         _webStream = await md.getUserMedia({'audio': true});
       } catch (e) {
         // permission denied or unsupported
+        setState(() {
+          _recordingState = RecordingState.error;
+          _errorMessage = "No s'ha pogut accedir al micròfon. Comprova els permisos.";
+        });
         return;
       }
 
@@ -277,15 +340,17 @@ class _MicScreenState extends State<MicScreen> {
 
       _webRecorder!.start();
       setState(() {
-        _isRecording = true;
+        _recordingState = RecordingState.recording;
         _recordDuration = Duration.zero;
         _recordedFilePath = null;
+        _secondsSinceLastChunk = 0;
       });
 
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         setState(() {
           _recordDuration += const Duration(seconds: 1);
+          _secondsSinceLastChunk += 1;
         });
       });
 
@@ -294,7 +359,13 @@ class _MicScreenState extends State<MicScreen> {
 
     // existing mobile/desktop implementation
     final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) return;
+    if (!hasPermission) {
+      setState(() {
+        _recordingState = RecordingState.error;
+        _errorMessage = "No s'ha pogut accedir al micròfon. Comprova els permisos.";
+      });
+      return;
+    }
 
     final dir = await getTemporaryDirectory();
     final filePath = '${dir.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
@@ -305,15 +376,17 @@ class _MicScreenState extends State<MicScreen> {
     );
 
     setState(() {
-      _isRecording = true;
+      _recordingState = RecordingState.recording;
       _recordDuration = Duration.zero;
       _recordedFilePath = filePath;
+      _secondsSinceLastChunk = 0;
     });
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
         _recordDuration += const Duration(seconds: 1);
+        _secondsSinceLastChunk += 1;
       });
     });
   }
@@ -348,7 +421,6 @@ class _MicScreenState extends State<MicScreen> {
       _timer = null;
 
       setState(() {
-        _isRecording = false;
         _recordDuration = Duration.zero;
         _recordedFilePath = _webBlobUrl;
       });
@@ -365,7 +437,6 @@ class _MicScreenState extends State<MicScreen> {
     _timer = null;
 
     setState(() {
-      _isRecording = false;
       _recordDuration = Duration.zero;
       _recordedFilePath = path ?? _recordedFilePath;
     });
@@ -383,6 +454,7 @@ class _MicScreenState extends State<MicScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _chunkTimer?.cancel();
     _recorder.dispose();
     try {
       _webStream?.getTracks().forEach((t) => t.stop());
@@ -394,6 +466,91 @@ class _MicScreenState extends State<MicScreen> {
       }
     } catch (_) {}
     super.dispose();
+  }
+
+  /// Builds the status text widget based on current state
+  Widget _buildStatusWidget() {
+    switch (_recordingState) {
+      case RecordingState.recording:
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Gravant...',
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        );
+      case RecordingState.uploading:
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getPrimaryTextColor(isDarkMode),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Processant àudio...',
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+              ),
+            ),
+          ],
+        );
+      case RecordingState.error:
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _errorMessage ?? 'Error desconegut',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        );
+      case RecordingState.idle:
+      default:
+        if (_transcriptionText != null) {
+          return const SizedBox.shrink();
+        }
+        return Text(
+          'Prem el botó per començar a gravar',
+          style: TextStyle(
+            color: AppColors.getSecondaryTextColor(isDarkMode),
+            fontSize: 14,
+          ),
+        );
+    }
   }
 
   @override
@@ -517,19 +674,34 @@ class _MicScreenState extends State<MicScreen> {
                           },
                         ),
                         RawMaterialButton(
-                          onPressed: _isRecording ? _stopRecording : _startRecording,
-                          fillColor: _isRecording ? Colors.red : Colors.white,
+                          onPressed: _isUploading 
+                              ? null 
+                              : (_isRecording ? _stopRecording : _startRecording),
+                          fillColor: _isUploading 
+                              ? Colors.grey 
+                              : (_isRecording ? Colors.red : Colors.white),
                           shape: const CircleBorder(),
                           elevation: 4.0,
                           constraints: const BoxConstraints.tightFor(
                             width: 96.0,
                             height: 96.0,
                           ),
-                          child: Icon(
-                            _isRecording ? Icons.stop : Icons.mic,
-                            size: 48.0,
-                            color: _isRecording ? Colors.white : Colors.black,
-                          ),
+                          child: _isUploading
+                              ? SizedBox(
+                                  width: 40,
+                                  height: 40,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3.0,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  _isRecording ? Icons.stop : Icons.mic,
+                                  size: 48.0,
+                                  color: _isRecording ? Colors.white : Colors.black,
+                                ),
                         ),
                         // Spacer between button and timer
                         const SizedBox(height: 12.0),
@@ -542,38 +714,52 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
 
-                        // Uploading indicator and transcription preview
+                        // Status indicator based on recording state
                         const SizedBox(height: 8.0),
-                        if (_isUploading) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2.0),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Uploading...',
-                                style: TextStyle(
-                                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (_transcriptionText != null && !_isUploading) ...[
+                        _buildStatusWidget(),
+                        
+                        // Transcription result display
+                        if (_transcriptionText != null && _recordingState == RecordingState.idle) ...[
                           const SizedBox(height: 12),
-                          SizedBox(
-                            width: 280,
-                            child: Text(
-                              _transcriptionText!,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.getPrimaryTextColor(isDarkMode),
-                                fontSize: 14,
-                              ),
+                          Container(
+                            width: 300,
+                            padding: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              color: AppColors.getBlurContainerColor(isDarkMode),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_outline,
+                                      color: Colors.green,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Transcripció completada',
+                                      style: TextStyle(
+                                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _transcriptionText!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.getPrimaryTextColor(isDarkMode),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
