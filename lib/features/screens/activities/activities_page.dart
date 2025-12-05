@@ -103,61 +103,74 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Activitats',
-                    style: TextStyle(
-                      color: AppColors.getPrimaryTextColor(isDarkMode),
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Explora activitats recomanades o consulta tot el catàleg.',
-                    style: TextStyle(
-                      color: AppColors.getSecondaryTextColor(isDarkMode),
-                      fontSize: 15,
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Activitats',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Explora activitats recomanades o consulta tot el catàleg.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.getSecondaryTextColor(isDarkMode),
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _ActionCard(
-                            title: 'Activitats recomanades',
-                            description:
-                                'Descobreix les activitats pensades per a tu segons el teu progrés.',
-                            icon: Icons.auto_awesome,
-                            isDarkMode: isDarkMode,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => RecommendedActivitiesPage(
-                                    initialDarkMode: isDarkMode,
-                                  ),
-                                ),
-                              );
-                            },
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 700),
+                          child: Column(
+                            children: [
+                              _ActionCard(
+                                title: 'Activitats recomanades',
+                                description:
+                                    'Descobreix les activitats pensades per a tu segons el teu progrés.',
+                                icon: Icons.auto_awesome,
+                                isDarkMode: isDarkMode,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => RecommendedActivitiesPage(
+                                        initialDarkMode: isDarkMode,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _ActionCard(
+                                title: 'Totes les activitats',
+                                description:
+                                    'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
+                                icon: Icons.view_list_outlined,
+                                isDarkMode: isDarkMode,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => AllActivitiesPage(
+                                        initialDarkMode: isDarkMode,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          _ActionCard(
-                            title: 'Totes les activitats',
-                            description:
-                                'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
-                            icon: Icons.view_list_outlined,
-                            isDarkMode: isDarkMode,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => AllActivitiesPage(
-                                    initialDarkMode: isDarkMode,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
