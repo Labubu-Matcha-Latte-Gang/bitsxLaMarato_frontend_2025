@@ -84,7 +84,13 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        return PatientRegistrationResponse.fromJson(responseData);
+        final registration =
+            PatientRegistrationResponse.fromJson(responseData);
+        await _persistSession(
+          registration.accessToken,
+          registration.toUserData(),
+        );
+        return registration;
       } else {
         // Manejo de errores específicos
         String errorMessage;
@@ -313,7 +319,12 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        return DoctorRegistrationResponse.fromJson(responseData);
+        final registration = DoctorRegistrationResponse.fromJson(responseData);
+        await _persistSession(
+          registration.accessToken,
+          registration.toUserData(),
+        );
+        return registration;
       } else {
         // Manejo de errores específicos
         String errorMessage;
@@ -673,6 +684,28 @@ class ApiService {
       if (e is ApiException) rethrow;
       throw ApiException(
         'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<void> _persistSession(
+    String accessToken,
+    Map<String, dynamic> userData,
+  ) async {
+    final tokenSaved = await SessionManager.saveToken(accessToken);
+    if (!tokenSaved) {
+      throw ApiException(
+        'El registre s\'ha completat però no s\'ha pogut guardar la sessió localment.',
+        0,
+      );
+    }
+
+    final userDataSaved = await SessionManager.saveUserData(userData);
+    if (!userDataSaved) {
+      await SessionManager.logout();
+      throw ApiException(
+        'El registre s\'ha completat però no s\'han pogut guardar les dades de l\'usuari.',
         0,
       );
     }
