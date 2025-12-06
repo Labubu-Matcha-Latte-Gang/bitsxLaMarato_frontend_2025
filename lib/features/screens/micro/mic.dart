@@ -255,14 +255,14 @@ class _MicScreenState extends State<MicScreen> {
   Future<void> _startNewMobileRecording() async {
     final dir = await getTemporaryDirectory();
     // Guardem els fragments amb extensió .mp3 per indicar l'ús de mp3
-    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.mp3';
+    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.wav';
     _currentChunkPath = filePath;
     await _recorder.start(
       path: filePath,
       // Fem servir l'encoder MP3 si està suportat pel plugin. En cas contrari,
       // el plugin utilitzarà un format per defecte, però l'arxiu i el
       // contentType s'indicaran com a MP3 en enviar el fragment.
-      encoder: AudioEncoder.mp3,
+      encoder: AudioEncoder.wav,
     );
   }
 
