@@ -104,7 +104,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     } catch (_) {
       setState(() {
         _errorMessage =
-            'S’ha produït un error en carregar les activitats.';
+        'S’ha produït un error en carregar les activitats.';
       });
     } finally {
       if (mounted) {
@@ -141,76 +141,45 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Left: fixed-size decorated back button
-                      SizedBox(
-                        width: 56,
-                        height: 48,
-                        child: Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.getBlurContainerColor(isDarkMode),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.containerShadow,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: Icon(
-                                Icons.arrow_back,
-                                color: AppColors.getPrimaryTextColor(isDarkMode),
-                              ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: Icon(
+                              Icons.arrow_back,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
                             ),
                           ),
-                        ),
-                      ),
-
-                      // Center: logo
-                      Expanded(
-                        child: Center(
-                          child: Image.asset(
+                          const SizedBox(width: 8),
+                          Image.asset(
                             isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                            height: 40,
-                            width: 140,
-                            fit: BoxFit.contain,
+                            width: 36,
+                            height: 36,
                           ),
-                        ),
+                        ],
                       ),
-
-                      // Right: fixed-size decorated theme toggle
-                      SizedBox(
-                        width: 56,
-                        height: 48,
-                        child: Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.getBlurContainerColor(isDarkMode),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.containerShadow,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getBlurContainerColor(isDarkMode),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.containerShadow,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              icon: Icon(
-                                isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-                                color: AppColors.getPrimaryTextColor(isDarkMode),
-                              ),
-                              onPressed: _toggleTheme,
-                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
+                          onPressed: _toggleTheme,
                         ),
                       ),
                     ],
@@ -266,7 +235,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             color: AppColors.getPlaceholderTextColor(isDarkMode),
           ),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         style: TextStyle(
           color: AppColors.getInputTextColor(isDarkMode),
@@ -279,8 +248,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.getSecondaryBackgroundColor(isDarkMode)
-            .withAlpha((0.9 * 255).round()),
+        color:
+        AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -290,8 +259,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
         ],
         border: Border.all(
-          color: AppColors.getPrimaryButtonColor(isDarkMode)
-              .withAlpha((0.2 * 255).round()),
+          color: AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -324,7 +292,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 label: const Text('Restableix'),
                 style: TextButton.styleFrom(
                   foregroundColor:
-                      AppColors.getPrimaryButtonColor(isDarkMode),
+                  AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
               ),
             ],
@@ -333,7 +301,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           SizedBox(
             height: 60,
             child: DropdownButtonFormField<String>(
-              initialValue: _selectedType,
+              value: _selectedType,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Tipus d\'activitat',
@@ -347,11 +315,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   color: AppColors.getSecondaryTextColor(isDarkMode),
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               dropdownColor:
-                  AppColors.getSecondaryBackgroundColor(isDarkMode),
+              AppColors.getSecondaryBackgroundColor(isDarkMode),
               iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -365,15 +333,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ]
                   .map(
                     (type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(
-                        type,
-                        style: TextStyle(
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        ),
-                      ),
+                  value: type,
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
                     ),
-                  )
+                  ),
+                ),
+              )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -399,7 +367,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               });
               _scheduleSearch();
             },
-            activeThumbColor: AppColors.getPrimaryButtonColor(isDarkMode),
+            activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
           ),
           if (_useDifficultyFilter) ...[
             Row(
@@ -416,8 +384,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha((0.2 * 255).round()),
+                  selectedColor:
+                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(
@@ -432,8 +400,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha((0.2 * 255).round()),
+                  selectedColor:
+                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
                 ),
               ],
             ),
@@ -605,7 +573,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 foregroundColor:
-                    AppColors.getPrimaryButtonTextColor(isDarkMode),
+                AppColors.getPrimaryButtonTextColor(isDarkMode),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
