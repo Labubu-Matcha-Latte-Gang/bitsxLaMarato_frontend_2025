@@ -349,11 +349,8 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        // Encapsulem l'arxiu com a MP3. Tot i que el MediaRecorder pot
-        // generar un altre format, el backend rebrà el mateix blob amb
-        // extensió i contentType d'MP3.
-        filename: 'fragment.mp3',
-        contentType: 'audio/mpeg',
+        filename: 'fragment.webm',
+        contentType: 'audio/webm',
       );
       await ApiService.uploadTranscriptionChunk(chunkRequest);
       _nextChunkIndex += 1;
