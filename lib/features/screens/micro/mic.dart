@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:io' show File;
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -35,29 +34,23 @@ class _MicScreenState extends State<MicScreen> {
   Timer? _timer;
   Timer? _chunkTimer;
 
-  // Ruta temporal del fragment actual en dispositius mòbils
   String? _currentChunkPath;
 
-  // Components per a la gravació al web
+  // Web recording
   html.MediaRecorder? _webRecorder;
   html.MediaStream? _webStream;
 
-  // Estat de càrrega i transcripció
   bool _isUploading = false;
   String? _transcriptionText;
   bool _hasUploadError = false;
 
-  // Sessió i índex de fragment
   String? _currentSessionId;
   int _nextChunkIndex = 0;
 
-  // Llista de càrregues pendents per esperar-les abans de finalitzar
   final List<Future<void>> _pendingChunkUploads = [];
 
-  // Màxim de segons per fragment
   static const int _maxChunkSeconds = 15;
 
-  // Pregunta diària carregada des de l'API
   late final Future<Question> _dailyQuestionFuture;
 
   @override
@@ -72,7 +65,6 @@ class _MicScreenState extends State<MicScreen> {
     });
   }
 
-  // Mostra un missatge d'error de forma uniforme
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -84,11 +76,9 @@ class _MicScreenState extends State<MicScreen> {
     return await ApiService.getDailyQuestion();
   }
 
-  /// Inicia la gravació. Es genera un nou session_id i es configuren els
-  /// temporitzadors per enviar fragments de veu de 15 segons al backend.
   Future<void> _startRecording() async {
     if (_isRecording) return;
-    // Reinicialitza estat de la sessió
+
     _transcriptionText = null;
     _hasUploadError = false;
     _currentSessionId = const Uuid().v4();
@@ -96,7 +86,6 @@ class _MicScreenState extends State<MicScreen> {
     _pendingChunkUploads.clear();
 
     if (kIsWeb) {
-      // Gravació al navegador utilitzant MediaRecorder
       final md = html.window.navigator.mediaDevices;
       if (md == null) {
         _showError('No s’ha pogut accedir al micròfon.');
@@ -109,18 +98,17 @@ class _MicScreenState extends State<MicScreen> {
         return;
       }
 
-      // Configuració del MediaRecorder amb timeslice per generar fragments
-      // Fem servir audio/mpeg (MP3) si el navegador ho suporta; en cas contrari,
-      // MediaRecorder utilitzarà el format per defecte, però enviarem el
-      // contentType com a MP3 al backend.
+      // Comprovar que el navegador pot gravar en WebM/Opus
+      if (!html.MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        _showError('El navegador no suporta audio/webm;codecs=opus — canvia navegador.');
+        return;
+      }
+
       _webRecorder = html.MediaRecorder(
         _webStream!,
-        {
-          'mimeType': 'audio/webm;codecs=opus',
-        },
+        {'mimeType': 'audio/webm;codecs=opus'},
       );
 
-      // Quan arriba un fragment, s'envia al backend
       _webRecorder!.addEventListener('dataavailable', (event) {
         try {
           final dynamic data = (event as dynamic).data;
@@ -129,15 +117,11 @@ class _MicScreenState extends State<MicScreen> {
             _pendingChunkUploads.add(f);
             f.whenComplete(() => _pendingChunkUploads.remove(f));
           }
-        } catch (_) {
-          // ignore unexpected event shape
-        }
+        } catch (_) {}
       });
 
-      // No cal processar res especial a l'esdeveniment stop;
       _webRecorder!.addEventListener('stop', (event) {});
 
-      // Iniciar la gravació amb fragments de 15 segons (en ms)
       try {
         _webRecorder!.start(_maxChunkSeconds * 1000);
       } catch (e) {
@@ -150,7 +134,6 @@ class _MicScreenState extends State<MicScreen> {
         _recordDuration = Duration.zero;
       });
 
-      // Temporitzador per actualitzar la durada visible
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         setState(() {
@@ -161,14 +144,13 @@ class _MicScreenState extends State<MicScreen> {
       return;
     }
 
-    // Gravació en dispositius mòbils/escriptori
+    // Dispositius mòbils / escriptori
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
       _showError('No s’ha pogut accedir al micròfon.');
       return;
     }
 
-    // Iniciar el primer fragment
     try {
       await _startNewMobileRecording();
     } catch (e) {
@@ -181,7 +163,6 @@ class _MicScreenState extends State<MicScreen> {
       _recordDuration = Duration.zero;
     });
 
-    // Temporitzador de la UI
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
@@ -189,12 +170,10 @@ class _MicScreenState extends State<MicScreen> {
       });
     });
 
-    // Temporitzador que envia un fragment cada _maxChunkSeconds segons
     _chunkTimer?.cancel();
     _chunkTimer = Timer.periodic(
       const Duration(seconds: _maxChunkSeconds),
       (_) {
-        // Enviar el fragment actual i reiniciar-ne un de nou
         final Future<void> f = _sendCurrentMobileChunk(restart: true);
         _pendingChunkUploads.add(f);
         f.whenComplete(() => _pendingChunkUploads.remove(f));
@@ -202,35 +181,26 @@ class _MicScreenState extends State<MicScreen> {
     );
   }
 
-  /// Atura la gravació. Es cancel·len els temporitzadors, s'envia el
-  /// darrer fragment pendent i, finalment, es notifica al servidor que
-  /// la sessió ha finalitzat.
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
 
-    // Cancel·lar els temporitzadors de durada i fragments
     _timer?.cancel();
     _timer = null;
     _chunkTimer?.cancel();
     _chunkTimer = null;
 
     if (kIsWeb) {
-      // Aturar el MediaRecorder (generarà l'últim dataavailable)
       try {
         _webRecorder?.stop();
       } catch (_) {}
-      // Esperar una mica per permetre que arribin els darrers esdeveniments
       await Future.delayed(const Duration(milliseconds: 100));
-      // Alliberar recursos del microfon
       try {
         _webStream?.getTracks().forEach((t) => t.stop());
       } catch (_) {}
       _webStream = null;
       _webRecorder = null;
     } else {
-      // Aturar la gravació en dispositius mòbils i enviar el darrer fragment
       try {
-        // Enviar l'últim fragment sense reiniciar la gravació
         final Future<void> f = _sendCurrentMobileChunk(restart: false);
         _pendingChunkUploads.add(f);
         await f;
@@ -243,42 +213,29 @@ class _MicScreenState extends State<MicScreen> {
       _recordDuration = Duration.zero;
     });
 
-    // Esperar que es completin totes les càrregues pendents
     try {
       if (_pendingChunkUploads.isNotEmpty) {
         await Future.wait(List<Future<void>>.from(_pendingChunkUploads));
       }
     } catch (_) {}
 
-    // Finalitzar la sessió de transcripció
     await _completeTranscription();
   }
 
-  /// Inicia una nova gravació en un dispositiu mòbil, creant un fitxer
-  /// temporal per emmagatzemar el fragment actual. L'àudio es codifica
-  /// com a MP3 perquè els fragments s'enviïn en aquest format.
   Future<void> _startNewMobileRecording() async {
     final dir = await getTemporaryDirectory();
-    // Guardem els fragments amb extensió .mp3 per indicar l'ús de mp3
-    final filePath = '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.wav';
+    final filePath =
+        '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.wav';
     _currentChunkPath = filePath;
     await _recorder.start(
       path: filePath,
-      // Fem servir l'encoder MP3 si està suportat pel plugin. En cas contrari,
-      // el plugin utilitzarà un format per defecte, però l'arxiu i el
-      // contentType s'indicaran com a MP3 en enviar el fragment.
       encoder: AudioEncoder.wav,
     );
   }
 
-  /// Envia el fragment actual enregistrat en dispositius mòbils. Si
-  /// [restart] és cert, després de l'enviament es torna a iniciar una nova
-  /// gravació. S'actualitzen els indicadors de càrrega i es gestionen
-  /// possibles errors.
   Future<void> _sendCurrentMobileChunk({bool restart = true}) async {
     if (_currentSessionId == null) return;
     try {
-      // Finalitzar la gravació i obtenir el fitxer
       final String? path = await _recorder.stop();
       final String? filePath = path ?? _currentChunkPath;
       if (filePath == null) return;
@@ -292,21 +249,19 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        filename: 'fragment.webm',
-        contentType: 'audio/webm',
+        filename: 'fragment.wav',
+        contentType: 'audio/wav',
       );
 
       await ApiService.uploadTranscriptionChunk(chunkRequest);
       _nextChunkIndex += 1;
 
-      // Esborra el fitxer temporal
       await file.delete().catchError((_) {});
     } catch (e) {
       _hasUploadError = true;
       _showError('Error en enviar l’àudio. Torna-ho a provar.');
     } finally {
       setState(() => _isUploading = false);
-      // Iniciar la següent gravació si cal
       if (restart && _isRecording) {
         try {
           await _startNewMobileRecording();
@@ -315,8 +270,6 @@ class _MicScreenState extends State<MicScreen> {
     }
   }
 
-  /// Llegeix un [html.Blob] com a [Uint8List]. S'utilitza per a la
-  /// gravació al web.
   Future<Uint8List> _readBlobAsUint8List(html.Blob blob) async {
     final reader = html.FileReader();
     final completer = Completer<Uint8List>();
@@ -339,22 +292,20 @@ class _MicScreenState extends State<MicScreen> {
     return completer.future;
   }
 
-  /// Envia un fragment enregistrat al web com a [html.Blob].
   Future<void> _sendWebChunk(html.Blob blob) async {
     if (_currentSessionId == null) return;
     try {
       final Uint8List bytes = await _readBlobAsUint8List(blob);
       setState(() => _isUploading = true);
+
       final chunkRequest = TranscriptionChunkRequest(
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        // Encapsulem l'arxiu com a MP3. Tot i que el MediaRecorder pot
-        // generar un altre format, el backend rebrà el mateix blob amb
-        // extensió i contentType d'MP3.
-        filename: 'fragment.mp3',
-        contentType: 'audio/mpeg',
+        filename: 'fragment.webm',
+        contentType: 'audio/webm',
       );
+
       await ApiService.uploadTranscriptionChunk(chunkRequest);
       _nextChunkIndex += 1;
     } catch (e) {
@@ -365,9 +316,6 @@ class _MicScreenState extends State<MicScreen> {
     }
   }
 
-  /// Completa la sessió actual enviant una petició al backend perquè combini
-  /// tots els fragments i retorni la transcripció. Actualitza l’estat de
-  /// transcripció i mostra un missatge adequat.
   Future<void> _completeTranscription() async {
     final String? sessionId = _currentSessionId;
     if (sessionId == null) return;
@@ -393,7 +341,6 @@ class _MicScreenState extends State<MicScreen> {
       _showError('No s’ha pogut completar la transcripció.');
     } finally {
       setState(() => _isUploading = false);
-      // Reinicialitzar la sessió per a una nova gravació
       _currentSessionId = null;
       _nextChunkIndex = 0;
     }
@@ -415,7 +362,6 @@ class _MicScreenState extends State<MicScreen> {
     super.dispose();
   }
 
-  /// Formata la durada en minuts i segons.
   String _formatDuration(Duration d) {
     final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -427,14 +373,11 @@ class _MicScreenState extends State<MicScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fons amb gradient
           Container(
             decoration: BoxDecoration(
               gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
-
-          // Sistema de partícules decoratives
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -444,25 +387,19 @@ class _MicScreenState extends State<MicScreen> {
             maxOpacity: 0.6,
             minOpacity: 0.2,
           ),
-
-          // Contingut principal
           SafeArea(
             child: Column(
               children: [
-                // Capçalera amb logotip i commutador de tema
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Logotip
                       Image.asset(
                         isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                         width: 40,
                         height: 40,
                       ),
-
-                      // Botó per canviar el tema
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -486,14 +423,12 @@ class _MicScreenState extends State<MicScreen> {
                     ],
                   ),
                 ),
-                // Cos amb pregunta, micròfon i controls
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Pregunta del dia
                         FutureBuilder<Question>(
                           future: _dailyQuestionFuture,
                           builder: (context, snapshot) {
@@ -540,7 +475,6 @@ class _MicScreenState extends State<MicScreen> {
                             );
                           },
                         ),
-                        // Botó de micròfon
                         RawMaterialButton(
                           onPressed: _isRecording ? _stopRecording : _startRecording,
                           fillColor: _isRecording ? Colors.red : Colors.white,
@@ -557,7 +491,6 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
                         const SizedBox(height: 12.0),
-                        // Temporitzador que mostra el temps de gravació
                         Text(
                           _formatDuration(_recordDuration),
                           style: TextStyle(
@@ -567,7 +500,6 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
                         const SizedBox(height: 8.0),
-                        // Indicador de càrrega i vista prèvia de la transcripció
                         if (_isUploading) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -602,7 +534,6 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ],
                         const SizedBox(height: 8.0),
-                        // Barra de progrés amb duració màxima de 60 segons (per exemple)
                         SizedBox(
                           width: 200.0,
                           child: LinearProgressIndicator(
@@ -625,8 +556,10 @@ class _MicScreenState extends State<MicScreen> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
-                            foregroundColor: AppColors.getPrimaryButtonTextColor(isDarkMode),
+                            backgroundColor:
+                                AppColors.getPrimaryButtonColor(isDarkMode),
+                            foregroundColor:
+                                AppColors.getPrimaryButtonTextColor(isDarkMode),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
