@@ -113,7 +113,12 @@ class _MicScreenState extends State<MicScreen> {
       // Fem servir audio/mpeg (MP3) si el navegador ho suporta; en cas contrari,
       // MediaRecorder utilitzarà el format per defecte, però enviarem el
       // contentType com a MP3 al backend.
-      _webRecorder = html.MediaRecorder(_webStream!, {'mimeType': 'audio/mpeg'});
+      _webRecorder = html.MediaRecorder(
+        _webStream!,
+        {
+          'mimeType': 'audio/webm;codecs=opus',
+        },
+      );
 
       // Quan arriba un fragment, s'envia al backend
       _webRecorder!.addEventListener('dataavailable', (event) {
@@ -287,12 +292,8 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        // Enviem com a MP3. Si el plugin genera un altre format, el backend
-        // rebrà igualment el contenidor amb contentType d'MP3.
-        filename: file.uri.pathSegments.isNotEmpty
-            ? file.uri.pathSegments.last
-            : 'fragment.mp3',
-        contentType: 'audio/mpeg',
+        filename: 'fragment.webm',
+        contentType: 'audio/webm',
       );
 
       await ApiService.uploadTranscriptionChunk(chunkRequest);
