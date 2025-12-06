@@ -141,45 +141,76 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: Icon(
-                              Icons.arrow_back,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                      // Left: fixed-size decorated back button
+                      SizedBox(
+                        width: 56,
+                        height: 48,
+                        child: Center(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.getBlurContainerColor(isDarkMode),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.containerShadow,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: Icon(
+                                Icons.arrow_back,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Image.asset(
-                            isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                            width: 36,
-                            height: 36,
-                          ),
-                        ],
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getBlurContainerColor(isDarkMode),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.containerShadow,
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
-                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                      ),
+
+                      // Center: logo
+                      Expanded(
+                        child: Center(
+                          child: Image.asset(
+                            isDarkMode ? TImages.lightLogo : TImages.darkLogo,
+                            height: 40,
+                            width: 140,
+                            fit: BoxFit.contain,
                           ),
-                          onPressed: _toggleTheme,
+                        ),
+                      ),
+
+                      // Right: fixed-size decorated theme toggle
+                      SizedBox(
+                        width: 56,
+                        height: 48,
+                        child: Center(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.getBlurContainerColor(isDarkMode),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.containerShadow,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: Icon(
+                                isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              onPressed: _toggleTheme,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -248,8 +279,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:
-            AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
+        color: AppColors.getSecondaryBackgroundColor(isDarkMode)
+            .withAlpha((0.9 * 255).round()),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -259,7 +290,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
         ],
         border: Border.all(
-          color: AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+          color: AppColors.getPrimaryButtonColor(isDarkMode)
+              .withAlpha((0.2 * 255).round()),
         ),
       ),
       child: Column(
@@ -301,7 +333,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           SizedBox(
             height: 60,
             child: DropdownButtonFormField<String>(
-              value: _selectedType,
+              initialValue: _selectedType,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Tipus d\'activitat',
@@ -367,7 +399,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               });
               _scheduleSearch();
             },
-            activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
+            activeThumbColor: AppColors.getPrimaryButtonColor(isDarkMode),
           ),
           if (_useDifficultyFilter) ...[
             Row(
@@ -384,8 +416,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                      AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha((0.2 * 255).round()),
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(
@@ -400,8 +432,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                      AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha((0.2 * 255).round()),
                 ),
               ],
             ),
