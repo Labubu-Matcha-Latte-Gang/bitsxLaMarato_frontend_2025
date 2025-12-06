@@ -2,14 +2,16 @@
 
 import 'dart:async';
 import 'dart:io' show File;
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:universal_html/universal_html.dart' as html;
 import 'package:uuid/uuid.dart';
+
+import 'web_audio_recorder.dart';
 
 import '../../../models/question_models.dart';
 import '../../../models/transcription_models.dart';
@@ -28,29 +30,37 @@ class MicScreen extends StatefulWidget {
 
 class _MicScreenState extends State<MicScreen> {
   bool isDarkMode = false;
+
+  /// Grabador nativo (móvil / desktop)
   final Record _recorder = Record();
+
+  /// Grabador específico para Web (MediaRecorder + chunks .webm bien formados)
+  WebAudioRecorder? _webRecorder;
+
   bool _isRecording = false;
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
   Timer? _chunkTimer;
 
+  // Ruta temporal del fragment actual en dispositivos móviles
   String? _currentChunkPath;
 
-  // Web recording
-  html.MediaRecorder? _webRecorder;
-  html.MediaStream? _webStream;
-
+  // Estado de carga y transcripción
   bool _isUploading = false;
   String? _transcriptionText;
   bool _hasUploadError = false;
 
+  // Sesión e índice de fragment
   String? _currentSessionId;
   int _nextChunkIndex = 0;
 
+  // Lista de cargas pendientes para esperar antes de finalizar
   final List<Future<void>> _pendingChunkUploads = [];
 
+  // Máximo de segundos por fragment
   static const int _maxChunkSeconds = 15;
 
+  // Pregunta diaria cargada desde la API
   late final Future<Question> _dailyQuestionFuture;
 
   @override
@@ -65,6 +75,7 @@ class _MicScreenState extends State<MicScreen> {
     });
   }
 
+  // Muestra un mensaje de error
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -76,64 +87,30 @@ class _MicScreenState extends State<MicScreen> {
     return await ApiService.getDailyQuestion();
   }
 
+  /// Inicia la grabación. Se genera un nuevo session_id y se configuran los
+  /// temporizadores para enviar fragmentos de voz de 15s al backend.
   Future<void> _startRecording() async {
     if (_isRecording) return;
 
+    // Reinicializa estado de la sesión
     _transcriptionText = null;
     _hasUploadError = false;
     _currentSessionId = const Uuid().v4();
     _nextChunkIndex = 0;
     _pendingChunkUploads.clear();
 
+    // --- WEB: usamos WebAudioRecorder (MediaRecorder + chunks .webm válidos) ---
     if (kIsWeb) {
-      final md = html.window.navigator.mediaDevices;
-      if (md == null) {
-        _showError('No s’ha pogut accedir al micròfon.');
-        return;
-      }
-      try {
-        _webStream = await md.getUserMedia({'audio': true});
-      } catch (e) {
-        _showError('No s’ha pogut accedir al micròfon.');
-        return;
-      }
-
-      // Comprovar que el navegador pot gravar en WebM/Opus
-      if (!html.MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        _showError('El navegador no suporta audio/webm;codecs=opus — canvia navegador.');
-        return;
-      }
-
-      _webRecorder = html.MediaRecorder(
-        _webStream!,
-        {'mimeType': 'audio/webm;codecs=opus'},
+      _webRecorder ??= WebAudioRecorder(
+        chunkMillis: _maxChunkSeconds * 1000,
       );
-
-      _webRecorder!.addEventListener('dataavailable', (event) {
-        try {
-          final dynamic data = (event as dynamic).data;
-          if (data != null && data is html.Blob) {
-            final Future<void> f = _sendWebChunk(data);
-            _pendingChunkUploads.add(f);
-            f.whenComplete(() => _pendingChunkUploads.remove(f));
-          }
-        } catch (_) {}
-      });
-
-      _webRecorder!.addEventListener('stop', (event) {});
-
-      try {
-        _webRecorder!.start(_maxChunkSeconds * 1000);
-      } catch (e) {
-        _showError('No s’ha pogut iniciar la gravació.');
-        return;
-      }
 
       setState(() {
         _isRecording = true;
         _recordDuration = Duration.zero;
       });
 
+      // Temporizador para actualizar la duración visible
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         setState(() {
@@ -141,16 +118,38 @@ class _MicScreenState extends State<MicScreen> {
         });
       });
 
+      try {
+        await _webRecorder!.start((Uint8List bytes) async {
+          // Cada chunk llega como bytes de un .webm válido
+          if (_currentSessionId == null) return;
+
+          final Future<void> f = _sendWebChunk(bytes);
+          _pendingChunkUploads.add(f);
+          try {
+            await f;
+          } finally {
+            _pendingChunkUploads.remove(f);
+          }
+        });
+      } catch (e) {
+        _showError('No s’ha pogut accedir al micròfon.');
+        setState(() {
+          _isRecording = false;
+          _recordDuration = Duration.zero;
+        });
+      }
+
       return;
     }
 
-    // Dispositius mòbils / escriptori
+    // --- MÓVIL / DESKTOP: plugin record ---
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
       _showError('No s’ha pogut accedir al micròfon.');
       return;
     }
 
+    // Iniciar el primer fragment
     try {
       await _startNewMobileRecording();
     } catch (e) {
@@ -163,6 +162,7 @@ class _MicScreenState extends State<MicScreen> {
       _recordDuration = Duration.zero;
     });
 
+    // Temporizador de la UI
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
@@ -170,6 +170,7 @@ class _MicScreenState extends State<MicScreen> {
       });
     });
 
+    // Temporizador para enviar un fragmento cada _maxChunkSeconds
     _chunkTimer?.cancel();
     _chunkTimer = Timer.periodic(
       const Duration(seconds: _maxChunkSeconds),
@@ -181,25 +182,23 @@ class _MicScreenState extends State<MicScreen> {
     );
   }
 
+  /// Detiene la grabación, envía el último fragmento y completa la sesión.
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
 
+    // Cancelar temporizadores
     _timer?.cancel();
     _timer = null;
     _chunkTimer?.cancel();
     _chunkTimer = null;
 
     if (kIsWeb) {
+      // Detener grabación en Web
       try {
-        _webRecorder?.stop();
+        await _webRecorder?.stop();
       } catch (_) {}
-      await Future.delayed(const Duration(milliseconds: 100));
-      try {
-        _webStream?.getTracks().forEach((t) => t.stop());
-      } catch (_) {}
-      _webStream = null;
-      _webRecorder = null;
     } else {
+      // Detener la grabación móvil y enviar el último fragmento
       try {
         final Future<void> f = _sendCurrentMobileChunk(restart: false);
         _pendingChunkUploads.add(f);
@@ -213,28 +212,37 @@ class _MicScreenState extends State<MicScreen> {
       _recordDuration = Duration.zero;
     });
 
+    // Esperar cargas pendientes
     try {
       if (_pendingChunkUploads.isNotEmpty) {
         await Future.wait(List<Future<void>>.from(_pendingChunkUploads));
       }
     } catch (_) {}
 
+    // Finalizar la sesión de transcripción
     await _completeTranscription();
   }
 
+  /// Inicia una nueva grabación (móvil) creando un archivo temporal.
   Future<void> _startNewMobileRecording() async {
     final dir = await getTemporaryDirectory();
     final filePath =
-        '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.wav';
+        '${dir.path}/chunk_${DateTime.now().millisecondsSinceEpoch}.webm';
     _currentChunkPath = filePath;
+
     await _recorder.start(
       path: filePath,
-      encoder: AudioEncoder.wav,
+      encoder: AudioEncoder.opus, // contenedor/webm compatible con Whisper
+      bitRate: 128000,
+      samplingRate: 48000,
     );
   }
 
+  /// Envía el fragmento actual grabado en móvil. Si [restart] es true, arranca
+  /// una nueva grabación inmediatamente.
   Future<void> _sendCurrentMobileChunk({bool restart = true}) async {
     if (_currentSessionId == null) return;
+
     try {
       final String? path = await _recorder.stop();
       final String? filePath = path ?? _currentChunkPath;
@@ -249,8 +257,8 @@ class _MicScreenState extends State<MicScreen> {
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        filename: 'fragment.wav',
-        contentType: 'audio/wav',
+        filename: 'chunk_${_nextChunkIndex}.webm',
+        contentType: 'audio/webm',
       );
 
       await ApiService.uploadTranscriptionChunk(chunkRequest);
@@ -262,6 +270,7 @@ class _MicScreenState extends State<MicScreen> {
       _showError('Error en enviar l’àudio. Torna-ho a provar.');
     } finally {
       setState(() => _isUploading = false);
+
       if (restart && _isRecording) {
         try {
           await _startNewMobileRecording();
@@ -270,39 +279,18 @@ class _MicScreenState extends State<MicScreen> {
     }
   }
 
-  Future<Uint8List> _readBlobAsUint8List(html.Blob blob) async {
-    final reader = html.FileReader();
-    final completer = Completer<Uint8List>();
-
-    reader.onLoadEnd.listen((_) {
-      final result = reader.result;
-      if (result is ByteBuffer) {
-        completer.complete(Uint8List.view(result));
-      } else if (result is List<int>) {
-        completer.complete(Uint8List.fromList(result));
-      } else {
-        completer.completeError('No s’ha pogut llegir el blob');
-      }
-    });
-    reader.onError.listen((event) {
-      completer.completeError(event);
-    });
-
-    reader.readAsArrayBuffer(blob);
-    return completer.future;
-  }
-
-  Future<void> _sendWebChunk(html.Blob blob) async {
+  /// Envía un fragmento grabado en Web ya como bytes de un .webm válido.
+  Future<void> _sendWebChunk(Uint8List bytes) async {
     if (_currentSessionId == null) return;
+
     try {
-      final Uint8List bytes = await _readBlobAsUint8List(blob);
       setState(() => _isUploading = true);
 
       final chunkRequest = TranscriptionChunkRequest(
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
         audioBytes: bytes,
-        filename: 'fragment.webm',
+        filename: 'chunk_${_nextChunkIndex}.webm',
         contentType: 'audio/webm',
       );
 
@@ -316,18 +304,23 @@ class _MicScreenState extends State<MicScreen> {
     }
   }
 
+  /// Completa la sesión actual y obtiene la transcripción.
   Future<void> _completeTranscription() async {
     final String? sessionId = _currentSessionId;
     if (sessionId == null) return;
+
     try {
       setState(() => _isUploading = true);
+
       final response = await ApiService.completeTranscriptionSession(
         TranscriptionCompleteRequest(sessionId: sessionId),
       );
+
       final extracted = response.transcription ?? response.partialText ?? '';
       setState(() {
         _transcriptionText = extracted;
       });
+
       if (extracted.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Transcripció: ${_shortPreview(extracted)}')),
@@ -356,12 +349,11 @@ class _MicScreenState extends State<MicScreen> {
     _timer?.cancel();
     _chunkTimer?.cancel();
     _recorder.dispose();
-    try {
-      _webStream?.getTracks().forEach((t) => t.stop());
-    } catch (_) {}
+    _webRecorder?.dispose();
     super.dispose();
   }
 
+  /// Formatea la duración en mm:ss
   String _formatDuration(Duration d) {
     final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -373,11 +365,14 @@ class _MicScreenState extends State<MicScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Fondo con gradiente
           Container(
             decoration: BoxDecoration(
               gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
+
+          // Sistema de partículas decorativas
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -387,9 +382,12 @@ class _MicScreenState extends State<MicScreen> {
             maxOpacity: 0.6,
             minOpacity: 0.2,
           ),
+
+          // Contenido principal
           SafeArea(
             child: Column(
               children: [
+                // Cabecera con logo y switch de tema
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
@@ -423,12 +421,15 @@ class _MicScreenState extends State<MicScreen> {
                     ],
                   ),
                 ),
+
+                // Cuerpo con pregunta, micrófono y controles
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Pregunta del día
                         FutureBuilder<Question>(
                           future: _dailyQuestionFuture,
                           builder: (context, snapshot) {
@@ -467,16 +468,21 @@ class _MicScreenState extends State<MicScreen> {
                             }
 
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 28.0),
                               child: ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 720),
+                                constraints:
+                                    const BoxConstraints(maxWidth: 720),
                                 child: child,
                               ),
                             );
                           },
                         ),
+
+                        // Botón de micrófono
                         RawMaterialButton(
-                          onPressed: _isRecording ? _stopRecording : _startRecording,
+                          onPressed:
+                              _isRecording ? _stopRecording : _startRecording,
                           fillColor: _isRecording ? Colors.red : Colors.white,
                           shape: const CircleBorder(),
                           elevation: 4.0,
@@ -491,6 +497,8 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
                         const SizedBox(height: 12.0),
+
+                        // Temporizador
                         Text(
                           _formatDuration(_recordDuration),
                           style: TextStyle(
@@ -500,6 +508,8 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
                         const SizedBox(height: 8.0),
+
+                        // Indicador de carga y preview de transcripción
                         if (_isUploading) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -534,10 +544,13 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ],
                         const SizedBox(height: 8.0),
+
+                        // Barra de progreso (ej: 60s máx)
                         SizedBox(
                           width: 200.0,
                           child: LinearProgressIndicator(
-                            value: (_recordDuration.inSeconds / 60).clamp(0.0, 1.0),
+                            value:
+                                (_recordDuration.inSeconds / 60).clamp(0.0, 1.0),
                             backgroundColor: Colors.white.withAlpha(3),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               _isRecording ? Colors.redAccent : Colors.green,
@@ -545,6 +558,7 @@ class _MicScreenState extends State<MicScreen> {
                           ),
                         ),
                         const SizedBox(height: 24.0),
+
                         ElevatedButton.icon(
                           onPressed: () {
                             Navigator.of(context).push(
