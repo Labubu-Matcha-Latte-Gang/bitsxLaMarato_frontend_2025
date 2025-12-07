@@ -30,8 +30,42 @@ class WebAudioRecorder {
       throw Exception('No se pudo acceder al micrófono');
     }
 
-    // 2. Crear el MediaRecorder (dejamos que el navegador elija el mimeType)
-    _recorder = MediaRecorder(_stream!);
+    // 2. Crear el MediaRecorder con formato MP3 preferido
+    // EVITAR WebM completamente - causa fragmentos incompatibles
+    String? selectedMimeType;
+    
+    // Lista de formatos preferidos (NO WebM para evitar fragmentos)
+    final preferredMimeTypes = [
+      'audio/mpeg',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg;codecs=opus'
+    ];
+    
+    // Intentar cada formato hasta encontrar uno compatible
+    for (String mimeType in preferredMimeTypes) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        selectedMimeType = mimeType;
+        print('WebAudioRecorder: Using MIME type: $mimeType');
+        break;
+      }
+    }
+    
+    if (selectedMimeType != null) {
+      try {
+        _recorder = MediaRecorder(_stream!, {'mimeType': selectedMimeType});
+        print('WebAudioRecorder: MediaRecorder created with $selectedMimeType');
+      } catch (e) {
+        // Fallback sin especificar mimeType
+        _recorder = MediaRecorder(_stream!);
+        print('WebAudioRecorder: Fallback MediaRecorder creation (error: $e)');
+      }
+    } else {
+      // Si ningún formato preferido está disponible, usar el predeterminado
+      _recorder = MediaRecorder(_stream!);
+      print('WebAudioRecorder: No preferred format available, using browser default');
+    }
 
     // 3. Escuchar el evento "dataavailable"
     _subscriptions.add(

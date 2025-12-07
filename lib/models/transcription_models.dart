@@ -1,5 +1,11 @@
 import 'dart:convert';
 
+// ESTRATEGIA CORREGIDA DE CHUNKS (preserva silencios para análisis backend):
+// - Web: MediaRecorder genera chunks automáticamente cada 15s
+// - Móvil: Chunks cada 15s con restart inmediato para minimizar gaps
+// - Silencios intermedios se preservan para análisis de pausas/respiración
+// - Archivos grandes se dividen en chunks de 10MB para el upload
+
 class TranscriptionChunkRequest {
   final String sessionId;
   final int chunkIndex;
