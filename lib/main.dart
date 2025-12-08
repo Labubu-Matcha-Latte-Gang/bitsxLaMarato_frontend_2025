@@ -1,4 +1,6 @@
 import 'package:bitsxlamarato_frontend_2025/features/screens/initialPage/initialPage.dart';
+import 'package:bitsxlamarato_frontend_2025/features/screens/register/registerLobby.dart';
+import 'package:bitsxlamarato_frontend_2025/features/screens/login/login.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,6 +20,11 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const InitialPage(),
+      routes: {
+        '/initial': (context) => const InitialPage(),
+        '/register': (context) => const RegisterLobby(),
+        '/login': (context) => const LoginScreen(),
+      }
     );
   }
 }

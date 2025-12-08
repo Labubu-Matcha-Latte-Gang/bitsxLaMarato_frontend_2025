@@ -61,23 +61,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: Icon(
-                              Icons.arrow_back,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Image.asset(
-                            isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                            width: 36,
-                            height: 36,
-                          ),
-                        ],
-                      ),
+                      // Left: back button container
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -92,9 +76,34 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
+                            Icons.arrow_back,
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+
+                      // Center: placeholder to keep spacing for centered logo below
+                      const Expanded(child: SizedBox()),
+
+                      // Right: theme toggle container
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getBlurContainerColor(isDarkMode),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.containerShadow,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
@@ -103,6 +112,29 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // Centered logo under the header (same style as LoginScreen)
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      child: SizedBox(
+                        height: 80,
+                        width: 160,
+                        child: Image.asset(
+                          isDarkMode ? TImages.lightLogo : TImages.darkLogo,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.local_hospital,
+                              size: 48,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
                   Center(
                     child: Column(
                       children: [
@@ -207,7 +239,7 @@ class _ActionCard extends StatelessWidget {
       child: Ink(
         decoration: BoxDecoration(
           color:
-              AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
+              AppColors.getSecondaryBackgroundColor(isDarkMode).withAlpha((0.9 * 255).round()),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -217,7 +249,7 @@ class _ActionCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha((0.2 * 255).round()),
           ),
         ),
         child: Padding(
@@ -228,7 +260,7 @@ class _ActionCard extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withOpacity(0.15),
+                      .withAlpha((0.15 * 255).round()),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

@@ -619,6 +619,106 @@ class ApiService {
     TranscriptionChunkRequest request,
   ) async {
     try {
+      // Use simplified endpoint for WebM files from MediaRecorder  
+      if (request.filename.endsWith('.webm') || request.contentType.contains('webm')) {
+        return await _uploadTranscriptionChunkRaw(request);
+      }
+      
+      // Original implementation for other formats
+      return await _uploadTranscriptionChunkOriginal(request);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<TranscriptionResponse> _uploadTranscriptionChunkRaw(
+    TranscriptionChunkRequest request,
+  ) async {
+    try {
+      // Validación básica del chunk antes del envío
+      if (request.audioBytes.isEmpty) {
+        throw ApiException('Chunk de audio vacío', 400);
+      }
+      
+      // Format-aware size validation - MP4/M4A chunks can be smaller initially
+      int minSize = 100;  // Default for raw endpoint
+      if (request.contentType.contains('webm')) {
+        minSize = 1000; // WebM needs bigger chunks to be valid
+      }
+      
+      if (request.audioBytes.length < minSize) {
+        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
+      }
+
+      final headers = await _authHeaders();
+      headers.remove('Content-Type');
+
+      final multipartRequest = http.MultipartRequest(
+        'POST', 
+        Uri.parse('$_baseUrl/transcription/chunk-raw'), // Use new simplified endpoint
+      );
+      multipartRequest.headers.addAll(headers);
+      multipartRequest.fields['session_id'] = request.sessionId;
+      multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
+      multipartRequest.files.add(
+        http.MultipartFile.fromBytes(
+          'audio_blob',
+          request.audioBytes,
+          filename: request.filename,
+          contentType: MediaType.parse(request.contentType),
+        ),
+      );
+
+      print('DEBUG - Uploading transcription chunk (RAW): session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}');
+
+      final streamedResponse = await _sharedClient.send(multipartRequest);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
+      print('DEBUG - Chunk upload response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData =
+            response.body.isNotEmpty ? json.decode(response.body) : {};
+        return TranscriptionResponse.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut enviar el fragment d\'àudio via raw endpoint.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<TranscriptionResponse> _uploadTranscriptionChunkOriginal(
+    TranscriptionChunkRequest request,
+  ) async {
+    try {
+      // Validación básica del chunk antes del envío
+      if (request.audioBytes.isEmpty) {
+        throw ApiException('Chunk de audio vacío', 400);
+      }
+      
+      // Format-aware size validation - MP4/M4A chunks can be smaller initially
+      int minSize = 1000;  // Default for regular endpoint
+      if (request.contentType.contains('mp4') || request.contentType.contains('mpeg') || request.contentType.contains('m4a')) {
+        minSize = 200; // MP4/MP3 can have smaller header chunks
+      }
+      
+      if (request.audioBytes.length < minSize) {
+        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
+      }
+
       final headers = await _authHeaders();
       headers.remove('Content-Type');
 
@@ -638,8 +738,21 @@ class ApiService {
         ),
       );
 
+      print('DEBUG - Uploading transcription chunk: session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}');
+
       final streamedResponse = await _sharedClient.send(multipartRequest);
       final response = await http.Response.fromStream(streamedResponse);
+
+      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
+      print('DEBUG - Chunk upload response body: ${response.body}');
+      
+      // Log adicional para chunks que fallan
+      if (response.statusCode == 500 && response.body.contains('error inesperat')) {
+        print('CRITICAL - Backend internal error for chunk ${request.chunkIndex}. Possible causes:');
+        print('  - Session state corruption after first chunk');
+        print('  - Audio format incompatibility after restart');
+        print('  - Backend chunking logic error');
+      }
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =
@@ -686,6 +799,44 @@ class ApiService {
         'Error de connexió amb el servidor: ${e.toString()}',
         0,
       );
+    }
+  }
+
+  static Future<TranscriptionResponse> uploadRecordingFromBytes(
+      List<int> bytes, {
+        String filename = 'recording.wav',
+        String contentType = 'audio/wav',
+        int chunkSize = 512 * 1024,
+      }) async {
+    try {
+      final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+      final total = bytes.length;
+      int chunkIndex = 0;
+
+      while(chunkIndex * chunkSize < total) {
+        final start = chunkIndex * chunkSize;
+        final end = (start + chunkSize) > total ? total : (start + chunkSize);
+        final chunkBytes = bytes.sublist(start, end);
+
+        final chunkRequest = TranscriptionChunkRequest(
+          sessionId: sessionId,
+          chunkIndex: chunkIndex,
+          audioBytes: chunkBytes,
+          filename: filename,
+          contentType: contentType,
+        );
+
+        await uploadTranscriptionChunk(chunkRequest);
+        chunkIndex += 1;
+      }
+
+      final completeResponse = await completeTranscriptionSession(
+        TranscriptionCompleteRequest(sessionId: sessionId),
+      );
+      return completeResponse;
+    } catch (e) {
+      if(e is ApiException) rethrow;
+      throw ApiException('Error uploading recording: ${e.toString()}', 0);
     }
   }
 

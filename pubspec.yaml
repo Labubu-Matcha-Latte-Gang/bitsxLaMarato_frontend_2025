@@ -40,6 +40,8 @@ dependencies:
   shared_preferences: ^2.2.2
   record: ^4.4.0
   path_provider: ^2.0.0
+  universal_html: ^2.3.0
+  uuid: ^4.1.0
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +69,8 @@ flutter:
   assets:
     - assets/logos/
     - assets/icons/
+    - lib/features/screens/activities/dictionary/words_sorted.json
+    - lib/features/screens/activities/dictionary/easy_words.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
