@@ -5,6 +5,7 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import 'games/wordle.dart';
 import 'widgets/activity_card.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {
@@ -122,14 +123,31 @@ class _RecommendedActivitiesPageState
                             ),
                           ],
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
-                            color: AppColors.getPrimaryTextColor(isDarkMode),
-                          ),
-                          onPressed: _toggleTheme,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              onPressed: _toggleTheme,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.sports_esports,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              tooltip: 'Jocs',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const WordleScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -144,15 +162,88 @@ class _RecommendedActivitiesPageState
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'Selecció personalitzada per a tu.',
-                    style: TextStyle(
-                      color: AppColors.getSecondaryTextColor(isDarkMode),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+
+                  // Body: loading / error / list
                   Expanded(
-                    child: _buildBody(),
+                    child: Builder(builder: (context) {
+                      if (_isLoading) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Carregant activitats…',
+                                style: TextStyle(
+                                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (_errorMessage != null) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                                size: 40,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadActivities,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                                  foregroundColor: AppColors.getPrimaryButtonTextColor(isDarkMode),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Torna-ho a provar'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (_activities.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No hi ha activitats recomanades en aquest moment.',
+                            style: TextStyle(
+                              color: AppColors.getSecondaryTextColor(isDarkMode),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: _activities.length,
+                        itemBuilder: (context, index) {
+                          return ActivityCard(
+                            activity: _activities[index],
+                            isDarkMode: isDarkMode,
+                          );
+                        },
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -160,87 +251,6 @@ class _RecommendedActivitiesPageState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.getPrimaryButtonColor(isDarkMode),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Carregant activitats recomanades…',
-              style: TextStyle(
-                color: AppColors.getSecondaryTextColor(isDarkMode),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: AppColors.getPrimaryButtonColor(isDarkMode),
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.getSecondaryTextColor(isDarkMode),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadActivities,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
-                foregroundColor:
-                    AppColors.getPrimaryButtonTextColor(isDarkMode),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Torna-ho a provar'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_activities.isEmpty) {
-      return Center(
-        child: Text(
-          'Ara mateix no hi ha activitats recomanades.',
-          style: TextStyle(
-            color: AppColors.getSecondaryTextColor(isDarkMode),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: _activities.length,
-      itemBuilder: (context, index) {
-        return ActivityCard(
-          activity: _activities[index],
-          isDarkMode: isDarkMode,
-        );
-      },
     );
   }
 }

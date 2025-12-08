@@ -314,7 +314,11 @@ class _MicScreenState extends State<MicScreen> {
             _nextChunkIndex += 1;
             
             // Limpiar archivo
-            await file.delete().catchError((e) => print('Error borrando: $e'));
+            try {
+              await file.delete();
+            } catch (e) {
+              print('Error borrando: $e');
+            }
           } else {
             print('WARNING - Chunk muy pequeño: ${bytes.length} bytes');
           }
@@ -436,7 +440,11 @@ class _MicScreenState extends State<MicScreen> {
             }
             
             // Limpiar archivo procesado
-            await file.delete().catchError((e) => print('Error borrando archivo: $e'));
+            try {
+              await file.delete();
+            } catch (e) {
+              print('Error borrando archivo: $e');
+            }
           } else {
             print('WARNING - Archivo no existe: $filePath, reiniciando grabación');
             await _startNewMobileRecording();
@@ -503,7 +511,9 @@ class _MicScreenState extends State<MicScreen> {
     }
     
     // Limpiar archivo temporal
-    await originalFile.delete().catchError((_) {});
+    try {
+      await originalFile.delete();
+    } catch (_) {}
   }
 
   /// Maneja grabaciones extremadamente largas (>60s) dividiendo sin interrumpir
@@ -775,7 +785,7 @@ class _MicScreenState extends State<MicScreen> {
     }
   }
 
-  void _showTranscriptionDialog(String text, TranscriptionCompleteResponse response) {
+  void _showTranscriptionDialog(String text, TranscriptionResponse response) {
     final fullText = (text.isNotEmpty) ? text : 'Sense text transcrit.';
     showDialog(
       context: context,

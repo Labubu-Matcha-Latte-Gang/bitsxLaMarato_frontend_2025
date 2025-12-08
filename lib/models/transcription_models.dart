@@ -82,3 +82,28 @@ class TranscriptionResponse {
     }
   }
 }
+
+// --- New wrapper type used by existing UI code ---
+class TranscriptionCompleteResponse extends TranscriptionResponse {
+  TranscriptionCompleteResponse({
+    required String status,
+    String? transcription,
+    String? partialText,
+    Map<String, dynamic> analysis = const {},
+  }) : super(
+          status: status,
+          transcription: transcription,
+          partialText: partialText,
+          analysis: analysis,
+        );
+
+  factory TranscriptionCompleteResponse.fromJson(Map<String, dynamic> json) {
+    final base = TranscriptionResponse.fromJson(json);
+    return TranscriptionCompleteResponse(
+      status: base.status,
+      transcription: base.transcription,
+      partialText: base.partialText,
+      analysis: base.analysis,
+    );
+  }
+}

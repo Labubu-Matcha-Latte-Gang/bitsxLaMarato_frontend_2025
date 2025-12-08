@@ -77,9 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final userName = response.user?.name ?? 'Usuari';
       final userSurname = response.user?.surname ?? '';
-      _showSuccessDialog(
-        'Sessió iniciada amb èxit!',
-        'Benvingut/da $userName $userSurname'.trim(),
+      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MicScreen(),
+        ),
       );
     } on ApiException catch (e) {
       _showErrorDialog(e.message);

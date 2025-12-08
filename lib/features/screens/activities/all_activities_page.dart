@@ -174,9 +174,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
+                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
