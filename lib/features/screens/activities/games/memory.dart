@@ -20,8 +20,8 @@ class _MemoryGameState extends State<MemoryGame> {
   late bool isDarkMode;
   String _selectedMode = 'Monuments'; // Modalidad actual
 
-  // Lista de rutas de imágenes de las 15 cartas únicas.
-  static const List<String> _cardImages = [
+  // Modalidad: Monuments
+  static const List<String> _monumentsImages = [
     'lib/features/screens/activities/cardsMemory/historic/angkor-wat.png',
     'lib/features/screens/activities/cardsMemory/historic/atenas.png',
     'lib/features/screens/activities/cardsMemory/historic/aztecas.png',
@@ -39,9 +39,42 @@ class _MemoryGameState extends State<MemoryGame> {
     'lib/features/screens/activities/cardsMemory/historic/taj-mahal.png',
   ];
 
-  // Reverso de carta.
-  static const String _cardBack =
-      'lib/features/screens/activities/cardsMemory/historic/reverso.png';
+  // Modalidad: Animals
+  static const List<String> _animalsImages = [
+    'lib/features/screens/activities/cardsMemory/animales/aguila.png',
+    'lib/features/screens/activities/cardsMemory/animales/ballena.png',
+    'lib/features/screens/activities/cardsMemory/animales/cerdo.png',
+    'lib/features/screens/activities/cardsMemory/animales/cuervo.png',
+    'lib/features/screens/activities/cardsMemory/animales/elefante.png',
+    'lib/features/screens/activities/cardsMemory/animales/gallina.png',
+    'lib/features/screens/activities/cardsMemory/animales/iguana.png',
+    'lib/features/screens/activities/cardsMemory/animales/jirafa.png',
+    'lib/features/screens/activities/cardsMemory/animales/leon.png',
+    'lib/features/screens/activities/cardsMemory/animales/loro.png',
+    'lib/features/screens/activities/cardsMemory/animales/panda.png',
+    'lib/features/screens/activities/cardsMemory/animales/pantera.png',
+    'lib/features/screens/activities/cardsMemory/animales/rinoceronte.png',
+    'lib/features/screens/activities/cardsMemory/animales/tiburon.png',
+    'lib/features/screens/activities/cardsMemory/animales/vaca.png',
+  ];
+
+  static const Map<String, List<String>> _modeImages = {
+    'Monuments': _monumentsImages,
+    'Animals': _animalsImages,
+  };
+
+  static const Map<String, String> _modeBacks = {
+    'Monuments':
+        'lib/features/screens/activities/cardsMemory/historic/reverso.png',
+    'Animals':
+        'lib/features/screens/activities/cardsMemory/animales/reverso-animales.png',
+  };
+
+  List<String> get _currentImages =>
+      _modeImages[_selectedMode] ?? _modeImages['Monuments']!;
+
+  String get _currentCardBack =>
+      _modeBacks[_selectedMode] ?? _modeBacks['Monuments']!;
 
   late List<_MemoryCard> _cards;
   _MemoryCard? _firstSelection;
@@ -84,7 +117,7 @@ class _MemoryGameState extends State<MemoryGame> {
 
     // Crear 2 copias de cada imagen y barajar.
     final duplicated = <String>[];
-    for (final img in _cardImages) {
+    for (final img in _currentImages) {
       duplicated
         ..add(img)
         ..add(img);
@@ -136,7 +169,7 @@ class _MemoryGameState extends State<MemoryGame> {
         _resetSelections();
 
         // Si todas las parejas encontradas, parar cronómetro.
-        if (_matchedPairs == _cardImages.length) {
+        if (_matchedPairs == _currentImages.length) {
           _isRunning = false;
         }
       } else {
@@ -394,7 +427,7 @@ class _MemoryGameState extends State<MemoryGame> {
                               final card = _cards[index];
                               return _MemoryCardWidget(
                                 card: card,
-                                cardBack: _cardBack,
+                                cardBack: _currentCardBack,
                                 onTap: () => _onCardTap(card),
                                 isDarkMode: isDarkMode,
                               );
@@ -438,7 +471,7 @@ class _MemoryGameState extends State<MemoryGame> {
         Expanded(
           child: _StatChip(
             label: 'Parelles',
-            value: '$_matchedPairs/${_cardImages.length}',
+            value: '$_matchedPairs/${_currentImages.length}',
             icon: Icons.check_circle_outline,
             isDarkMode: isDarkMode,
           ),
