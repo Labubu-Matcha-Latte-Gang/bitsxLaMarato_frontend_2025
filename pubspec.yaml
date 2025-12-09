@@ -71,6 +71,8 @@ flutter:
     - assets/icons/
     - lib/features/screens/activities/dictionary/words_sorted.json
     - lib/features/screens/activities/dictionary/easy_words.json
+    - lib/features/screens/activities/cardsMemory/historic/
+    - lib/features/screens/activities/cardsMemory/animales/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
