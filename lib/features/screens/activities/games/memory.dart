@@ -18,6 +18,7 @@ class MemoryGame extends StatefulWidget {
 
 class _MemoryGameState extends State<MemoryGame> {
   late bool isDarkMode;
+  String _selectedMode = 'Monuments'; // Modalidad actual
 
   // Lista de rutas de imágenes de las 15 cartas únicas.
   static const List<String> _cardImages = [
@@ -239,14 +240,77 @@ class _MemoryGameState extends State<MemoryGame> {
                           },
                         ),
                       ),
-                      // Título
-                      Text(
-                        'Memory - Monuments',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        ),
+                      // Título y selector de modalidad
+                      Row(
+                        children: [
+                          Text(
+                            'Memory',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.getBlurContainerColor(isDarkMode),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.containerShadow,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedMode,
+                                isDense: true,
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
+                                  size: 20,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                dropdownColor:
+                                    AppColors.getBlurContainerColor(isDarkMode),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Monuments',
+                                    child: Text('Monuments'),
+                                  ),
+                                  // Aquí se pueden agregar más modalidades en el futuro
+                                  // DropdownMenuItem(
+                                  //   value: 'Animals',
+                                  //   child: Text('Animals'),
+                                  // ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedMode = newValue;
+                                      // Aquí se puede reiniciar el juego con la nueva modalidad
+                                      _startNewGame();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       // Botones de acción
                       Row(
