@@ -18,7 +18,7 @@ class MemoryGame extends StatefulWidget {
 
 class _MemoryGameState extends State<MemoryGame> {
   late bool isDarkMode;
-  String _selectedMode = 'Monuments'; // Modalidad actual
+  String _selectedMode = 'Animals'; // Modalidad actual
 
   // Modalidad: Monuments
   static const List<String> _monumentsImages = [
@@ -325,11 +325,10 @@ class _MemoryGameState extends State<MemoryGame> {
                                     value: 'Monuments',
                                     child: Text('Monuments'),
                                   ),
-                                  // Aquí se pueden agregar más modalidades en el futuro
-                                  // DropdownMenuItem(
-                                  //   value: 'Animals',
-                                  //   child: Text('Animals'),
-                                  // ),
+                                  DropdownMenuItem(
+                                    value: 'Animals',
+                                    child: Text('Animals'),
+                                  ),
                                 ],
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
