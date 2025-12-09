@@ -1,8 +1,11 @@
 // lib/features/screens/micro/web_wav_recorder.dart
 import 'dart:async';
 import 'dart:html';
-import 'dart:web_audio' as web_audio;
 import 'dart:typed_data';
+
+// dart:web_audio is only available on web; silence analyzer on non-web builds
+// ignore: uri_does_not_exist
+import 'dart:web_audio' as web_audio;
 
 /// Simple WAV recorder for Flutter Web using AudioContext + ScriptProcessor.
 /// Produces self-contained WAV chunks of fixed duration (chunkMillis).
