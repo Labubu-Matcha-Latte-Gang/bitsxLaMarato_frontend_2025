@@ -158,17 +158,23 @@ class _MemoryGameState extends State<MemoryGame> {
   }
 
   void _updateScore({required bool isMatch}) {
-    // Puntuación basada en eficiencia: recompensa matches, penaliza movimientos.
-    // Fórmula sencilla y transparente.
-    if (isMatch) {
-      _score += 150; // bonus por encontrar pareja
-      // Bono pequeño por velocidad: menos tiempo => más puntos
-      _score += max(0, 50 - (_elapsedSeconds ~/ 5));
+    // Puntuación sobre 10 basada en eficiencia de movimientos.
+    // Movimientos óptimos = 15 (número de parejas).
+    // Fórmula: 10 - (movimientos - 15) * penalización, con mínimo de 0.
+    const int optimalMoves = 15;
+    const double penaltyPerExtraMove = 0.3;
+
+    if (_moves >= optimalMoves) {
+      final extraMoves = _moves - optimalMoves;
+      _score = max(0, (10 - (extraMoves * penaltyPerExtraMove) * 10).round());
     } else {
-      _score = max(0, _score - 30); // penalización por fallo
+      _score = 100; // 10.0 en escala de 100 para mantener int
     }
-    // Penalización ligera por movimiento extra para incentivar memoria
-    _score = max(0, _score - (_moves ~/ 5));
+  }
+
+  // Obtener puntuación final sobre 10 para enviar al backend
+  double getFinalScore() {
+    return _score / 10.0;
   }
 
   String _formatTime(int seconds) {
@@ -345,31 +351,33 @@ class _MemoryGameState extends State<MemoryGame> {
 
   Widget _buildStatsRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _StatChip(
-          label: 'Temps',
-          value: _formatTime(_elapsedSeconds),
-          icon: Icons.timer,
-          isDarkMode: isDarkMode,
+        Expanded(
+          child: _StatChip(
+            label: 'Temps',
+            value: _formatTime(_elapsedSeconds),
+            icon: Icons.timer,
+            isDarkMode: isDarkMode,
+          ),
         ),
-        _StatChip(
-          label: 'Moviments',
-          value: _moves.toString(),
-          icon: Icons.touch_app,
-          isDarkMode: isDarkMode,
+        const SizedBox(width: 8),
+        Expanded(
+          child: _StatChip(
+            label: 'Moviments',
+            value: _moves.toString(),
+            icon: Icons.touch_app,
+            isDarkMode: isDarkMode,
+          ),
         ),
-        _StatChip(
-          label: 'Puntuació',
-          value: _score.toString(),
-          icon: Icons.star,
-          isDarkMode: isDarkMode,
-        ),
-        _StatChip(
-          label: 'Parelles',
-          value: '$_matchedPairs/${_cardImages.length}',
-          icon: Icons.check_circle_outline,
-          isDarkMode: isDarkMode,
+        const SizedBox(width: 8),
+        Expanded(
+          child: _StatChip(
+            label: 'Parelles',
+            value: '$_matchedPairs/${_cardImages.length}',
+            icon: Icons.check_circle_outline,
+            isDarkMode: isDarkMode,
+          ),
         ),
       ],
     );
