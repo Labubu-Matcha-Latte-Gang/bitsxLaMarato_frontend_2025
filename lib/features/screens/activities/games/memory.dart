@@ -351,21 +351,25 @@ class _MemoryGameState extends State<MemoryGame> {
           label: 'Temps',
           value: _formatTime(_elapsedSeconds),
           icon: Icons.timer,
+          isDarkMode: isDarkMode,
         ),
         _StatChip(
           label: 'Moviments',
           value: _moves.toString(),
           icon: Icons.touch_app,
+          isDarkMode: isDarkMode,
         ),
         _StatChip(
           label: 'Puntuació',
           value: _score.toString(),
           icon: Icons.star,
+          isDarkMode: isDarkMode,
         ),
         _StatChip(
           label: 'Parelles',
           value: '$_matchedPairs/${_cardImages.length}',
           icon: Icons.check_circle_outline,
+          isDarkMode: isDarkMode,
         ),
       ],
     );
@@ -376,11 +380,13 @@ class _StatChip extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
+  final bool isDarkMode;
 
   const _StatChip({
     required this.label,
     required this.value,
     required this.icon,
+    required this.isDarkMode,
   });
 
   @override
@@ -388,18 +394,42 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: AppColors.getBlurContainerColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.containerShadow,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18),
+          Icon(
+            icon,
+            size: 18,
+            color: AppColors.getPrimaryTextColor(isDarkMode),
+          ),
           const SizedBox(width: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: Theme.of(context).textTheme.labelSmall),
-              Text(value, style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                ),
+              ),
             ],
           ),
         ],
@@ -412,11 +442,13 @@ class _MemoryCardWidget extends StatelessWidget {
   final _MemoryCard card;
   final String cardBack;
   final VoidCallback onTap;
+  final bool isDarkMode;
 
   const _MemoryCardWidget({
     required this.card,
     required this.cardBack,
     required this.onTap,
+    required this.isDarkMode,
   });
 
   @override
@@ -427,11 +459,14 @@ class _MemoryCardWidget extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-                color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+              color: AppColors.containerShadow,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
           ],
-          color: Colors.white,
+          color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
