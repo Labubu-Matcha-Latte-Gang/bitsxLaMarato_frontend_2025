@@ -35,6 +35,15 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
   List<String>? _easyWords;
+  List<String>? _medWords;
+  List<String>? _hardWords;
+
+  // Gameplay stats
+  int invalidWordCount = 0; // times user entered a non-existing word
+  int incorrectGuessCount = 0; // valid guesses that were not correct
+
+  // Difficulty (0.0 .. 5.0 in 0.5 increments)
+  double difficulty = 2.0;
 
   double difficulty = 2.0;
 
@@ -86,6 +95,22 @@ class _WordleScreenState extends State<WordleScreen>
       } catch (_) {
         _easyWords = null;
       }
+      // Try loading medium words
+      try {
+        final rawMed = await rootBundle.loadString('lib/features/screens/activities/dictionary/med_words.json');
+        final List<dynamic> arr3 = jsonDecode(rawMed) as List<dynamic>;
+        _medWords = arr3.map((e) => e.toString().toUpperCase()).toList();
+      } catch (_) {
+        _medWords = null;
+      }
+      // Try loading hard words
+      try {
+        final rawHard = await rootBundle.loadString('lib/features/screens/activities/dictionary/hard_words.json');
+        final List<dynamic> arr4 = jsonDecode(rawHard) as List<dynamic>;
+        _hardWords = arr4.map((e) => e.toString().toUpperCase()).toList();
+      } catch (_) {
+        _hardWords = null;
+      }
       // print('Loaded dictionary with ${words.length} words');
     } catch (e) {
       // ignore failures — dictionary remains null
@@ -95,14 +120,38 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   void _startNewGame() {
-    // Choose secret exclusively from easy_words.json if available.
-    // If easy_words.json is missing or empty, fall back to a fixed default.
-    if (_easyWords != null && _easyWords!.isNotEmpty) {
+    // Reset stats
+    invalidWordCount = 0;
+    incorrectGuessCount = 0;
+
+    // Choose secret depending on selected difficulty:
+    // difficulty <= 1.5 -> easy; 2.0..3.5 -> medium; >4.0 -> hard
+    List<String>? pool;
+    if (difficulty <= 1.5) {
+      pool = _easyWords;
+    } else if (difficulty >= 2.0 && difficulty <= 3.5) {
+      pool = _medWords;
+    } else if (difficulty > 4.0) {
+      pool = _hardWords;
+    } else {
+      // For values like 1.75, 1.5..2.0 gap, or exactly 4.0, fall back to the general dictionary
+      // or medium if available; prefer med for higher difficulty near 4.0.
+      pool = _dictionary ?? _easyWords;
+    }
+
+    if (pool != null && pool.isNotEmpty) {
+      final copy = List<String>.from(pool);
+      copy.shuffle();
+      secretWord = copy.first.toUpperCase();
+      // Ensure the validation set matches the chosen difficulty pool when possible
+      _dictionarySet = copy.map((w) => w.toUpperCase()).toSet();
+    } else if (_easyWords != null && _easyWords!.isNotEmpty) {
+      // Fallback to easy words if the chosen pool isn't available
       final copy = List<String>.from(_easyWords!);
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
     } else {
-      // Default secret when easy_words isn't available
+      // Default secret when none available
       secretWord = 'APPLE';
     }
     guesses = [];
@@ -162,8 +211,15 @@ class _WordleScreenState extends State<WordleScreen>
       if (!_isValidWord(guess)) {
         // Count invalid / non-existing word attempts
         invalidWordCount++;
+<<<<<<< Updated upstream
         // Provide immediate feedback by shaking the current row
         _triggerInvalidWordFeedback();
+=======
+        // Provide immediate feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No és una paraula vàlida')),
+        );
+>>>>>>> Stashed changes
         return;
       }
     }
@@ -191,14 +247,26 @@ class _WordleScreenState extends State<WordleScreen>
       }
     }
 
+    // If guess was valid but incorrect, count it
+    if (guess != secretWord) {
+      incorrectGuessCount++;
+    }
+
     setState(() {
       guesses = List.from(guesses)..add(guess);
       currentGuess = '';
     });
 
     if (guess == secretWord) {
+<<<<<<< Updated upstream
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
+=======
+      // Show central results dialog
+      _showResultDialog(won: true);
+    } else if (guesses.length >= rows) {
+      // Show central results dialog for loss
+>>>>>>> Stashed changes
       _showResultDialog(won: false);
     }
   }
@@ -259,6 +327,7 @@ class _WordleScreenState extends State<WordleScreen>
     return _dictionarySet!.contains(word);
   }
 
+<<<<<<< Updated upstream
   void _triggerInvalidWordFeedback() {
     try {
       _shakeController.forward(from: 0.0);
@@ -273,6 +342,52 @@ class _WordleScreenState extends State<WordleScreen>
 
   // Centered results dialog showing statistics and an Accept button that returns
   // the user to the Recommended Activities page.
+=======
+  // Show difficulty selector dialog
+  Future<void> _showDifficultyDialog() async {
+    double temp = difficulty;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Selecciona la dificultat'),
+          content: StatefulBuilder(builder: (ctx, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Dificultat: ${temp.toStringAsFixed(1)}'),
+                Slider(
+                  value: temp,
+                  min: 0.0,
+                  max: 5.0,
+                  divisions: 10,
+                  label: temp.toStringAsFixed(1),
+                  onChanged: (v) => setState(() => temp = v),
+                ),
+                const SizedBox(height: 8),
+                Text('0.0 = més fàcil, 5.0 = més difícil'),
+              ],
+            );
+          }),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Keep default and start
+                difficulty = temp;
+                Navigator.of(context).pop();
+                _startNewGame();
+              },
+              child: const Text('Acceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show central result dialog with stats and accept button that returns to recommended page
+>>>>>>> Stashed changes
   void _showResultDialog({required bool won}) {
     showDialog<void>(
       context: context,
@@ -299,12 +414,28 @@ class _WordleScreenState extends State<WordleScreen>
           actions: [
             TextButton(
               onPressed: () {
+<<<<<<< Updated upstream
                 Navigator.of(context).pop(); // close dialog
                 // Navigate back to Recommended Activities page
+=======
+                // Close dialog and navigate to RecommendedActivitiesPage explicitly
+                Navigator.of(context).pop(); // close dialog
+>>>>>>> Stashed changes
                 Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RecommendedActivitiesPage(initialDarkMode: isDark)));
               },
               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
             ),
+<<<<<<< Updated upstream
+=======
+            TextButton(
+              onPressed: () {
+                // Start a new game without leaving
+                Navigator.of(context).pop();
+                _showDifficultyDialog();
+              },
+              child: Text('Jugar una altra vegada', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
+            ),
+>>>>>>> Stashed changes
           ],
         );
       },
@@ -330,6 +461,7 @@ class _WordleScreenState extends State<WordleScreen>
 
             return SizedBox(
               height: tileSize,
+<<<<<<< Updated upstream
               child: AnimatedBuilder(
                 animation: _shakeController,
                 builder: (context, child) {
@@ -349,6 +481,17 @@ class _WordleScreenState extends State<WordleScreen>
                         : (isCurrent && c < currentGuess.length)
                             ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
                             : AppColors.getSecondaryBackgroundColor(isDark);
+=======
+              child: Row(
+                children: List.generate(cols, (c) {
+                  final ch = c < rowGuess.length ? rowGuess[c] : '';
+                  final state = (r < guesses.length) ? states[c] : LetterState.initial;
+                  final bgColor = (r < guesses.length)
+                      ? _colorForState(state)
+                      : (isCurrent && c < currentGuess.length)
+                          ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
+                          : AppColors.getSecondaryBackgroundColor(isDark);
+>>>>>>> Stashed changes
 
                     final fgColor = (r < guesses.length)
                         ? ((state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))
@@ -388,6 +531,7 @@ class _WordleScreenState extends State<WordleScreen>
         body: Stack(
           children: [
             Positioned.fill(
+<<<<<<< Updated upstream
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.getBackgroundGradient(isDark),
@@ -397,6 +541,10 @@ class _WordleScreenState extends State<WordleScreen>
             Positioned.fill(
               // Match the particle theme used in Login / Activities pages for visual consistency
               child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: 0.6, minOpacity: 0.2, particleColor: AppColors.getParticleColor(isDark)),
+=======
+              // Match the particle theme used in Login / Activities pages for visual consistency
+              child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: isDark ? 0.6 : 0.6, minOpacity: isDark ? 0.2 : 0.2),
+>>>>>>> Stashed changes
             ),
             SafeArea(
               child: Column(
