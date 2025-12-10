@@ -18,6 +18,9 @@ class QRGeneratePage extends StatefulWidget {
 class _QRGeneratePageState extends State<QRGeneratePage> {
   late bool isDarkMode;
   bool _showQR = false;
+  String? _qrCodeUrl;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -31,13 +34,57 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
     });
   }
 
-  void _generateQR() {
+  Future<void> _generateQR() async {
     setState(() {
-      _showQR = true;
+      _isLoading = true;
+      _errorMessage = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('QR generat correctament')),
-    );
+
+    try {
+      final response = await QRApiService.generateQRCode();
+
+      if (response['success'] == true) {
+        setState(() {
+          _showQR = true;
+          _qrCodeUrl = response['qr_code'];
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('QR generat correctament')),
+          );
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = response['error'] ?? 'Error al generar el QR';
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${_errorMessage}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
