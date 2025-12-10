@@ -75,8 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      final userName = response.user?.name ?? 'Usuari';
-      final userSurname = response.user?.surname ?? '';
       Navigator.of(context).pop();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -115,47 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'D\'acord',
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog(String title, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            title,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-          ),
-          content: Text(
-            message,
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-            ),
-          ),
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const MicScreen(),
-                  ),
-                );
-              },
               child: Text(
                 'D\'acord',
                 style: TextStyle(

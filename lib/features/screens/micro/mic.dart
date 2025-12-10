@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:io' show File;
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -11,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 
-import 'web_wav_recorder.dart';
+import 'web_audio_recorder.dart';
 
 import '../../../models/question_models.dart';
 import '../../../models/transcription_models.dart';
@@ -34,8 +33,8 @@ class _MicScreenState extends State<MicScreen> {
   /// Grabador nativo (móvil / desktop)
   final Record _recorder = Record();
 
-  /// Grabador específico para Web (WAV chunks auto-contenidos)
-  WebWavRecorder? _webRecorder;
+  /// Grabador específico para Web (chunks .webm/MP3 comprimidos)
+  WebAudioRecorder? _webRecorder;
 
   bool _isRecording = false;
   Duration _recordDuration = Duration.zero;
@@ -118,7 +117,7 @@ class _MicScreenState extends State<MicScreen> {
     // --- WEB: usamos WebAudioRecorder (MediaRecorder + chunks .webm válidos) ---
     if (kIsWeb) {
       // Use larger chunkMillis on web to produce fewer, longer chunks
-      _webRecorder ??= WebWavRecorder(
+      _webRecorder ??= WebAudioRecorder(
         // Use 2000–3000ms chunks to satisfy minimum duration and reduce overhead
         chunkMillis: (_maxChunkSeconds + 1) * 1000,
       );

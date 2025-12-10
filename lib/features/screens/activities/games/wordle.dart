@@ -246,7 +246,6 @@ class _WordleScreenState extends State<WordleScreen>
       case LetterState.absent:
         return isDark ? Colors.grey.shade800 : Colors.grey.shade400;
       case LetterState.initial:
-      default:
         return AppColors.getFieldBackgroundColor(isDark);
     }
   }
