@@ -405,11 +405,11 @@ class _MemoryGameState extends State<MemoryGame> {
                 // Stats y grid
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
                         _buildStatsRow(),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Expanded(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
