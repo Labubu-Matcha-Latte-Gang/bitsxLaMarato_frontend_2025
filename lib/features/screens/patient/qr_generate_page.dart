@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../services/qr_api_service.dart';
 
 class QRGeneratePage extends StatefulWidget {
   final bool initialDarkMode;
