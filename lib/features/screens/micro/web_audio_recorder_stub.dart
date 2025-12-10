@@ -17,4 +17,6 @@ class WebAudioRecorder {
   void dispose() {}
 
   bool get isRecording => false;
+
+  Future<bool> ensurePermission() async => false;
 }
