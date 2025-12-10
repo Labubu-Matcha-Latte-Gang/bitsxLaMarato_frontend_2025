@@ -160,7 +160,8 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const WordleScreen(),
+                                builder: (_) =>
+                                    WordleScreen(isDarkMode: isDarkMode),
                               ),
                             );
                           },
@@ -173,7 +174,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    const MemoryGame(isDarkMode: false),
+                                    MemoryGame(isDarkMode: isDarkMode),
                               ),
                             );
                           },
