@@ -281,4 +281,50 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       ),
     );
   }
+
+  Widget _buildGameCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppColors.getBlurContainerColor(isDarkMode),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.containerShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
