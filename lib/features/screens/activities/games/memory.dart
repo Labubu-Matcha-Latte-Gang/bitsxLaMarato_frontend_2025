@@ -576,7 +576,7 @@ class _MemoryCardWidget extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(
               color: AppColors.containerShadow,
@@ -587,7 +587,7 @@ class _MemoryCardWidget extends StatelessWidget {
           color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           child: card.isFaceUp || card.isMatched
               ? Image.asset(card.imagePath, fit: BoxFit.cover)
               : Image.asset(cardBack, fit: BoxFit.cover),
