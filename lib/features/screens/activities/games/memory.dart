@@ -414,15 +414,15 @@ class _MemoryGameState extends State<MemoryGame> {
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               // Calcular aspect ratio ajustado para cartas más anchas
-                              // Aspect ratio típico de cartas de juego es ~0.7 (ancho/alto)
+                              // Aspect ratio más alto = cartas más anchas y bajas
                               final availableHeight = constraints.maxHeight;
                               final availableWidth = constraints.maxWidth;
 
-                              // Calcular basándose en un aspect ratio fijo de carta (0.65)
-                              // que hace las cartas un poco más anchas
+                              // Calcular basándose en un aspect ratio fijo de carta (0.72)
+                              // que hace las cartas más anchas y menos altas
                               final cardWidth = (availableWidth - (4 * 8)) / 5;
                               final cardHeight = cardWidth /
-                                  0.65; // Aspect ratio de carta más ancha
+                                  0.72; // Aspect ratio de carta más ancha
 
                               // Verificar que cabe en altura
                               final totalHeight = (cardHeight * 6) + (5 * 8);
@@ -431,7 +431,7 @@ class _MemoryGameState extends State<MemoryGame> {
                                       ? (availableWidth - (4 * 8)) /
                                           5 /
                                           ((availableHeight - (5 * 8)) / 6)
-                                      : 0.65;
+                                      : 0.72;
 
                               return GridView.builder(
                                 physics: const NeverScrollableScrollPhysics(),
