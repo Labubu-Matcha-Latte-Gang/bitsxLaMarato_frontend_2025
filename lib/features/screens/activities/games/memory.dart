@@ -273,76 +273,14 @@ class _MemoryGameState extends State<MemoryGame> {
                           },
                         ),
                       ),
-                      // Título y selector de modalidad
-                      Row(
-                        children: [
-                          Text(
-                            'Memory',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppColors.getBlurContainerColor(isDarkMode),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.containerShadow,
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedMode,
-                                isDense: true,
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color:
-                                      AppColors.getPrimaryTextColor(isDarkMode),
-                                  size: 20,
-                                ),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      AppColors.getPrimaryTextColor(isDarkMode),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                dropdownColor:
-                                    AppColors.getBlurContainerColor(isDarkMode),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Monuments',
-                                    child: Text('Monuments'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Animals',
-                                    child: Text('Animals'),
-                                  ),
-                                ],
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setState(() {
-                                      _selectedMode = newValue;
-                                      // Aquí se puede reiniciar el juego con la nueva modalidad
-                                      _startNewGame();
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
+                      // Título
+                      Text(
+                        'Memory',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
                       ),
                       // Botones de acción
                       Row(
@@ -454,6 +392,66 @@ class _MemoryGameState extends State<MemoryGame> {
                                 },
                               );
                             },
+                          ),
+                        ),
+                        // Selector de modalidad debajo de las cartas
+                        Center(
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppColors.getBlurContainerColor(isDarkMode),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.containerShadow,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedMode,
+                                isDense: true,
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
+                                  size: 20,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                dropdownColor:
+                                    AppColors.getBlurContainerColor(isDarkMode),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Monuments',
+                                    child: Text('Monuments'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Animals',
+                                    child: Text('Animals'),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedMode = newValue;
+                                      _startNewGame();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ],
