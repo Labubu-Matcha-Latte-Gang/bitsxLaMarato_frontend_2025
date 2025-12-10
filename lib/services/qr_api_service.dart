@@ -1,9 +1,11 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config.dart';
 import 'session_manager.dart';
 
 class QRApiService {
-  static const String _baseUrl = 'http://localhost:8000/api/v1';
+  // Usa la misma URL base que el resto de servicios (configurable por API_URL)
+  static final String _baseUrl = '${Config.apiUrl}/api/v1';
 
   /// Obtiene el código QR del informe médico del paciente
   ///
@@ -51,6 +53,7 @@ class QRApiService {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
@@ -74,7 +77,8 @@ class QRApiService {
         throw Exception(
             'Error inesperado del servidor al generar el código QR.');
       } else {
-        throw Exception('Error desconocido: ${response.statusCode}');
+        throw Exception(
+            'Error ${response.statusCode}: ${response.reasonPhrase}\n${response.body}');
       }
     } catch (e) {
       return {
