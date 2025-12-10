@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:bitsxlamarato_frontend_2025/features/screens/activities/activities_page.dart';
+import 'package:bitsxlamarato_frontend_2025/features/screens/patient/patient_menu_page.dart';
 import 'package:bitsxlamarato_frontend_2025/features/screens/activities/widgets/activity_card.dart';
 import 'package:bitsxlamarato_frontend_2025/models/activity_models.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,9 @@ class _FakeAssetBundle extends CachingAssetBundle {
 
   Map<String, List<String>> get _manifestJson => const {
         'assets/logos/logo-text-blau.png': ['assets/logos/logo-text-blau.png'],
-        'assets/logos/logo-text-blanc.png': ['assets/logos/logo-text-blanc.png'],
+        'assets/logos/logo-text-blanc.png': [
+          'assets/logos/logo-text-blanc.png'
+        ],
         'assets/logos/logo-blau.png': ['assets/logos/logo-blau.png'],
         'assets/logos/logo-blanc.png': ['assets/logos/logo-blanc.png'],
       };
@@ -83,7 +85,8 @@ Widget _wrapWithApp(Widget child) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('ActivityCard mostra tipus i dificultat i amaga ID', (tester) async {
+  testWidgets('ActivityCard mostra tipus i dificultat i amaga ID',
+      (tester) async {
     final activity = Activity(
       id: 'secret-id',
       title: 'Prova',

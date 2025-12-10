@@ -3,22 +3,23 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
-import 'all_activities_page.dart';
-import 'recommended_activities_page.dart';
+import '../activities/all_activities_page.dart';
+import '../activities/recommended_activities_page.dart';
+import 'qr_generate_page.dart';
 
-class ActivitiesPage extends StatefulWidget {
+class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
 
-  const ActivitiesPage({
+  const PatientMenuPage({
     super.key,
     this.initialDarkMode = false,
   });
 
   @override
-  State<ActivitiesPage> createState() => _ActivitiesPageState();
+  State<PatientMenuPage> createState() => _PatientMenuPageState();
 }
 
-class _ActivitiesPageState extends State<ActivitiesPage> {
+class _PatientMenuPageState extends State<PatientMenuPage> {
   late bool isDarkMode;
 
   @override
@@ -103,7 +104,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
@@ -139,7 +142,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     child: Column(
                       children: [
                         Text(
-                          'Activitats',
+                          'Menú Principal',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -149,7 +152,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Explora activitats recomanades o consulta tot el catàleg.',
+                          'Accedeix a les teves activitats i opcions.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.getSecondaryTextColor(isDarkMode),
@@ -167,38 +170,64 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                           constraints: const BoxConstraints(maxWidth: 700),
                           child: Column(
                             children: [
-                              _ActionCard(
-                                title: 'Activitats recomanades',
-                                description:
-                                    'Descobreix les activitats pensades per a tu segons el teu progrés.',
-                                icon: Icons.auto_awesome,
+                              _CardContainer(
                                 isDarkMode: isDarkMode,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => RecommendedActivitiesPage(
-                                        initialDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Activitats recomanades',
+                                  description:
+                                      'Descobreix les activitats pensades per a tu segons el teu progrés.',
+                                  icon: Icons.auto_awesome,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => RecommendedActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
                               const SizedBox(height: 16),
-                              _ActionCard(
-                                title: 'Totes les activitats',
-                                description:
-                                    'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
-                                icon: Icons.view_list_outlined,
+                              _CardContainer(
                                 isDarkMode: isDarkMode,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => AllActivitiesPage(
-                                        initialDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Totes les activitats',
+                                  description:
+                                      'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
+                                  icon: Icons.view_list_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'QR per Informe Mèdic',
+                                  description:
+                                      'Genera un codi QR per accedir als teus informes mèdics.',
+                                  icon: Icons.qr_code_2,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => QRGeneratePage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ],
                           ),
@@ -235,41 +264,74 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
+      splashColor: AppColors.getPrimaryButtonColor(isDarkMode)
+          .withAlpha((0.2 * 255).round()),
+      highlightColor: AppColors.getPrimaryButtonColor(isDarkMode)
+          .withAlpha((0.1 * 255).round()),
       child: Ink(
         decoration: BoxDecoration(
-          color:
-              AppColors.getSecondaryBackgroundColor(isDarkMode).withAlpha((0.9 * 255).round()),
-          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.getSecondaryBackgroundColor(isDarkMode)
+                  .withAlpha((0.95 * 255).round()),
+              AppColors.getSecondaryBackgroundColor(isDarkMode)
+                  .withAlpha((0.85 * 255).round()),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.containerShadow,
-              blurRadius: 10,
+              color: AppColors.containerShadow.withAlpha((0.5 * 255).round()),
+              blurRadius: 12,
               offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha((0.08 * 255).round()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
           border: Border.all(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha((0.2 * 255).round()),
+            color: AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.15 * 255).round()),
+            width: 1.5,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha((0.15 * 255).round()),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha((0.25 * 255).round()),
+                      AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha((0.15 * 255).round()),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha((0.3 * 255).round()),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   icon,
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  size: 28,
+                  size: 32,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,25 +342,69 @@ class _ActionCard extends StatelessWidget {
                         color: AppColors.getPrimaryTextColor(isDarkMode),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       description,
                       style: TextStyle(
                         color: AppColors.getSecondaryTextColor(isDarkMode),
-                        fontSize: 14,
-                        height: 1.4,
+                        fontSize: 13,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                size: 24,
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CardContainer extends StatelessWidget {
+  final bool isDarkMode;
+  final Widget child;
+
+  const _CardContainer({
+    required this.isDarkMode,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode)
+            .withAlpha((0.6 * 255).round()),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.getPrimaryButtonColor(isDarkMode)
+              .withAlpha((0.25 * 255).round()),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.containerShadow.withAlpha((0.3 * 255).round()),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
