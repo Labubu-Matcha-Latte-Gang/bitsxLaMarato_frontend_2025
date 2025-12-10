@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/qr_api_service.dart';
@@ -84,6 +85,74 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
           ),
         );
       }
+    }
+  }
+
+  /// Construye la imagen del QR soportando data URIs
+  Widget _buildQRImage(String qrDataUri, bool isDarkMode) {
+    try {
+      // Extraer el formato y datos de la URI
+      if (qrDataUri.startsWith('data:image/')) {
+        // Encontrar la coma que separa header de datos
+        final commaIndex = qrDataUri.indexOf(',');
+        if (commaIndex != -1) {
+          final data = qrDataUri.substring(commaIndex + 1);
+
+          // Decodificar base64
+          final decodedBytes = base64Decode(data);
+
+          // Mostrar usando Image.memory
+          return Image.memory(
+            decodedBytes,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error al decodificar QR: $error');
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error, color: Colors.red, size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Error al cargar QR',
+                      style: TextStyle(
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+      }
+
+      // Si no es data URI, intentar como URL normal
+      return Image.network(
+        qrDataUri,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ Error al cargar imagen de red: $error');
+          return Center(
+            child: Text(
+              'Error al cargar QR',
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      print('❌ Error en _buildQRImage: $e');
+      return Center(
+        child: Text(
+          'Error: $e',
+          style: TextStyle(
+            color: AppColors.getPrimaryTextColor(isDarkMode),
+          ),
+        ),
+      );
     }
   }
 
@@ -262,23 +331,8 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                         ),
                                         child: Padding(
                                           padding: const EdgeInsets.all(8.0),
-                                          child: Image.network(
-                                            _qrCodeUrl!,
-                                            fit: BoxFit.contain,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Center(
-                                                child: Text(
-                                                  'Error al cargar QR',
-                                                  style: TextStyle(
-                                                    color: AppColors
-                                                        .getPrimaryTextColor(
-                                                            isDarkMode),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
+                                          child: _buildQRImage(
+                                              _qrCodeUrl!, isDarkMode),
                                         ),
                                       )
                                     else
