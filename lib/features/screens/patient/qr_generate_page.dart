@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
 
@@ -174,10 +173,28 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                 child: Column(
                                   children: [
                                     if (_showQR)
-                                      QrImage(
-                                        data: _qrData,
-                                        version: QrVersions.auto,
-                                        size: 200,
+                                      Container(
+                                        width: 200,
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          color: AppColors
+                                              .getBlurContainerColor(isDarkMode),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: AppColors
+                                                .getPrimaryTextColor(isDarkMode),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.qr_code_2,
+                                            size: 100,
+                                            color: AppColors
+                                                .getPrimaryTextColor(isDarkMode),
+                                          ),
+                                        ),
                                       )
                                     else
                                       Container(
