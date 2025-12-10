@@ -156,7 +156,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                         _buildGameCard(
                           context: context,
                           title: 'Wordle',
-                          icon: Icons.abc,
+                          icon: Icons.grid_3x3,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -168,7 +168,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                         _buildGameCard(
                           context: context,
                           title: 'Memory',
-                          icon: Icons.casino,
+                          icon: Icons.style,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
