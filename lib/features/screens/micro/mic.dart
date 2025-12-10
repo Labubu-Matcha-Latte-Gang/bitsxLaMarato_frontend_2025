@@ -77,6 +77,7 @@ class _MicScreenState extends State<MicScreen> {
 
   // Pregunta diaria cargada desde la API
   late final Future<Question> _dailyQuestionFuture;
+  Question? _currentDailyQuestion;
 
   @override
   void initState() {
@@ -99,7 +100,9 @@ class _MicScreenState extends State<MicScreen> {
   }
 
   Future<Question> _getDailyQuestion() async {
-    return await ApiService.getDailyQuestion();
+    final question = await ApiService.getDailyQuestion();
+    _currentDailyQuestion = question;
+    return question;
   }
 
   /// Inicia la grabación. Se genera un nuevo session_id y se configuran los
@@ -834,12 +837,20 @@ class _MicScreenState extends State<MicScreen> {
   Future<void> _completeTranscription() async {
     final String? sessionId = _currentSessionId;
     if (sessionId == null) return;
+    final questionId = _currentDailyQuestion?.id;
+    if (questionId == null || questionId.isEmpty) {
+      _showError('Encara no s\'ha carregat la pregunta diaria. Torna-ho a provar.');
+      return;
+    }
 
     try {
       setState(() => _isUploading = true);
 
       final response = await ApiService.completeTranscriptionSession(
-        TranscriptionCompleteRequest(sessionId: sessionId),
+        TranscriptionCompleteRequest(
+          sessionId: sessionId,
+          questionId: questionId,
+        ),
       );
 
       final extracted = response.transcription ?? response.partialText ?? '';

@@ -24,12 +24,17 @@ class TranscriptionChunkRequest {
 
 class TranscriptionCompleteRequest {
   final String sessionId;
+  final String questionId;
 
-  TranscriptionCompleteRequest({required this.sessionId});
+  TranscriptionCompleteRequest({
+    required this.sessionId,
+    required this.questionId,
+  });
 
   Map<String, dynamic> toJson() {
     return {
       'session_id': sessionId,
+      'question_id': questionId,
     };
   }
 }
