@@ -123,35 +123,14 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                isDarkMode
-                                    ? Icons.wb_sunny
-                                    : Icons.nightlight_round,
-                                color:
-                                    AppColors.getPrimaryTextColor(isDarkMode),
-                              ),
-                              onPressed: _toggleTheme,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.sports_esports,
-                                color:
-                                    AppColors.getPrimaryTextColor(isDarkMode),
-                              ),
-                              tooltip: 'Jocs',
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const WordleScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
+                        child: IconButton(
+                          icon: Icon(
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                          ),
+                          onPressed: _toggleTheme,
                         ),
                       ),
                     ],
@@ -193,7 +172,8 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const MemoryGame(isDarkMode: false),
+                                builder: (_) =>
+                                    const MemoryGame(isDarkMode: false),
                               ),
                             );
                           },
