@@ -413,16 +413,25 @@ class _MemoryGameState extends State<MemoryGame> {
                         Expanded(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              // Calcular aspect ratio basado en espacio disponible
+                              // Calcular aspect ratio ajustado para cartas más anchas
+                              // Aspect ratio típico de cartas de juego es ~0.7 (ancho/alto)
                               final availableHeight = constraints.maxHeight;
                               final availableWidth = constraints.maxWidth;
 
-                              // 6 filas con spacing
-                              final cardHeight = (availableHeight - (5 * 8)) /
-                                  6; // 5 spacings de 8px
-                              final cardWidth = (availableWidth - (4 * 8)) /
-                                  5; // 4 spacings de 8px
-                              final aspectRatio = cardWidth / cardHeight;
+                              // Calcular basándose en un aspect ratio fijo de carta (0.65)
+                              // que hace las cartas un poco más anchas
+                              final cardWidth = (availableWidth - (4 * 8)) / 5;
+                              final cardHeight = cardWidth /
+                                  0.65; // Aspect ratio de carta más ancha
+
+                              // Verificar que cabe en altura
+                              final totalHeight = (cardHeight * 6) + (5 * 8);
+                              final finalAspectRatio =
+                                  totalHeight > availableHeight
+                                      ? (availableWidth - (4 * 8)) /
+                                          5 /
+                                          ((availableHeight - (5 * 8)) / 6)
+                                      : 0.65;
 
                               return GridView.builder(
                                 physics: const NeverScrollableScrollPhysics(),
@@ -431,7 +440,7 @@ class _MemoryGameState extends State<MemoryGame> {
                                   crossAxisCount: 5,
                                   mainAxisSpacing: 8,
                                   crossAxisSpacing: 8,
-                                  childAspectRatio: aspectRatio,
+                                  childAspectRatio: finalAspectRatio,
                                 ),
                                 itemCount: _cards.length,
                                 itemBuilder: (context, index) {
