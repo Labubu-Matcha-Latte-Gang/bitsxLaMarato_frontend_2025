@@ -6,19 +6,19 @@ import '../../../utils/effects/particle_system.dart';
 import 'all_activities_page.dart';
 import 'recommended_activities_page.dart';
 
-class ActivitiesPage extends StatefulWidget {
+class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
 
-  const ActivitiesPage({
+  const PatientMenuPage({
     super.key,
     this.initialDarkMode = false,
   });
 
   @override
-  State<ActivitiesPage> createState() => _ActivitiesPageState();
+  State<PatientMenuPage> createState() => _PatientMenuPageState();
 }
 
-class _ActivitiesPageState extends State<ActivitiesPage> {
+class _PatientMenuPageState extends State<PatientMenuPage> {
   late bool isDarkMode;
 
   @override
@@ -103,7 +103,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
@@ -139,7 +141,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     child: Column(
                       children: [
                         Text(
-                          'Activitats',
+                          'Menú Principal',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -149,7 +151,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Explora activitats recomanades o consulta tot el catàleg.',
+                          'Accedeix a les teves activitats i opcions.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.getSecondaryTextColor(isDarkMode),
@@ -238,8 +240,8 @@ class _ActionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Ink(
         decoration: BoxDecoration(
-          color:
-              AppColors.getSecondaryBackgroundColor(isDarkMode).withAlpha((0.9 * 255).round()),
+          color: AppColors.getSecondaryBackgroundColor(isDarkMode)
+              .withAlpha((0.9 * 255).round()),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -249,7 +251,8 @@ class _ActionCard extends StatelessWidget {
             ),
           ],
           border: Border.all(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha((0.2 * 255).round()),
+            color: AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.2 * 255).round()),
           ),
         ),
         child: Padding(
