@@ -210,44 +210,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                       }
 
                       if (_errorMessage != null) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color:
-                                    AppColors.getPrimaryButtonColor(isDarkMode),
-                                size: 40,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                _errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: AppColors.getSecondaryTextColor(
-                                      isDarkMode),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _loadActivities,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppColors.getPrimaryButtonColor(
-                                          isDarkMode),
-                                  foregroundColor:
-                                      AppColors.getPrimaryButtonTextColor(
-                                          isDarkMode),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text('Torna-ho a provar'),
-                              ),
-                            ],
-                          ),
-                        );
+                        return const SizedBox.shrink();
                       }
 
                       if (_activities.isEmpty) {
