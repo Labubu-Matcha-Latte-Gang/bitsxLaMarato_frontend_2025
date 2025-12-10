@@ -173,30 +173,55 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                 ),
                                 child: Column(
                                   children: [
-                                    Container(
-                                      width: 200,
-                                      height: 200,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.getBlurContainerColor(
-                                            isDarkMode),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
+                                    if (_showQR)
+                                      QrImage(
+                                        data: _qrData,
+                                        version: QrVersions.auto,
+                                        size: 200.0,
+                                        backgroundColor:
+                                            AppColors.getBlurContainerColor(
+                                                isDarkMode),
+                                        eyeStyle: QrEyeStyle(
+                                          eyeShape: QrEyeShape.square,
                                           color: AppColors.getPrimaryTextColor(
-                                                  isDarkMode)
-                                              .withOpacity(0.2),
-                                          width: 2,
+                                              isDarkMode),
+                                        ),
+                                        dataModuleStyle: QrDataModuleStyle(
+                                          dataModuleShape:
+                                              QrDataModuleShape.square,
+                                          color: AppColors.getPrimaryTextColor(
+                                              isDarkMode),
+                                        ),
+                                      )
+                                    else
+                                      Container(
+                                        width: 200,
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppColors.getBlurContainerColor(
+                                                  isDarkMode),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                        isDarkMode)
+                                                    .withOpacity(0.2),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.qr_code_2,
+                                            size: 100,
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                        isDarkMode)
+                                                    .withOpacity(0.5),
+                                          ),
                                         ),
                                       ),
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.qr_code_2,
-                                          size: 100,
-                                          color: AppColors.getPrimaryTextColor(
-                                                  isDarkMode)
-                                              .withOpacity(0.5),
-                                        ),
-                                      ),
-                                    ),
                                     const SizedBox(height: 24),
                                     Text(
                                       'Codi QR per a informe mèdic',
