@@ -804,6 +804,7 @@ class ApiService {
 
   static Future<TranscriptionResponse> uploadRecordingFromBytes(
       List<int> bytes, {
+        required String questionId,
         String filename = 'recording.wav',
         String contentType = 'audio/wav',
         int chunkSize = 512 * 1024,
@@ -831,7 +832,10 @@ class ApiService {
       }
 
       final completeResponse = await completeTranscriptionSession(
-        TranscriptionCompleteRequest(sessionId: sessionId),
+        TranscriptionCompleteRequest(
+          sessionId: sessionId,
+          questionId: questionId,
+        ),
       );
       return completeResponse;
     } catch (e) {

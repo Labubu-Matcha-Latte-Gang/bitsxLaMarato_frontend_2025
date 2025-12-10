@@ -245,6 +245,123 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
   }
 }
 
+/// Simplified activities landing page kept for backwards compatibility with older flows/tests.
+class ActivitiesPage extends StatelessWidget {
+  final bool initialDarkMode;
+
+  const ActivitiesPage({
+    super.key,
+    this.initialDarkMode = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final bool isDarkMode =
+        brightness == Brightness.dark ? true : initialDarkMode;
+
+    return Scaffold(
+      backgroundColor: AppColors.getBackgroundColor(isDarkMode),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Explora les activitats',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Escull entre les activitats recomanades per a tu o consulta tot el catàleg disponible.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.getSecondaryTextColor(isDarkMode),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  _ActivitiesPageButton(
+                    label: 'Activitats recomanades',
+                    icon: Icons.auto_awesome,
+                    isDarkMode: isDarkMode,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => RecommendedActivitiesPage(
+                            initialDarkMode: isDarkMode,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _ActivitiesPageButton(
+                    label: 'Totes les activitats',
+                    icon: Icons.view_list_outlined,
+                    isDarkMode: isDarkMode,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AllActivitiesPage(
+                            initialDarkMode: isDarkMode,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivitiesPageButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isDarkMode;
+  final VoidCallback onPressed;
+
+  const _ActivitiesPageButton({
+    required this.label,
+    required this.icon,
+    required this.isDarkMode,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+        foregroundColor: AppColors.getPrimaryTextColor(isDarkMode),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      icon: Icon(icon, size: 24),
+      label: Text(label),
+      onPressed: onPressed,
+    );
+  }
+}
+
 class _ActionCard extends StatelessWidget {
   final String title;
   final String description;
