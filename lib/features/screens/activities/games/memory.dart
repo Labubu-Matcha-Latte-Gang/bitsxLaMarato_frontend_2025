@@ -397,60 +397,86 @@ class _MemoryGameState extends State<MemoryGame> {
                         // Selector de modalidad debajo de las cartas
                         Center(
                           child: Container(
-                            margin: const EdgeInsets.only(top: 12),
+                            margin: const EdgeInsets.only(top: 16),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                              horizontal: 24,
+                              vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color:
+                              gradient: LinearGradient(
+                                colors: [
                                   AppColors.getBlurContainerColor(isDarkMode),
-                              borderRadius: BorderRadius.circular(20),
+                                  AppColors.getBlurContainerColor(isDarkMode)
+                                      .withOpacity(0.8),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.getPrimaryTextColor(isDarkMode)
+                                    .withOpacity(0.1),
+                                width: 1,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppColors.containerShadow,
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedMode,
-                                isDense: true,
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.category,
                                   color:
                                       AppColors.getPrimaryTextColor(isDarkMode),
                                   size: 20,
                                 ),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      AppColors.getPrimaryTextColor(isDarkMode),
-                                  fontWeight: FontWeight.w600,
+                                const SizedBox(width: 12),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedMode,
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: AppColors.getPrimaryTextColor(
+                                          isDarkMode),
+                                      size: 24,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.getPrimaryTextColor(
+                                          isDarkMode),
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    dropdownColor:
+                                        AppColors.getBlurContainerColor(
+                                            isDarkMode),
+                                    borderRadius: BorderRadius.circular(12),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'Monuments',
+                                        child: Text('Monuments'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'Animals',
+                                        child: Text('Animals'),
+                                      ),
+                                    ],
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          _selectedMode = newValue;
+                                          _startNewGame();
+                                        });
+                                      }
+                                    },
+                                  ),
                                 ),
-                                dropdownColor:
-                                    AppColors.getBlurContainerColor(isDarkMode),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Monuments',
-                                    child: Text('Monuments'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Animals',
-                                    child: Text('Animals'),
-                                  ),
-                                ],
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setState(() {
-                                      _selectedMode = newValue;
-                                      _startNewGame();
-                                    });
-                                  }
-                                },
-                              ),
+                              ],
                             ),
                           ),
                         ),
