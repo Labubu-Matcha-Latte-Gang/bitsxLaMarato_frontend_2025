@@ -26,8 +26,6 @@ class QRApiService {
         throw Exception('Token no disponible. Por favor inicia sesión.');
       }
 
-      print('🔐 QR API Token: ${token.substring(0, 20)}...');
-
       final payload = <String, dynamic>{
         'timezone': timezone,
         'format': format,
@@ -39,9 +37,6 @@ class QRApiService {
       if (timestamp != null) payload['timestamp'] = timestamp;
       if (license != null) payload['license'] = license;
 
-      print('📤 QR API Request: POST $_baseUrl/qr');
-      print('📦 Payload: ${jsonEncode(payload)}');
-
       final response = await http.post(
         Uri.parse('$_baseUrl/qr'),
         headers: {
@@ -51,9 +46,6 @@ class QRApiService {
         },
         body: jsonEncode(payload),
       );
-
-      print('📥 Response Status: ${response.statusCode}');
-      print('📄 Response Body: ${response.body.substring(0, 200)}...');
 
       if (response.statusCode == 200) {
         // El backend devuelve PNG o SVG como binary/string
@@ -70,31 +62,23 @@ class QRApiService {
           qrDataUri = 'data:image/svg+xml;base64,$base64Svg';
         }
 
-        print('✅ QR Code generado exitosamente');
-        print('🖼️ Format: $format, Data URI length: ${qrDataUri.length}');
-
         return {
           'success': true,
           'qr_code': qrDataUri,
         };
       } else if (response.statusCode == 401) {
-        print('❌ 401 Unauthorized: Token inválido o expirado');
         throw Exception(
             'Token JWT inválido o expirado. Inicia sesión de nuevo.');
       } else if (response.statusCode == 403) {
-        print('❌ 403 Forbidden: Falta permiso');
         throw Exception(
             'No tienes permisos para generar QR. Contacta con soporte.');
       } else if (response.statusCode == 422) {
-        print('❌ 422 Unprocessable Entity: Datos inválidos');
         throw Exception(
             'El código de la solicitud no ha superado la validación.');
       } else if (response.statusCode == 500) {
-        print('❌ 500 Server Error');
         throw Exception(
             'Error inesperado del servidor al generar el código QR.');
       } else {
-        print('❌ Error ${response.statusCode}: ${response.reasonPhrase}');
         throw Exception(
             'Error ${response.statusCode}: ${response.reasonPhrase}\n${response.body}');
       }

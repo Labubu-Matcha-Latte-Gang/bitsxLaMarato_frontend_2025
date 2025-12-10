@@ -106,7 +106,6 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
             decodedBytes,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
-              print('❌ Error al decodificar QR: $error');
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +131,6 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
         qrDataUri,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
-          print('❌ Error al cargar imagen de red: $error');
           return Center(
             child: Text(
               'Error al cargar QR',
@@ -144,7 +142,6 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
         },
       );
     } catch (e) {
-      print('❌ Error en _buildQRImage: $e');
       return Center(
         child: Text(
           'Error: $e',
