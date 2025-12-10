@@ -14,6 +14,20 @@ class WebAudioRecorder {
 
   WebAudioRecorder({required this.chunkMillis});
 
+  /// Demana permís d'accés al micròfon sense iniciar una sessió de gravació.
+  Future<bool> ensurePermission() async {
+    final mediaDevices = window.navigator.mediaDevices;
+    if (mediaDevices == null) return false;
+
+    try {
+      final tempStream = await mediaDevices.getUserMedia({'audio': true});
+      tempStream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Empieza a grabar y va llamando a [onChunk] con cada fragmento (.webm).
   /// El callback puede ser async.
   Future<void> start(Future<void> Function(Uint8List bytes) onChunk) async {
