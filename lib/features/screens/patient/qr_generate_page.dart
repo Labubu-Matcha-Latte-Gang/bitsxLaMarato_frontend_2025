@@ -217,7 +217,33 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                 ),
                                 child: Column(
                                   children: [
-                                    if (_showQR)
+                                    if (_isLoading)
+                                      Container(
+                                        width: 200,
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppColors.getBlurContainerColor(
+                                                  isDarkMode),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                        isDarkMode)
+                                                    .withOpacity(0.2),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color:
+                                                AppColors.getPrimaryButtonColor(
+                                                    isDarkMode),
+                                          ),
+                                        ),
+                                      )
+                                    else if (_showQR && _qrCodeUrl != null)
                                       Container(
                                         width: 200,
                                         height: 200,
@@ -234,13 +260,24 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                             width: 2,
                                           ),
                                         ),
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.qr_code_2,
-                                            size: 100,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                    isDarkMode),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Image.network(
+                                            _qrCodeUrl!,
+                                            fit: BoxFit.contain,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Center(
+                                                child: Text(
+                                                  'Error al cargar QR',
+                                                  style: TextStyle(
+                                                    color: AppColors
+                                                        .getPrimaryTextColor(
+                                                            isDarkMode),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ),
                                       )
