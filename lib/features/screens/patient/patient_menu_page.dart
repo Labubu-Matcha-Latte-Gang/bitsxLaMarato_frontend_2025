@@ -170,55 +170,64 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                           constraints: const BoxConstraints(maxWidth: 700),
                           child: Column(
                             children: [
-                              _ActionCard(
-                                title: 'Activitats recomanades',
-                                description:
-                                    'Descobreix les activitats pensades per a tu segons el teu progrés.',
-                                icon: Icons.auto_awesome,
+                              _CardContainer(
                                 isDarkMode: isDarkMode,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => RecommendedActivitiesPage(
-                                        initialDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Activitats recomanades',
+                                  description:
+                                      'Descobreix les activitats pensades per a tu segons el teu progrés.',
+                                  icon: Icons.auto_awesome,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => RecommendedActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
                               const SizedBox(height: 16),
-                              _ActionCard(
-                                title: 'Totes les activitats',
-                                description:
-                                    'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
-                                icon: Icons.view_list_outlined,
+                              _CardContainer(
                                 isDarkMode: isDarkMode,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => AllActivitiesPage(
-                                        initialDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Totes les activitats',
+                                  description:
+                                      'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
+                                  icon: Icons.view_list_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
                               const SizedBox(height: 16),
-                              _ActionCard(
-                                title: 'QR per Informe Mèdic',
-                                description:
-                                    'Genera un codi QR per accedir als teus informes mèdics.',
-                                icon: Icons.qr_code_2,
+                              _CardContainer(
                                 isDarkMode: isDarkMode,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => QRGeneratePage(
-                                        initialDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'QR per Informe Mèdic',
+                                  description:
+                                      'Genera un codi QR per accedir als teus informes mèdics.',
+                                  icon: Icons.qr_code_2,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => QRGeneratePage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
                             ],
                           ),
@@ -361,6 +370,41 @@ class _ActionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CardContainer extends StatelessWidget {
+  final bool isDarkMode;
+  final Widget child;
+
+  const _CardContainer({
+    required this.isDarkMode,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode)
+            .withAlpha((0.6 * 255).round()),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.getPrimaryButtonColor(isDarkMode)
+              .withAlpha((0.25 * 255).round()),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.containerShadow.withAlpha((0.3 * 255).round()),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
