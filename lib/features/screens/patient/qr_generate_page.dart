@@ -336,7 +336,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                               ),
                               const SizedBox(height: 32),
                               ElevatedButton.icon(
-                                onPressed: _generateQR,
+                                onPressed: _isLoading ? null : _generateQR,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                       AppColors.getPrimaryButtonColor(
@@ -352,10 +352,23 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                icon: const Icon(Icons.qr_code),
-                                label: const Text(
-                                  'Generar QR',
-                                  style: TextStyle(
+                                icon: _isLoading
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            AppColors.getPrimaryButtonTextColor(
+                                                isDarkMode),
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.qr_code),
+                                label: Text(
+                                  _isLoading ? 'Generant...' : 'Generar QR',
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
