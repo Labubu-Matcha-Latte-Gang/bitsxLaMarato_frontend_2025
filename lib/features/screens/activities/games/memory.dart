@@ -405,30 +405,44 @@ class _MemoryGameState extends State<MemoryGame> {
                 // Stats y grid
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Column(
                       children: [
                         _buildStatsRow(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Expanded(
-                          child: GridView.builder(
-                            physics: const BouncingScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                                  5, // 5 columnas x 6 filas = 30 cartas
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 0.72,
-                            ),
-                            itemCount: _cards.length,
-                            itemBuilder: (context, index) {
-                              final card = _cards[index];
-                              return _MemoryCardWidget(
-                                card: card,
-                                cardBack: _currentCardBack,
-                                onTap: () => _onCardTap(card),
-                                isDarkMode: isDarkMode,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Calcular aspect ratio basado en espacio disponible
+                              final availableHeight = constraints.maxHeight;
+                              final availableWidth = constraints.maxWidth;
+
+                              // 6 filas con spacing
+                              final cardHeight = (availableHeight - (5 * 8)) /
+                                  6; // 5 spacings de 8px
+                              final cardWidth = (availableWidth - (4 * 8)) /
+                                  5; // 4 spacings de 8px
+                              final aspectRatio = cardWidth / cardHeight;
+
+                              return GridView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 5,
+                                  mainAxisSpacing: 8,
+                                  crossAxisSpacing: 8,
+                                  childAspectRatio: aspectRatio,
+                                ),
+                                itemCount: _cards.length,
+                                itemBuilder: (context, index) {
+                                  final card = _cards[index];
+                                  return _MemoryCardWidget(
+                                    card: card,
+                                    cardBack: _currentCardBack,
+                                    onTap: () => _onCardTap(card),
+                                    isDarkMode: isDarkMode,
+                                  );
+                                },
                               );
                             },
                           ),
