@@ -255,42 +255,74 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
+      splashColor: AppColors.getPrimaryButtonColor(isDarkMode)
+          .withAlpha((0.2 * 255).round()),
+      highlightColor: AppColors.getPrimaryButtonColor(isDarkMode)
+          .withAlpha((0.1 * 255).round()),
       child: Ink(
         decoration: BoxDecoration(
-          color: AppColors.getSecondaryBackgroundColor(isDarkMode)
-              .withAlpha((0.9 * 255).round()),
-          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.getSecondaryBackgroundColor(isDarkMode)
+                  .withAlpha((0.95 * 255).round()),
+              AppColors.getSecondaryBackgroundColor(isDarkMode)
+                  .withAlpha((0.85 * 255).round()),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.containerShadow,
-              blurRadius: 10,
+              color: AppColors.containerShadow.withAlpha((0.5 * 255).round()),
+              blurRadius: 12,
               offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha((0.08 * 255).round()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
           border: Border.all(
             color: AppColors.getPrimaryButtonColor(isDarkMode)
-                .withAlpha((0.2 * 255).round()),
+                .withAlpha((0.15 * 255).round()),
+            width: 1.5,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha((0.15 * 255).round()),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha((0.25 * 255).round()),
+                      AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha((0.15 * 255).round()),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha((0.3 * 255).round()),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   icon,
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  size: 28,
+                  size: 32,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,21 +333,30 @@ class _ActionCard extends StatelessWidget {
                         color: AppColors.getPrimaryTextColor(isDarkMode),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       description,
                       style: TextStyle(
                         color: AppColors.getSecondaryTextColor(isDarkMode),
-                        fontSize: 14,
-                        height: 1.4,
+                        fontSize: 13,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                size: 24,
+              ),
             ],
           ),
         ),
