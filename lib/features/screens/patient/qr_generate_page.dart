@@ -16,7 +16,6 @@ class QRGeneratePage extends StatefulWidget {
 
 class _QRGeneratePageState extends State<QRGeneratePage> {
   late bool isDarkMode;
-  String _qrData = "https://example.com/report/12345";
   bool _showQR = false;
 
   @override
@@ -34,8 +33,6 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   void _generateQR() {
     setState(() {
       _showQR = true;
-      _qrData =
-          "https://medical-report.com/patient/${DateTime.now().millisecondsSinceEpoch}";
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('QR generat correctament')),
