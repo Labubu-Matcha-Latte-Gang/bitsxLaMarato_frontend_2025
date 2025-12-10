@@ -543,15 +543,39 @@ class _MicScreenState extends State<MicScreen> {
 
     try {
       // Detectar formato del chunk basado en los primeros bytes
-      String detectedFormat = 'wav'; // default for new web recorder
+      String detectedFormat = 'wav'; // default fallback
       String contentType = 'audio/wav';
 
       print(
           'DEBUG - *** NUEVA VERSIÓN CON BUFFERING ACTIVA *** chunk size: ${bytes.length}');
 
       if (bytes.length > 4) {
+        // Detectar WAV (header: RIFF....WAVE)
+        if (bytes.length > 12 &&
+            bytes[0] == 0x52 && // R
+            bytes[1] == 0x49 && // I
+            bytes[2] == 0x46 && // F
+            bytes[3] == 0x46 && // F
+            bytes[8] == 0x57 && // W
+            bytes[9] == 0x41 && // A
+            bytes[10] == 0x56 && // V
+            bytes[11] == 0x45) {
+          // E
+          detectedFormat = 'wav';
+          contentType = 'audio/wav';
+          print('🎵 DEBUG - WAV format detected');
+        }
+        // Detectar WebM/Matroska (EBML header 1A 45 DF A3)
+        else if (bytes[0] == 0x1A &&
+            bytes[1] == 0x45 &&
+            bytes[2] == 0xDF &&
+            bytes[3] == 0xA3) {
+          detectedFormat = 'webm';
+          contentType = 'audio/webm';
+          print('🎵 DEBUG - WEBM format detected');
+        }
         // Detectar MP3 (headers: 0xFF 0xFB, 0xFF 0xFA, o "ID3")
-        if ((bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0) ||
+        else if ((bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0) ||
             (bytes.length > 3 &&
                 bytes[0] == 0x49 &&
                 bytes[1] == 0x44 &&
