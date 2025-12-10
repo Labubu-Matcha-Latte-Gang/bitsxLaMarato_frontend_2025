@@ -19,7 +19,7 @@ import '../../../services/api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
-import '../activities/activities_page.dart';
+import '../patient/patient_menu_page.dart';
 
 class MicScreen extends StatefulWidget {
   const MicScreen({super.key});

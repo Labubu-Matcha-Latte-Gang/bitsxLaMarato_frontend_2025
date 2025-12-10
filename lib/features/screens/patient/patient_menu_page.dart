@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
-import 'all_activities_page.dart';
-import 'recommended_activities_page.dart';
+import '../activities/all_activities_page.dart';
+import '../activities/recommended_activities_page.dart';
 
 class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
