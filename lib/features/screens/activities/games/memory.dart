@@ -273,76 +273,14 @@ class _MemoryGameState extends State<MemoryGame> {
                           },
                         ),
                       ),
-                      // Título y selector de modalidad
-                      Row(
-                        children: [
-                          Text(
-                            'Memory',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  AppColors.getBlurContainerColor(isDarkMode),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.containerShadow,
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedMode,
-                                isDense: true,
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color:
-                                      AppColors.getPrimaryTextColor(isDarkMode),
-                                  size: 20,
-                                ),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      AppColors.getPrimaryTextColor(isDarkMode),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                dropdownColor:
-                                    AppColors.getBlurContainerColor(isDarkMode),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Monuments',
-                                    child: Text('Monuments'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Animals',
-                                    child: Text('Animals'),
-                                  ),
-                                ],
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) {
-                                    setState(() {
-                                      _selectedMode = newValue;
-                                      // Aquí se puede reiniciar el juego con la nueva modalidad
-                                      _startNewGame();
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
+                      // Título
+                      Text(
+                        'Memory',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
                       ),
                       // Botones de acción
                       Row(
@@ -411,26 +349,135 @@ class _MemoryGameState extends State<MemoryGame> {
                         _buildStatsRow(),
                         const SizedBox(height: 12),
                         Expanded(
-                          child: GridView.builder(
-                            physics: const BouncingScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                                  5, // 5 columnas x 6 filas = 30 cartas
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 0.72,
-                            ),
-                            itemCount: _cards.length,
-                            itemBuilder: (context, index) {
-                              final card = _cards[index];
-                              return _MemoryCardWidget(
-                                card: card,
-                                cardBack: _currentCardBack,
-                                onTap: () => _onCardTap(card),
-                                isDarkMode: isDarkMode,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Calcular aspect ratio ajustado para cartas más anchas
+                              // Aspect ratio más alto = cartas más anchas y bajas
+                              final availableHeight = constraints.maxHeight;
+                              final availableWidth = constraints.maxWidth;
+
+                              // Calcular basándose en un aspect ratio fijo de carta (0.72)
+                              // que hace las cartas más anchas y menos altas
+                              final cardWidth = (availableWidth - (4 * 8)) / 5;
+                              final cardHeight = cardWidth /
+                                  0.72; // Aspect ratio de carta más ancha
+
+                              // Verificar que cabe en altura
+                              final totalHeight = (cardHeight * 6) + (5 * 8);
+                              final finalAspectRatio =
+                                  totalHeight > availableHeight
+                                      ? (availableWidth - (4 * 8)) /
+                                          5 /
+                                          ((availableHeight - (5 * 8)) / 6)
+                                      : 0.72;
+
+                              return GridView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 5,
+                                  mainAxisSpacing: 8,
+                                  crossAxisSpacing: 8,
+                                  childAspectRatio: finalAspectRatio,
+                                ),
+                                itemCount: _cards.length,
+                                itemBuilder: (context, index) {
+                                  final card = _cards[index];
+                                  return _MemoryCardWidget(
+                                    card: card,
+                                    cardBack: _currentCardBack,
+                                    onTap: () => _onCardTap(card),
+                                    isDarkMode: isDarkMode,
+                                  );
+                                },
                               );
                             },
+                          ),
+                        ),
+                        // Selector de modalidad debajo de las cartas
+                        Center(
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.getBlurContainerColor(isDarkMode),
+                                  AppColors.getBlurContainerColor(isDarkMode)
+                                      .withOpacity(0.8),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.getPrimaryTextColor(isDarkMode)
+                                    .withOpacity(0.1),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.containerShadow,
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.category,
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedMode,
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: AppColors.getPrimaryTextColor(
+                                          isDarkMode),
+                                      size: 24,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.getPrimaryTextColor(
+                                          isDarkMode),
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    dropdownColor:
+                                        AppColors.getBlurContainerColor(
+                                            isDarkMode),
+                                    borderRadius: BorderRadius.circular(12),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'Monuments',
+                                        child: Text('Monuments'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'Animals',
+                                        child: Text('Animals'),
+                                      ),
+                                    ],
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          _selectedMode = newValue;
+                                          _startNewGame();
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -562,7 +609,7 @@ class _MemoryCardWidget extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(
               color: AppColors.containerShadow,
@@ -573,7 +620,7 @@ class _MemoryCardWidget extends StatelessWidget {
           color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           child: card.isFaceUp || card.isMatched
               ? Image.asset(card.imagePath, fit: BoxFit.cover)
               : Image.asset(cardBack, fit: BoxFit.cover),

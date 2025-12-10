@@ -8,7 +8,8 @@ import '../../../../utils/app_colors.dart';
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
-  const WordleScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  const WordleScreen({Key? key, this.isDarkMode = false}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -18,7 +19,8 @@ enum LetterState { initial, correct, present, absent }
 
 class _WordleScreenState extends State<WordleScreen>
     with SingleTickerProviderStateMixin {
-  static const int rows = 6; // changed to 6 guesses x 5 columns (classic Wordle)
+  static const int rows =
+      6; // changed to 6 guesses x 5 columns (classic Wordle)
   static const int cols = 5;
 
   // Note: word list removed — secret word will be chosen from easy_words.json
@@ -35,6 +37,7 @@ class _WordleScreenState extends State<WordleScreen>
   @override
   void initState() {
     super.initState();
+    isDark = widget.isDarkMode;
     // Load dictionaries first, then start the game so we can prefer easy words
     _loadDictionary().whenComplete(() {
       _startNewGame();
@@ -43,21 +46,31 @@ class _WordleScreenState extends State<WordleScreen>
 
   Future<void> _loadDictionary() async {
     try {
-      final raw = await rootBundle.loadString('lib/features/screens/activities/dictionary/words_sorted.json');
+      final raw = await rootBundle.loadString(
+          'lib/features/screens/activities/dictionary/words_sorted.json');
       // JSON might be a list or newline-separated. Try to parse as JSON first.
       List<String> words = [];
       try {
         final decoded = raw.trim();
         if (decoded.startsWith('[')) {
-          final List<dynamic> arr = (await Future.value(jsonDecode(decoded))) as List<dynamic>;
+          final List<dynamic> arr =
+              (await Future.value(jsonDecode(decoded))) as List<dynamic>;
           words = arr.map((e) => e.toString().toUpperCase()).toList();
         } else {
           // Fallback: treat as newline-separated text
-          words = decoded.split(RegExp(r"\r?\n")).where((s) => s.trim().isNotEmpty).map((s) => s.trim().toUpperCase()).toList();
+          words = decoded
+              .split(RegExp(r"\r?\n"))
+              .where((s) => s.trim().isNotEmpty)
+              .map((s) => s.trim().toUpperCase())
+              .toList();
         }
       } catch (e) {
         // fallback to newline split
-        words = raw.split(RegExp(r"\r?\n")).where((s) => s.trim().isNotEmpty).map((s) => s.trim().toUpperCase()).toList();
+        words = raw
+            .split(RegExp(r"\r?\n"))
+            .where((s) => s.trim().isNotEmpty)
+            .map((s) => s.trim().toUpperCase())
+            .toList();
       }
 
       // Ensure sorted and create a Set for O(1) lookups
@@ -66,7 +79,8 @@ class _WordleScreenState extends State<WordleScreen>
       _dictionarySet = words.map((w) => w.toUpperCase()).toSet();
       // Try loading easy words as well (optional)
       try {
-        final rawEasy = await rootBundle.loadString('lib/features/screens/activities/dictionary/easy_words.json');
+        final rawEasy = await rootBundle.loadString(
+            'lib/features/screens/activities/dictionary/easy_words.json');
         final List<dynamic> arr2 = jsonDecode(rawEasy) as List<dynamic>;
         _easyWords = arr2.map((e) => e.toString().toUpperCase()).toList();
       } catch (_) {
@@ -94,9 +108,8 @@ class _WordleScreenState extends State<WordleScreen>
     guesses = [];
     currentGuess = '';
     keyStates.clear();
-    for (var c = 'A'.codeUnitAt(0);
-        c <= 'Z'.codeUnitAt(0);
-        c++) keyStates[String.fromCharCode(c)] = LetterState.initial;
+    for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
+      keyStates[String.fromCharCode(c)] = LetterState.initial;
     setState(() {});
   }
 
@@ -239,7 +252,8 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   bool _isValidWord(String word) {
-    if (_dictionarySet == null) return true; // if dictionary not loaded, accept all
+    if (_dictionarySet == null)
+      return true; // if dictionary not loaded, accept all
     return _dictionarySet!.contains(word);
   }
 
@@ -255,41 +269,57 @@ class _WordleScreenState extends State<WordleScreen>
           mainAxisSize: MainAxisSize.min,
           children: List.generate(rows, (r) {
             final isCurrent = r == guesses.length;
-            final rowGuess = r < guesses.length ? guesses[r] : (isCurrent ? currentGuess : '');
-            List<LetterState> states = List.generate(cols, (_) => LetterState.initial);
-            if (r < guesses.length) states = _evaluateGuess(guesses[r], secretWord);
+            final rowGuess = r < guesses.length
+                ? guesses[r]
+                : (isCurrent ? currentGuess : '');
+            List<LetterState> states =
+                List.generate(cols, (_) => LetterState.initial);
+            if (r < guesses.length)
+              states = _evaluateGuess(guesses[r], secretWord);
 
             return SizedBox(
               height: tileSize,
               child: Row(
                 children: List.generate(cols, (c) {
                   final ch = c < rowGuess.length ? rowGuess[c] : '';
-                  final state = (r < guesses.length) ? states[c] : LetterState.initial;
+                  final state =
+                      (r < guesses.length) ? states[c] : LetterState.initial;
                   final bgColor = (r < guesses.length)
                       ? _colorForState(state)
                       : (isCurrent && c < currentGuess.length)
-                          ? AppColors.getPrimaryButtonColor(isDark).withOpacity(0.18)
+                          ? AppColors.getPrimaryButtonColor(isDark)
+                              .withOpacity(0.18)
                           : AppColors.getSecondaryBackgroundColor(isDark);
 
                   final fgColor = (r < guesses.length)
-                      ? ((state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))
+                      ? ((state == LetterState.correct ||
+                              state == LetterState.present)
+                          ? Colors.white
+                          : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
                   return Expanded(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: (r < guesses.length) ? Colors.transparent : Colors.grey.shade500,
+                          color: (r < guesses.length)
+                              ? Colors.transparent
+                              : Colors.grey.shade500,
                           width: 1,
                         ),
                       ),
                       child: Center(
                         child: Text(
                           ch.toUpperCase(),
-                          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.6, fontSize: tileSize * 0.33, color: fgColor),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.6,
+                              fontSize: tileSize * 0.33,
+                              color: fgColor),
                         ),
                       ),
                     ),
@@ -308,7 +338,14 @@ class _WordleScreenState extends State<WordleScreen>
         body: Stack(
           children: [
             Positioned.fill(
-              child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 40, maxSize: 3.0, minSize: 1.0, speed: 0.6, maxOpacity: isDark ? 0.35 : 0.25, minOpacity: isDark ? 0.05 : 0.02),
+              child: ParticleSystemWidget(
+                  isDarkMode: isDark,
+                  particleCount: 40,
+                  maxSize: 3.0,
+                  minSize: 1.0,
+                  speed: 0.6,
+                  maxOpacity: isDark ? 0.35 : 0.25,
+                  minOpacity: isDark ? 0.05 : 0.02),
             ),
             SafeArea(
               child: Column(
@@ -384,7 +421,9 @@ class _WordleScreenState extends State<WordleScreen>
                               ),
                               child: IconButton(
                                 icon: Icon(
-                                  isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                                  isDark
+                                      ? Icons.wb_sunny
+                                      : Icons.nightlight_round,
                                   color: AppColors.getPrimaryTextColor(isDark),
                                 ),
                                 onPressed: _toggleTheme,
@@ -399,7 +438,8 @@ class _WordleScreenState extends State<WordleScreen>
                   Expanded(
                     child: Center(
                       child: LayoutBuilder(builder: (context, constraints) {
-                        final maxWidth = min(constraints.maxWidth * 0.95, 560.0);
+                        final maxWidth =
+                            min(constraints.maxWidth * 0.95, 560.0);
                         return buildGrid(maxWidth);
                       }),
                     ),
@@ -410,18 +450,39 @@ class _WordleScreenState extends State<WordleScreen>
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Builder(builder: (ctx) {
                       // Slightly smaller keys and margins for mobile so the full keyboard fits on screen
-                      final keySize = min(40.0, MediaQuery.of(ctx).size.width / 12);
+                      final keySize =
+                          min(40.0, MediaQuery.of(ctx).size.width / 12);
 
                       Widget keyWidget(String k) {
                         final state = keyStates[k] ?? LetterState.initial;
                         final color = _colorForState(state);
                         return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 2.5),
-                          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade500, width: 1)),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 1.5, vertical: 2.5),
+                          decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                  color: Colors.grey.shade500, width: 1)),
                           child: InkWell(
                             onTap: () => _onKeyTap(k),
                             borderRadius: BorderRadius.circular(6),
-                            child: SizedBox(width: keySize, height: keySize, child: Center(child: Text(k, style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: keySize * 0.34, color: (state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))))),
+                            child: SizedBox(
+                                width: keySize,
+                                height: keySize,
+                                child: Center(
+                                    child: Text(k,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: -0.5,
+                                            fontSize: keySize * 0.34,
+                                            color: (state ==
+                                                        LetterState.correct ||
+                                                    state ==
+                                                        LetterState.present)
+                                                ? Colors.white
+                                                : AppColors.getPrimaryTextColor(
+                                                    isDark))))),
                           ),
                         );
                       }
@@ -429,15 +490,70 @@ class _WordleScreenState extends State<WordleScreen>
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(mainAxisSize: MainAxisSize.min, children: [...'QWERTYUIOP'.split('').map((k) => keyWidget(k)).toList()]),
-                          Row(mainAxisSize: MainAxisSize.min, children: [...'ASDFGHJKL'.split('').map((k) => keyWidget(k)).toList()]),
-                          Row(mainAxisSize: MainAxisSize.min, children: [...'ZXCVBNM'.split('').map((k) => keyWidget(k)).toList()]),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            ...'QWERTYUIOP'
+                                .split('')
+                                .map((k) => keyWidget(k))
+                                .toList()
+                          ]),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            ...'ASDFGHJKL'
+                                .split('')
+                                .map((k) => keyWidget(k))
+                                .toList()
+                          ]),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            ...'ZXCVBNM'
+                                .split('')
+                                .map((k) => keyWidget(k))
+                                .toList()
+                          ]),
                           const SizedBox(height: 12),
                           Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 2.5), decoration: BoxDecoration(color: AppColors.getPrimaryButtonColor(isDark), borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade500, width: 1)), child: InkWell(onTap: () => _onKeyTap('ENTER'), borderRadius: BorderRadius.circular(6), child: SizedBox(width: keySize * 2.2, height: keySize, child: Center(child: Text('ENTER', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: keySize * 0.34, color: Colors.white)))))),
+                            Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 1.5, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                    color:
+                                        AppColors.getPrimaryButtonColor(isDark),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: Colors.grey.shade500, width: 1)),
+                                child: InkWell(
+                                    onTap: () => _onKeyTap('ENTER'),
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: SizedBox(
+                                        width: keySize * 2.2,
+                                        height: keySize,
+                                        child: Center(
+                                            child: Text('ENTER',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    letterSpacing: -0.5,
+                                                    fontSize: keySize * 0.34,
+                                                    color: Colors.white)))))),
                             const SizedBox(width: 6),
                             // Backspace icon instead of text label
-                            Container(margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 2.5), decoration: BoxDecoration(color: AppColors.getPrimaryButtonColor(isDark), borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade500, width: 1)), child: InkWell(onTap: () => _onKeyTap('BACK'), borderRadius: BorderRadius.circular(6), child: SizedBox(width: keySize * 2.2, height: keySize, child: Center(child: Icon(Icons.backspace_outlined, color: Colors.white, size: keySize * 0.48))))),
+                            Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 1.5, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                    color:
+                                        AppColors.getPrimaryButtonColor(isDark),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: Colors.grey.shade500, width: 1)),
+                                child: InkWell(
+                                    onTap: () => _onKeyTap('BACK'),
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: SizedBox(
+                                        width: keySize * 2.2,
+                                        height: keySize,
+                                        child: Center(
+                                            child: Icon(
+                                                Icons.backspace_outlined,
+                                                color: Colors.white,
+                                                size: keySize * 0.48))))),
                           ])
                         ],
                       );
