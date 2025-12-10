@@ -44,12 +44,15 @@ class _WordleScreenState extends State<WordleScreen>
 
   // Difficulty (0.0 .. 5.0 in 0.5 increments)
   double difficulty = 2.0;
+<<<<<<< Updated upstream
 
   double difficulty = 2.0;
 
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
   int invalidWordCount = 0;
   int incorrectGuessCount = 0;
+=======
+>>>>>>> Stashed changes
 
   @override
   void initState() {
@@ -212,9 +215,12 @@ class _WordleScreenState extends State<WordleScreen>
         // Count invalid / non-existing word attempts
         invalidWordCount++;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         // Provide immediate feedback by shaking the current row
         _triggerInvalidWordFeedback();
 =======
+=======
+>>>>>>> Stashed changes
         // Provide immediate feedback
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No és una paraula vàlida')),
@@ -259,8 +265,15 @@ class _WordleScreenState extends State<WordleScreen>
 
     if (guess == secretWord) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
+=======
+      // Show central results dialog
+      _showResultDialog(won: true);
+    } else if (guesses.length >= rows) {
+      // Show central results dialog for loss
+>>>>>>> Stashed changes
 =======
       // Show central results dialog
       _showResultDialog(won: true);
@@ -328,6 +341,7 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   void _triggerInvalidWordFeedback() {
     try {
       _shakeController.forward(from: 0.0);
@@ -343,6 +357,8 @@ class _WordleScreenState extends State<WordleScreen>
   // Centered results dialog showing statistics and an Accept button that returns
   // the user to the Recommended Activities page.
 =======
+=======
+>>>>>>> Stashed changes
   // Show difficulty selector dialog
   Future<void> _showDifficultyDialog() async {
     double temp = difficulty;
@@ -387,6 +403,9 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   // Show central result dialog with stats and accept button that returns to recommended page
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   void _showResultDialog({required bool won}) {
     showDialog<void>(
@@ -415,8 +434,13 @@ class _WordleScreenState extends State<WordleScreen>
             TextButton(
               onPressed: () {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 Navigator.of(context).pop(); // close dialog
                 // Navigate back to Recommended Activities page
+=======
+                // Close dialog and navigate to RecommendedActivitiesPage explicitly
+                Navigator.of(context).pop(); // close dialog
+>>>>>>> Stashed changes
 =======
                 // Close dialog and navigate to RecommendedActivitiesPage explicitly
                 Navigator.of(context).pop(); // close dialog
@@ -426,7 +450,10 @@ class _WordleScreenState extends State<WordleScreen>
               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
             ),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
             TextButton(
               onPressed: () {
                 // Start a new game without leaving
@@ -435,6 +462,9 @@ class _WordleScreenState extends State<WordleScreen>
               },
               child: Text('Jugar una altra vegada', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
             ),
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
           ],
         );
@@ -532,6 +562,7 @@ class _WordleScreenState extends State<WordleScreen>
           children: [
             Positioned.fill(
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.getBackgroundGradient(isDark),
@@ -541,6 +572,10 @@ class _WordleScreenState extends State<WordleScreen>
             Positioned.fill(
               // Match the particle theme used in Login / Activities pages for visual consistency
               child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: 0.6, minOpacity: 0.2, particleColor: AppColors.getParticleColor(isDark)),
+=======
+              // Match the particle theme used in Login / Activities pages for visual consistency
+              child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: isDark ? 0.6 : 0.6, minOpacity: isDark ? 0.2 : 0.2),
+>>>>>>> Stashed changes
 =======
               // Match the particle theme used in Login / Activities pages for visual consistency
               child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: isDark ? 0.6 : 0.6, minOpacity: isDark ? 0.2 : 0.2),
