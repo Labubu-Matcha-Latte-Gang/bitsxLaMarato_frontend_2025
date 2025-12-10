@@ -1,5 +1,6 @@
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import '../config.dart';
 import 'session_manager.dart';
 
@@ -7,55 +8,43 @@ class QRApiService {
   // Usa la misma URL base que el resto de servicios (configurable por API_URL)
   static final String _baseUrl = '${Config.apiUrl}/api/v1';
 
-  /// Obtiene el código QR del informe médico del paciente
-  ///
-  /// Parámetros:
-  /// - [timestamp]: (Opcional) Timestamp específico
-  /// - [license]: (Opcional) Licencia del profesional
-  /// - [format]: (Opcional) Formato del QR (por defecto 'svg')
-  /// - [back_color]: (Opcional) Color de fondo en formato hexadecimal
-  ///
-  /// Retorna:
-  /// - Mapa con:
-  ///   - 'qr_code': URL de la imagen QR
-  ///   - 'timestamp': Timestamp del QR
-  ///   - 'additionalProp1': (Opcional) Propiedades adicionales
+  /// Genera el código QR para informe médico según la especificación QRGenerate
+  /// del backend.
   static Future<Map<String, dynamic>> generateQRCode({
     String? timestamp,
     String? license,
-    String format = 'svg',
-    String? backColor,
+    String timezone = 'Europe/Madrid',
+    String format = 'svg', // enum: png | svg | svgz
+    String fillColor = '#000000',
+    String backColor = '#FFFFFF',
+    int boxSize = 10,
+    int border = 4,
   }) async {
     try {
-      // Obtener el token JWT
       final token = await SessionManager.getToken();
       if (token == null) {
         throw Exception('Token no disponible. Por favor inicia sesión.');
       }
 
-      // Construir la URL con parámetros de query
-      String url = '$_baseUrl/qr/obtenir-un-codi-qr-per-a-linformemedic';
-
-      final queryParams = <String, String>{
+      final payload = <String, dynamic>{
+        'timezone': timezone,
         'format': format,
+        'fill_color': fillColor,
+        'back_color': backColor,
+        'box_size': boxSize,
+        'border': border,
       };
+      if (timestamp != null) payload['timestamp'] = timestamp;
+      if (license != null) payload['license'] = license;
 
-      if (timestamp != null) queryParams['timestamp'] = timestamp;
-      if (license != null) queryParams['license'] = license;
-      if (backColor != null) queryParams['back_color'] = backColor;
-
-      if (queryParams.isNotEmpty) {
-        url += '?${Uri(queryParameters: queryParams).query}';
-      }
-
-      // Realizar la solicitud POST
       final response = await http.post(
-        Uri.parse(url),
+        Uri.parse('$_baseUrl/qr'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
+        body: jsonEncode(payload),
       );
 
       if (response.statusCode == 200) {
