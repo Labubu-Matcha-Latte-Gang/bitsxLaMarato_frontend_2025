@@ -37,6 +37,8 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
   List<String>? _easyWords;
+  List<String>? _medWords;
+  List<String>? _hardWords;
 
   double difficulty = 2.0;
 
@@ -112,6 +114,37 @@ class _WordleScreenState extends State<WordleScreen>
     // Choose secret exclusively from easy_words.json if available.
     // If easy_words.json is missing or empty, fall back to a fixed default.
     if (_easyWords != null && _easyWords!.isNotEmpty) {
+    // Reset stats for the new game
+    invalidWordCount = 0;
+    incorrectGuessCount = 0;
+
+    // Choose pool according to difficulty:
+    // difficulty <= 1.5 -> easy
+    // difficulty in [2.0, 3.5] -> medium
+    // difficulty > 4.0 -> hard
+    List<String>? pool;
+    if (difficulty <= 1.5) {
+      pool = _easyWords;
+    } else if (difficulty >= 2.0 && difficulty <= 3.5) {
+      pool = _medWords;
+    } else if (difficulty > 4.0) {
+      pool = _hardWords;
+    } else {
+      // For intermediate values not explicitly mapped, fall back to the general dictionary if available
+      pool = _dictionary ?? _easyWords;
+    }
+
+    if (pool != null && pool.isNotEmpty) {
+      final copy = List<String>.from(pool);
+      copy.shuffle();
+      secretWord = copy.first.toUpperCase();
+      // Optionally set validation to pool; keep full dictionary validation by default so guesses from other lists are accepted
+      // _dictionarySet = copy.map((w) => w.toUpperCase()).toSet();
+    } else if (_dictionary != null && _dictionary!.isNotEmpty) {
+      final copy = List<String>.from(_dictionary!);
+      copy.shuffle();
+      secretWord = copy.first.toUpperCase();
+    } else if (_easyWords != null && _easyWords!.isNotEmpty) {
       final copy = List<String>.from(_easyWords!);
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
@@ -125,6 +158,49 @@ class _WordleScreenState extends State<WordleScreen>
     for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
       keyStates[String.fromCharCode(c)] = LetterState.initial;
     setState(() {});
+  }
+
+  // Show difficulty selector dialog with 0.5 increments
+  Future<void> _showDifficultyDialog() async {
+    double temp = difficulty;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Selecciona la dificultat'),
+          content: StatefulBuilder(builder: (ctx, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Dificultat: ${temp.toStringAsFixed(1)}'),
+                Slider(
+                  value: temp,
+                  min: 0.0,
+                  max: 5.0,
+                  divisions: 10,
+                  label: temp.toStringAsFixed(1),
+                  onChanged: (v) => setState(() => temp = v),
+                ),
+                const SizedBox(height: 8),
+                Text('0.0 = fàcil, 5.0 = difícil'),
+              ],
+            );
+          }),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // snap to nearest 0.5 and start
+                difficulty = (temp * 2).round() / 2.0;
+                Navigator.of(context).pop();
+                _startNewGame();
+              },
+              child: const Text('Acceptar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -279,11 +355,6 @@ class _WordleScreenState extends State<WordleScreen>
     } catch (_) {}
   }
 
-  // Minimal difficulty dialog fallback used during init; keeps previous behaviour
-  void _showDifficultyDialog() {
-    // For now, just start a new game. This keeps behavior simple and avoids a missing-symbol error.
-    _startNewGame();
-  }
 
   // Centered results dialog showing statistics and an Accept button that returns
   // the user to the Recommended Activities page.
