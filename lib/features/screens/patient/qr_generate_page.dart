@@ -177,21 +177,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                       QrImage(
                                         data: _qrData,
                                         version: QrVersions.auto,
-                                        size: 200.0,
-                                        backgroundColor:
-                                            AppColors.getBlurContainerColor(
-                                                isDarkMode),
-                                        eyeStyle: QrEyeStyle(
-                                          eyeShape: QrEyeShape.square,
-                                          color: AppColors.getPrimaryTextColor(
-                                              isDarkMode),
-                                        ),
-                                        dataModuleStyle: QrDataModuleStyle(
-                                          dataModuleShape:
-                                              QrDataModuleShape.square,
-                                          color: AppColors.getPrimaryTextColor(
-                                              isDarkMode),
-                                        ),
+                                        size: 200,
                                       )
                                     else
                                       Container(
