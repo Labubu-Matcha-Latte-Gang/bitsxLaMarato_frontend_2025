@@ -177,13 +177,15 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                         width: 200,
                                         height: 200,
                                         decoration: BoxDecoration(
-                                          color: AppColors
-                                              .getBlurContainerColor(isDarkMode),
+                                          color:
+                                              AppColors.getBlurContainerColor(
+                                                  isDarkMode),
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: AppColors
-                                                .getPrimaryTextColor(isDarkMode),
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                    isDarkMode),
                                             width: 2,
                                           ),
                                         ),
@@ -191,8 +193,9 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                           child: Icon(
                                             Icons.qr_code_2,
                                             size: 100,
-                                            color: AppColors
-                                                .getPrimaryTextColor(isDarkMode),
+                                            color:
+                                                AppColors.getPrimaryTextColor(
+                                                    isDarkMode),
                                           ),
                                         ),
                                       )
