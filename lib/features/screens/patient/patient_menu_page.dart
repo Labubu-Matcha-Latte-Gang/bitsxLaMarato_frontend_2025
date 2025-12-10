@@ -5,6 +5,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
+import 'qr_generate_page.dart';
 
 class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -196,6 +197,23 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => AllActivitiesPage(
+                                        initialDarkMode: isDarkMode,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _ActionCard(
+                                title: 'QR per Informe Mèdic',
+                                description:
+                                    'Genera un codi QR per accedir als teus informes mèdics.',
+                                icon: Icons.qr_code_2,
+                                isDarkMode: isDarkMode,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => QRGeneratePage(
                                         initialDarkMode: isDarkMode,
                                       ),
                                     ),

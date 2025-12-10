@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
 
@@ -16,6 +17,8 @@ class QRGeneratePage extends StatefulWidget {
 
 class _QRGeneratePageState extends State<QRGeneratePage> {
   late bool isDarkMode;
+  String _qrData = "https://example.com/report/12345";
+  bool _showQR = false;
 
   @override
   void initState() {
@@ -30,7 +33,11 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   }
 
   void _generateQR() {
-    // TODO: Implementar lógica de generación de QR
+    setState(() {
+      _showQR = true;
+      _qrData =
+          "https://medical-report.com/patient/${DateTime.now().millisecondsSinceEpoch}";
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('QR generat correctament')),
     );
