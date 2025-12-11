@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
+import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
 
 class PatientMenuPage extends StatefulWidget {
@@ -21,17 +23,163 @@ class PatientMenuPage extends StatefulWidget {
 
 class _PatientMenuPageState extends State<PatientMenuPage> {
   late bool isDarkMode;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.initialDarkMode;
+    _loadThemePreference();
   }
 
   void _toggleTheme() {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
+  }
+
+  Future<void> _confirmAndLogout() async {
+    if (_isLoggingOut) return;
+
+    final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            final surfaceColor =
+                AppColors.getSecondaryBackgroundColor(isDarkMode)
+                    .withAlpha((0.95 * 255).round());
+            final borderColor = AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.25 * 255).round());
+            final iconBg = AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.12 * 255).round());
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.containerShadow
+                          .withAlpha((0.35 * 255).round()),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.logout,
+                            color: AppColors.getPrimaryButtonColor(isDarkMode),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tancar sessió',
+                          style: TextStyle(
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
+                      style: TextStyle(
+                        color: AppColors.getSecondaryTextColor(isDarkMode),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                AppColors.getPrimaryTextColor(isDarkMode),
+                            side: BorderSide(color: borderColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel·lar'),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                AppColors.getPrimaryButtonColor(isDarkMode),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Tancar sessió'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ) ??
+        false;
+
+    if (!shouldLogout) return;
+
+    setState(() => _isLoggingOut = true);
+    final success = await SessionManager.logout();
+    if (!mounted) return;
+
+    setState(() => _isLoggingOut = false);
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const InitialPage()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No s\'ha pogut tancar la sessió. Torna-ho a provar.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -60,8 +208,29 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getBlurContainerColor(isDarkMode),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.containerShadow,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.logout,
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                          ),
+                          tooltip: 'Tancar sessió',
+                          onPressed: _isLoggingOut ? null : _confirmAndLogout,
+                        ),
+                      ),
+                      const Spacer(),
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
@@ -153,7 +322,8 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => RecommendedActivitiesPage(
+                                        builder: (_) =>
+                                            RecommendedActivitiesPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),

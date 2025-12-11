@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../../models/user_models.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_manager.dart';
 import '../../../utils/doctor_colors.dart';
+import '../initialPage/initialPage.dart';
 import 'doctor_patient_detail_page.dart';
 
 class DoctorHomePage extends StatefulWidget {
@@ -21,7 +23,6 @@ class DoctorHomePage extends StatefulWidget {
 
 class _DoctorHomePageState extends State<DoctorHomePage> {
   bool isDarkMode = false;
-  bool _loadingProfile = true;
   bool _loadingPatients = false;
   bool _searching = false;
   bool _mutatingPatient = false;
@@ -29,6 +30,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
+  bool _isLoggingOut = false;
 
   List<PatientDataResponse> _assignedPatients = [];
   List<UserProfile> _searchResults = [];
@@ -39,6 +41,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   void initState() {
     super.initState();
     isDarkMode = widget.initialDarkMode;
+    _loadThemePreference();
     _bootstrap();
   }
 
@@ -51,7 +54,6 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   Future<void> _bootstrap() async {
     setState(() {
-      _loadingProfile = true;
       _errorMessage = null;
     });
 
@@ -68,11 +70,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         _errorMessage = e.toString();
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          _loadingProfile = false;
-        });
-      }
+      // No extra state to toggle here; keeping setState minimal.
     }
   }
 
@@ -107,6 +105,146 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
+  }
+
+  Future<void> _confirmAndLogout() async {
+    if (_isLoggingOut) return;
+
+    final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            final surfaceColor =
+                DoctorColors.surface(isDarkMode).withOpacity(0.96);
+            final borderColor =
+                DoctorColors.primary(isDarkMode).withOpacity(0.25);
+            final iconBg = DoctorColors.primary(isDarkMode).withOpacity(0.14);
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          DoctorColors.cardShadow(isDarkMode).withOpacity(0.45),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.logout,
+                            color: DoctorColors.primary(isDarkMode),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tancar sessió',
+                          style: TextStyle(
+                            color: DoctorColors.textPrimary(isDarkMode),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
+                      style: TextStyle(
+                        color: DoctorColors.textSecondary(isDarkMode),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                DoctorColors.textPrimary(isDarkMode),
+                            side: BorderSide(color: borderColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel·lar'),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: DoctorColors.primary(isDarkMode),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Tancar sessió'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ) ??
+        false;
+
+    if (!shouldLogout) return;
+
+    setState(() => _isLoggingOut = true);
+    final success = await SessionManager.logout();
+    if (!mounted) return;
+
+    setState(() => _isLoggingOut = false);
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const InitialPage()),
+        (route) => false,
+      );
+    } else {
+      _showSnack(
+        'No s\'ha pogut tancar la sessió. Torna-ho a provar.',
+        isError: true,
+      );
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -204,8 +342,9 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? DoctorColors.critical(isDarkMode) : DoctorColors.primary(isDarkMode),
+        backgroundColor: isError
+            ? DoctorColors.critical(isDarkMode)
+            : DoctorColors.primary(isDarkMode),
       ),
     );
   }
@@ -309,18 +448,34 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
             ),
           ],
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: Icon(
-              isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-              color: Colors.white,
+        Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.logout, color: Colors.white),
+                tooltip: 'Tancar sessió',
+                onPressed: _isLoggingOut ? null : _confirmAndLogout,
+              ),
             ),
-            onPressed: _toggleTheme,
-          ),
+            const SizedBox(width: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                  color: Colors.white,
+                ),
+                onPressed: _toggleTheme,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -365,7 +520,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+            backgroundColor:
+                DoctorColors.secondary(isDarkMode).withOpacity(0.12),
             child: Icon(
               Icons.medical_services_outlined,
               color: DoctorColors.primary(isDarkMode),
@@ -377,7 +533,9 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  fullName.isNotEmpty ? '$greetingTitle $fullName' : 'Espai del metge',
+                  fullName.isNotEmpty
+                      ? '$greetingTitle $fullName'
+                      : 'Espai del metge',
                   style: TextStyle(
                     color: DoctorColors.textPrimary(isDarkMode),
                     fontSize: 16,
@@ -430,11 +588,12 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                   fontSize: 15,
                 ),
               ),
-              if (_searching) const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              if (_searching)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -444,7 +603,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
             decoration: InputDecoration(
               hintText: 'Introdueix nom o cognom (mínim 2 caràcters)',
               filled: true,
-              fillColor: DoctorColors.lightAccent.withOpacity(isDarkMode ? 0.08 : 0.6),
+              fillColor:
+                  DoctorColors.lightAccent.withOpacity(isDarkMode ? 0.08 : 0.6),
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -461,12 +621,15 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
                   (p) => _SearchResultTile(
                     profile: p,
                     isDarkMode: isDarkMode,
-                    onAdd: _mutatingPatient ? null : () => _assignPatient(p.email),
+                    onAdd:
+                        _mutatingPatient ? null : () => _assignPatient(p.email),
                   ),
                 )
                 .toList(),
           ],
-          if (!_searching && _searchResults.isEmpty && _searchController.text.length >= 2)
+          if (!_searching &&
+              _searchResults.isEmpty &&
+              _searchController.text.length >= 2)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(
@@ -627,7 +790,8 @@ class _SearchResultTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+            backgroundColor:
+                DoctorColors.secondary(isDarkMode).withOpacity(0.12),
             child: Icon(
               Icons.person_add_alt,
               color: DoctorColors.primary(isDarkMode),
@@ -751,9 +915,8 @@ class _PatientCard extends StatelessWidget {
             runSpacing: 4,
             children: [
               _InfoChip(
-                label:
-                    translateGenderToCatalan(data.patient.role.gender) ??
-                        'Sense gènere',
+                label: translateGenderToCatalan(data.patient.role.gender) ??
+                    'Sense gènere',
                 icon: Icons.transgender,
                 isDarkMode: isDarkMode,
               ),
@@ -931,8 +1094,9 @@ class DoctorPatientsComparisonSheet extends StatelessWidget {
                   _buildRow(
                     'Última puntuació',
                     patients
-                        .map((p) =>
-                            p.scores.isNotEmpty ? p.scores.first.score.toStringAsFixed(1) : '—')
+                        .map((p) => p.scores.isNotEmpty
+                            ? p.scores.first.score.toStringAsFixed(1)
+                            : '—')
                         .toList(),
                   ),
                   _buildRow(

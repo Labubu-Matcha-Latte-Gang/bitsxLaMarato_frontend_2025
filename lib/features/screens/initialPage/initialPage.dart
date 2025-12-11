@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
+import '../../../services/session_manager.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../login/login.dart';
 import '../register/registerLobby.dart';
 
 class InitialPage extends StatefulWidget {
-  const InitialPage({super.key});
+  final bool initialDarkMode;
+
+  const InitialPage({super.key, this.initialDarkMode = false});
 
   @override
   State<InitialPage> createState() => _InitialPageState();
@@ -15,10 +18,27 @@ class InitialPage extends StatefulWidget {
 class _InitialPageState extends State<InitialPage> {
   bool isDarkMode = false;
 
+  @override
+  void initState() {
+    super.initState();
+    isDarkMode = widget.initialDarkMode;
+    _loadThemePreference();
+  }
+
   void _toggleTheme() {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
   }
 
   @override
@@ -84,8 +104,8 @@ class _InitialPageState extends State<InitialPage> {
                                     isDarkMode
                                         ? Icons.wb_sunny
                                         : Icons.nightlight_round,
-                                    color:
-                                        AppColors.getPrimaryTextColor(isDarkMode),
+                                    color: AppColors.getPrimaryTextColor(
+                                        isDarkMode),
                                   ),
                                   onPressed: _toggleTheme,
                                 ),
@@ -96,8 +116,7 @@ class _InitialPageState extends State<InitialPage> {
 
                         // Contenido principal centrado con tamaño adaptable
                         Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 40.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 40.0),
                           child: Column(
                             children: [
                               Container(
@@ -110,8 +129,7 @@ class _InitialPageState extends State<InitialPage> {
                                         ? TImages.lightLogoText
                                         : TImages.darkLogoText,
                                     fit: BoxFit.contain,
-                                    errorBuilder:
-                                        (context, error, stackTrace) {
+                                    errorBuilder: (context, error, stackTrace) {
                                       // Fallback en caso de que la imagen no se encuentre
                                       return Column(
                                         mainAxisAlignment:
@@ -130,8 +148,8 @@ class _InitialPageState extends State<InitialPage> {
                                             style: TextStyle(
                                               fontSize: 32,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors
-                                                  .getPrimaryTextColor(
+                                              color:
+                                                  AppColors.getPrimaryTextColor(
                                                       isDarkMode),
                                               letterSpacing: 4,
                                             ),
@@ -149,11 +167,12 @@ class _InitialPageState extends State<InitialPage> {
                         // Recuadro inferior con botones (adaptable a pantallas pequeñas)
                         Container(
                           width: double.infinity,
-                          constraints:
-                              BoxConstraints(minHeight: footerHeight),
+                          constraints: BoxConstraints(minHeight: footerHeight),
                           decoration: BoxDecoration(
-                            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-                            borderRadius: const BorderRadius.all(Radius.circular(32)),
+                            color: AppColors.getSecondaryBackgroundColor(
+                                isDarkMode),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(32)),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
