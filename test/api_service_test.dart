@@ -130,7 +130,7 @@ void main() {
     );
 
     expect(response.activity.id, '42');
-    expect(response.patient['email'], 'pat@example.com');
+    expect(response.patient.email, 'pat@example.com');
     expect(response.score, 90.0);
     expect(response.secondsToFinish, 120.0);
   });
@@ -140,13 +140,7 @@ void main() {
       client: MockClient((request) async {
         final body = {
           'access_token': 'jwt-token',
-          'user': {
-            '_id': 'u1',
-            'name': 'Doc',
-            'surname': 'Who',
-            'email': 'doc@example.com',
-            'user_type': 'doctor',
-          },
+          'already_responded_today': true,
         };
         return http.Response(jsonEncode(body), 200);
       }),
@@ -157,8 +151,7 @@ void main() {
     );
 
     expect(response.accessToken, 'jwt-token');
-    expect(response.user?.name, 'Doc');
-    expect(response.user?.userType, 'doctor');
+    expect(response.alreadyRespondedToday, true);
   });
 
   test('loginUser maps validation errors from server', () async {
