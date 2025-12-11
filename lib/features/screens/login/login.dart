@@ -31,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode;
+    _loadThemePreference();
   }
 
   @override
@@ -44,6 +45,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
   }
 
   void _submitLogin() async {
@@ -67,14 +78,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (userType == 'doctor') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const DoctorHomePage(),
+            builder: (context) => DoctorHomePage(initialDarkMode: isDarkMode),
           ),
         );
       } else {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => response.alreadyRespondedToday
-                ? const PatientMenuPage()
+                ? PatientMenuPage(initialDarkMode: isDarkMode)
                 : const MicScreen(),
           ),
         );

@@ -17,6 +17,7 @@ Future<void> main() async {
   );
 
   final startLoggedIn = await ApiService.restoreSession();
+  final savedThemeDark = await SessionManager.getThemeMode() ?? false;
   Map<String, dynamic>? userData = await SessionManager.getUserData();
   if (startLoggedIn && (userData == null || userData['user_type'] == null)) {
     try {
@@ -32,6 +33,7 @@ Future<void> main() async {
       startLoggedIn: startLoggedIn,
       startInActivities: alreadyRespondedToday,
       userType: userType,
+      initialDarkMode: savedThemeDark,
     ),
   );
 }
@@ -40,36 +42,39 @@ class MyApp extends StatelessWidget {
   final bool startLoggedIn;
   final bool startInActivities;
   final String userType;
+  final bool initialDarkMode;
   const MyApp({
     super.key,
     this.startLoggedIn = false,
     this.startInActivities = false,
     this.userType = 'unknown',
+    this.initialDarkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LMLG - BitsxLaMarató 2025',
-      navigatorKey: NavigationService.navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: startLoggedIn
-          ? (userType == 'doctor'
-              ? const DoctorHomePage()
-              : (startInActivities
-                  ? const PatientMenuPage()
-                  : const MicScreen()))
-          : const InitialPage(),
-      routes: {
-        '/initial': (context) => const InitialPage(),
-        '/register': (context) => const RegisterLobby(),
-        '/login': (context) => const LoginScreen(),
-        '/doctor': (context) => const DoctorHomePage(),
-      }
-    );
+        title: 'LMLG - BitsxLaMarató 2025',
+        navigatorKey: NavigationService.navigatorKey,
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        home: startLoggedIn
+            ? (userType == 'doctor'
+                ? DoctorHomePage(initialDarkMode: initialDarkMode)
+                : (startInActivities
+                    ? PatientMenuPage(initialDarkMode: initialDarkMode)
+                    : const MicScreen()))
+            : InitialPage(initialDarkMode: initialDarkMode),
+        routes: {
+          '/initial': (context) =>
+              InitialPage(initialDarkMode: initialDarkMode),
+          '/register': (context) => const RegisterLobby(),
+          '/login': (context) => const LoginScreen(),
+          '/doctor': (context) =>
+              DoctorHomePage(initialDarkMode: initialDarkMode),
+        });
   }
 }
