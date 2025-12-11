@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
+import '../recommended_activities_page.dart';
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
@@ -23,6 +24,9 @@ class _WordleScreenState extends State<WordleScreen>
       6; // changed to 6 guesses x 5 columns (classic Wordle)
   static const int cols = 5;
 
+  // Shake animation controller for invalid-word feedback
+  late AnimationController _shakeController;
+
   // Note: word list removed — secret word will be chosen from easy_words.json
 
   late String secretWord;
@@ -33,14 +37,26 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
   List<String>? _easyWords;
+  List<String>? _medWords;
+  List<String>? _hardWords;
+
+  double difficulty = 2.0;
+
+  // Gameplay stats (previously removed) — keep them here so other parts of the file compile
+  int invalidWordCount = 0;
+  int incorrectGuessCount = 0;
 
   @override
   void initState() {
     super.initState();
     isDark = widget.isDarkMode;
+    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     // Load dictionaries first, then start the game so we can prefer easy words
     _loadDictionary().whenComplete(() {
-      _startNewGame();
+      // After the first frame, show difficulty selector before starting
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showDifficultyDialog();
+      });
     });
   }
 
@@ -97,7 +113,38 @@ class _WordleScreenState extends State<WordleScreen>
   void _startNewGame() {
     // Choose secret exclusively from easy_words.json if available.
     // If easy_words.json is missing or empty, fall back to a fixed default.
-    if (_easyWords != null && _easyWords!.isNotEmpty) {
+    // (Removed an unnecessary if that caused an unmatched brace)
+    // Reset stats for the new game
+    invalidWordCount = 0;
+    incorrectGuessCount = 0;
+
+    // Choose pool according to difficulty:
+    // difficulty <= 1.5 -> easy
+    // difficulty in [2.0, 3.5] -> medium
+    // difficulty > 4.0 -> hard
+    List<String>? pool;
+    if (difficulty <= 1.5) {
+      pool = _easyWords;
+    } else if (difficulty >= 2.0 && difficulty <= 3.5) {
+      pool = _medWords;
+    } else if (difficulty > 4.0) {
+      pool = _hardWords;
+    } else {
+      // For intermediate values not explicitly mapped, fall back to the general dictionary if available
+      pool = _dictionary ?? _easyWords;
+    }
+
+    if (pool != null && pool.isNotEmpty) {
+      final copy = List<String>.from(pool);
+      copy.shuffle();
+      secretWord = copy.first.toUpperCase();
+      // Optionally set validation to pool; keep full dictionary validation by default so guesses from other lists are accepted
+      // _dictionarySet = copy.map((w) => w.toUpperCase()).toSet();
+    } else if (_dictionary != null && _dictionary!.isNotEmpty) {
+      final copy = List<String>.from(_dictionary!);
+      copy.shuffle();
+      secretWord = copy.first.toUpperCase();
+    } else if (_easyWords != null && _easyWords!.isNotEmpty) {
       final copy = List<String>.from(_easyWords!);
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
@@ -113,8 +160,52 @@ class _WordleScreenState extends State<WordleScreen>
     setState(() {});
   }
 
+  // Show difficulty selector dialog with 0.5 increments
+  Future<void> _showDifficultyDialog() async {
+    double temp = difficulty;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Selecciona la dificultat'),
+          content: StatefulBuilder(builder: (ctx, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Dificultat: ${temp.toStringAsFixed(1)}'),
+                Slider(
+                  value: temp,
+                  min: 0.0,
+                  max: 5.0,
+                  divisions: 10,
+                  label: temp.toStringAsFixed(1),
+                  onChanged: (v) => setState(() => temp = v),
+                ),
+                const SizedBox(height: 8),
+                Text('0.0 = fàcil, 5.0 = difícil'),
+              ],
+            );
+          }),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // snap to nearest 0.5 and start
+                difficulty = (temp * 2).round() / 2.0;
+                Navigator.of(context).pop();
+                _startNewGame();
+              },
+              child: const Text('Acceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
+    _shakeController.dispose();
     super.dispose();
   }
 
@@ -158,14 +249,20 @@ class _WordleScreenState extends State<WordleScreen>
     // If dictionary loaded, validate word exists
     if (_dictionary != null) {
       if (!_isValidWord(guess)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No és una paraula vàlida')),
-        );
+        // Count invalid / non-existing word attempts
+        invalidWordCount++;
+        // Provide immediate feedback by shaking the current row
+        _triggerInvalidWordFeedback();
         return;
       }
     }
     // Optionally enforce dictionary (not enforced here)
     final results = _evaluateGuess(guess, secretWord);
+
+    // Count valid but incorrect guesses
+    if (guess != secretWord) {
+      incorrectGuessCount++;
+    }
 
     // Update keyStates
     for (int i = 0; i < cols; i++) {
@@ -189,13 +286,9 @@ class _WordleScreenState extends State<WordleScreen>
     });
 
     if (guess == secretWord) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Has guanyat!')),
-      );
+      _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Final - la paraula era $secretWord')),
-      );
+      _showResultDialog(won: false);
     }
   }
 
@@ -256,12 +349,60 @@ class _WordleScreenState extends State<WordleScreen>
     return _dictionarySet!.contains(word);
   }
 
+  void _triggerInvalidWordFeedback() {
+    try {
+      _shakeController.forward(from: 0.0);
+    } catch (_) {}
+  }
+
+
+  // Centered results dialog showing statistics and an Accept button that returns
+  // the user to the Recommended Activities page.
+  void _showResultDialog({required bool won}) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final title = won ? 'Has guanyat!' : 'Final';
+        final message = won
+            ? 'Ho has aconseguit en ${guesses.length} intents.'
+            : 'No has encertat. La paraula era $secretWord.';
+        return AlertDialog(
+          title: Text(title, style: TextStyle(color: AppColors.getPrimaryTextColor(isDark))),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message, style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
+              const SizedBox(height: 12),
+              Text('Nombre d\'intents: ${guesses.length}', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
+              Text('Intents incorrectes vàlids: $incorrectGuessCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
+              Text('Paraules no existents: $invalidWordCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
+            ],
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDark),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                // Navigate back to Recommended Activities page
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RecommendedActivitiesPage(initialDarkMode: isDark)));
+              },
+              child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = isDark ? ThemeData.dark() : ThemeData.light();
 
     Widget buildGrid(double maxWidth) {
       final tileSize = maxWidth / cols;
+
       return SizedBox(
         width: tileSize * cols,
         child: Column(
@@ -273,41 +414,35 @@ class _WordleScreenState extends State<WordleScreen>
                 : (isCurrent ? currentGuess : '');
             List<LetterState> states =
                 List.generate(cols, (_) => LetterState.initial);
-            if (r < guesses.length)
-              states = _evaluateGuess(guesses[r], secretWord);
+            if (r < guesses.length) states = _evaluateGuess(guesses[r], secretWord);
 
-            return SizedBox(
-              height: tileSize,
-              child: Row(
+            // Build the row tiles
+            Widget rowTiles() {
+              return Row(
                 children: List.generate(cols, (c) {
                   final ch = c < rowGuess.length ? rowGuess[c] : '';
-                  final state =
-                      (r < guesses.length) ? states[c] : LetterState.initial;
+                  final state = (r < guesses.length) ? states[c] : LetterState.initial;
+
                   final bgColor = (r < guesses.length)
                       ? _colorForState(state)
                       : (isCurrent && c < currentGuess.length)
-                          ? AppColors.getPrimaryButtonColor(isDark)
-                              .withOpacity(0.18)
+                          ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
                           : AppColors.getSecondaryBackgroundColor(isDark);
 
                   final fgColor = (r < guesses.length)
-                      ? ((state == LetterState.correct ||
-                              state == LetterState.present)
+                      ? ((state == LetterState.correct || state == LetterState.present)
                           ? Colors.white
                           : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
                   return Expanded(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 2, vertical: 3),
+                      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: (r < guesses.length)
-                              ? Colors.transparent
-                              : Colors.grey.shade500,
+                          color: (r < guesses.length) ? Colors.transparent : Colors.grey.shade500,
                           width: 1,
                         ),
                       ),
@@ -315,15 +450,33 @@ class _WordleScreenState extends State<WordleScreen>
                         child: Text(
                           ch.toUpperCase(),
                           style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.6,
-                              fontSize: tileSize * 0.33,
-                              color: fgColor),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.6,
+                            fontSize: tileSize * 0.33,
+                            color: fgColor,
+                          ),
                         ),
                       ),
                     ),
                   );
                 }),
+              );
+            }
+
+            // Wrap the current row in the shake AnimatedBuilder, otherwise just show the row
+            return SizedBox(
+              height: tileSize,
+              child: AnimatedBuilder(
+                animation: _shakeController,
+                builder: (context, child) {
+                  double dx = 0.0;
+                  if (isCurrent && _shakeController.isAnimating) {
+                    final t = _shakeController.value;
+                    dx = sin(t * pi * 8) * 10 * (1 - t);
+                  }
+                  return Transform.translate(offset: Offset(dx, 0), child: child);
+                },
+                child: rowTiles(),
               ),
             );
           }),
@@ -337,14 +490,15 @@ class _WordleScreenState extends State<WordleScreen>
         body: Stack(
           children: [
             Positioned.fill(
-              child: ParticleSystemWidget(
-                  isDarkMode: isDark,
-                  particleCount: 40,
-                  maxSize: 3.0,
-                  minSize: 1.0,
-                  speed: 0.6,
-                  maxOpacity: isDark ? 0.35 : 0.25,
-                  minOpacity: isDark ? 0.05 : 0.02),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: AppColors.getBackgroundGradient(isDark),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              // Match the particle theme used in Login / Activities pages for visual consistency
+              child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: 0.6, minOpacity: 0.2, particleColor: AppColors.getParticleColor(isDark)),
             ),
             SafeArea(
               child: Column(
