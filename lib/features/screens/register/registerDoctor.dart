@@ -82,8 +82,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         if (!mounted) return;
 
         final welcomeName = [
-          response.user?.name ?? response.name,
-          response.user?.surname ?? response.surname,
+          response.name,
+          response.surname,
         ].where((part) => part.trim().isNotEmpty).join(' ');
 
         _showSuccessDialog(
