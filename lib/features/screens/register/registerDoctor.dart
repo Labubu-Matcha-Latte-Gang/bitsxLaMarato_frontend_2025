@@ -4,7 +4,8 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
-import '../micro/mic.dart';
+import '../doctor/doctor_home_page.dart';
+import '../login/login.dart';
 
 class RegisterDoctor extends StatefulWidget {
   final bool isDarkMode;
@@ -48,7 +49,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
   void _navigateToHome() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const MicScreen()),
+      MaterialPageRoute(builder: (context) => const DoctorHomePage()),
       (_) => false,
     );
   }
@@ -479,7 +480,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Password',
+                              'Contrasenya',
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
@@ -564,7 +565,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                         color: Colors.white, strokeWidth: 2),
                                   )
                                 : const Text(
-                                    'REGISTER',
+                                    'REGISTRA\'T',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -579,10 +580,15 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         // Link "Ja tens un compte? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    LoginScreen(isDarkMode: isDarkMode),
+                              ),
+                            );
                           },
                           child: Text(
-                            'Ja tens un compte? Login',
+                            'Ja tens un compte? Inicia sessió',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getPrimaryTextColor(isDarkMode),
