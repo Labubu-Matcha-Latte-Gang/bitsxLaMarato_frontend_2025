@@ -18,13 +18,23 @@ void main() {
     expect(params.containsKey('id'), isFalse);
   });
 
-  test('LoginResponse falls back to default user when missing', () {
-    final response = LoginResponse.fromJson({'access_token': 'tok'});
+  test('LoginResponse exposes daily flag', () {
+    final response = LoginResponse.fromJson({
+      'access_token': 'tok',
+      'already_responded_today': false,
+    });
 
     expect(response.accessToken, 'tok');
-    expect(response.user, isNotNull);
-    expect(response.user?.name, 'Usuario');
-    expect(response.user?.userType, 'unknown');
+    expect(response.alreadyRespondedToday, isFalse);
+  });
+
+  test('LoginResponse respects provided daily flag', () {
+    final response = LoginResponse.fromJson({
+      'access_token': 'tok2',
+      'already_responded_today': true,
+    });
+
+    expect(response.alreadyRespondedToday, isTrue);
   });
 
   test('UserRoleData parses doctors and patients lists safely', () {

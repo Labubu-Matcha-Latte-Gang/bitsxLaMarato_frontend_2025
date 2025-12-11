@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/qr_api_service.dart';
@@ -186,6 +188,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
 
     try {
       final response = await QRApiService.generateQRCode(
+        format: 'png',
         fillColor: _colorToHex(_fillColor),
         backColor: _colorToHex(_backColor),
       );
@@ -237,39 +240,55 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   /// Construye la imagen del QR soportando data URIs
   Widget _buildQRImage(String qrDataUri, bool isDarkMode) {
     try {
-      // Extraer el formato y datos de la URI
-      if (qrDataUri.startsWith('data:image/')) {
-        // Encontrar la coma que separa header de datos
-        final commaIndex = qrDataUri.indexOf(',');
-        if (commaIndex != -1) {
-          final data = qrDataUri.substring(commaIndex + 1);
+      final commaIndex = qrDataUri.indexOf(',');
+      final bool isDataUri = qrDataUri.startsWith('data:') && commaIndex != -1;
 
-          // Decodificar base64
-          final decodedBytes = base64Decode(data);
+      if (isDataUri) {
+        final String header = qrDataUri.substring(5, commaIndex);
+        final String dataPart = qrDataUri.substring(commaIndex + 1);
+        final String mimeType = header.split(';').first.toLowerCase();
+        final bool isBase64 = header.contains(';base64');
+        final String normalizedData = isBase64
+            ? dataPart.replaceAll(RegExp(r'\s'), '')
+            : Uri.decodeComponent(dataPart);
+        final Uint8List decodedBytes = isBase64
+            ? base64Decode(normalizedData)
+            : Uint8List.fromList(utf8.encode(normalizedData));
 
-          // Mostrar usando Image.memory
-          return Image.memory(
+        if (mimeType.contains('svg')) {
+          return SvgPicture.memory(
             decodedBytes,
             fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error, color: Colors.red, size: 32),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Error al cargar QR',
-                      style: TextStyle(
-                        color: AppColors.getPrimaryTextColor(isDarkMode),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            placeholderBuilder: (_) => Center(
+              child: CircularProgressIndicator(
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                strokeWidth: 2,
+              ),
+            ),
           );
         }
+
+        return Image.memory(
+          decodedBytes,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, color: Colors.red, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error al cargar QR',
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       }
 
       // Si no es data URI, intentar como URL normal

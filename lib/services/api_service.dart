@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/patient_models.dart';
@@ -59,10 +60,6 @@ class ApiService {
       return false;
     }
 
-    if (!SessionManager.isTokenExpired(storedToken)) {
-      return true;
-    }
-
     try {
       await _refreshAccessToken();
       return true;
@@ -96,8 +93,17 @@ class ApiService {
             PatientRegistrationResponse.fromJson(responseData);
         await _persistSession(
           accessToken: registration.accessToken,
-          refreshToken: registration.refreshToken ?? registration.accessToken,
+          refreshToken: null,
           userData: registration.toUserData(),
+        );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
+          alreadyRespondedToday: false,
         );
         return registration;
       } else {
@@ -150,6 +156,134 @@ class ApiService {
       if (e is ApiException) {
         rethrow;
       }
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<PatientSearchResult> searchPatientsForDoctor(
+    String query, {
+    int limit = 20,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/user/doctor/patients/search').replace(
+        queryParameters: {
+          'q': query,
+          'limit': limit.toString(),
+        },
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return PatientSearchResult.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'han pogut cercar els pacients.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<UserProfile> assignPatientsToDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'assign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut afegir els pacients al teu llistat.',
+    );
+  }
+
+  static Future<UserProfile> unassignPatientsFromDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'unassign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut eliminar els pacients seleccionats.',
+    );
+  }
+
+  static Future<UserProfile> _mutateDoctorPatients({
+    required String endpoint,
+    required List<String> patients,
+    required String failureMessage,
+  }) async {
+    if (patients.isEmpty) {
+      throw ApiException('Cal indicar almenys un pacient.', 400);
+    }
+
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/user/doctor/patients/$endpoint'),
+          headers: _jsonHeaders(token),
+          body: json.encode({'patients': patients}),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final profile = UserProfile.fromJson(responseData);
+        await _persistUserProfile(profile);
+        return profile;
+      }
+
+      throw _apiExceptionFromResponse(response, failureMessage);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Uint8List> downloadPatientReport(
+    String email, {
+    String timezone = 'Europe/Madrid',
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/report/$email').replace(
+        queryParameters: {'timezone': timezone},
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(
+            token,
+            extra: {'Accept': 'application/pdf'},
+          ),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return Uint8List.fromList(response.bodyBytes);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut descarregar l\'informe del pacient.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
       throw ApiException(
         'Error de connexió amb el servidor: ${e.toString()}',
         0,
@@ -342,8 +476,16 @@ class ApiService {
         final registration = DoctorRegistrationResponse.fromJson(responseData);
         await _persistSession(
           accessToken: registration.accessToken,
-          refreshToken: registration.refreshToken ?? registration.accessToken,
+          refreshToken: null,
           userData: registration.toUserData(),
+        );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
         );
         return registration;
       } else {
@@ -423,7 +565,6 @@ class ApiService {
       print('DEBUG - Login Response Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
-        // Verificar si el body no está vacío
         if (response.body.isEmpty) {
           throw ApiException('La resposta de la API està buida', 200);
         }
@@ -432,16 +573,14 @@ class ApiService {
           final responseData = json.decode(response.body);
           print('DEBUG - Parsed Response Data: $responseData');
 
-          // Verificar que responseData no sea null
-          if (responseData == null) {
-            throw ApiException('La resposta de la API és null', 200);
-          }
-
           final loginResponse = LoginResponse.fromJson(responseData);
           await _persistSession(
             accessToken: loginResponse.accessToken,
-            refreshToken: loginResponse.refreshToken ?? loginResponse.accessToken,
+            refreshToken: null,
             userData: loginResponse.toUserData(),
+          );
+          await getAndCacheCurrentUser(
+            alreadyRespondedToday: loginResponse.alreadyRespondedToday,
           );
           return loginResponse;
         } catch (e) {
@@ -532,6 +671,17 @@ class ApiService {
         0,
       );
     }
+  }
+
+  static Future<UserProfile> getAndCacheCurrentUser({
+    bool? alreadyRespondedToday,
+  }) async {
+    final profile = await getCurrentUser();
+    await _persistUserProfile(
+      profile,
+      alreadyRespondedToday: alreadyRespondedToday,
+    );
+    return profile;
   }
 
   static Future<UserProfile> updateCurrentUser(
@@ -651,13 +801,7 @@ class ApiService {
     TranscriptionChunkRequest request,
   ) async {
     try {
-      // Use simplified endpoint for WebM files from MediaRecorder  
-      if (request.filename.endsWith('.webm') || request.contentType.contains('webm')) {
-        return await _uploadTranscriptionChunkRaw(request);
-      }
-      
-      // Original implementation for other formats
-      return await _uploadTranscriptionChunkOriginal(request);
+      return await _uploadTranscriptionChunkMultipart(request);
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException(
@@ -667,91 +811,12 @@ class ApiService {
     }
   }
 
-  static Future<TranscriptionResponse> _uploadTranscriptionChunkRaw(
+  static Future<TranscriptionResponse> _uploadTranscriptionChunkMultipart(
     TranscriptionChunkRequest request,
   ) async {
     try {
-      // Validación básica del chunk antes del envío
       if (request.audioBytes.isEmpty) {
         throw ApiException('Chunk de audio vacío', 400);
-      }
-      
-      // Format-aware size validation - MP4/M4A chunks can be smaller initially
-      int minSize = 100;  // Default for raw endpoint
-      if (request.contentType.contains('webm')) {
-        minSize = 1000; // WebM needs bigger chunks to be valid
-      }
-      
-      if (request.audioBytes.length < minSize) {
-        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
-      }
-
-      final response = await _sendAuthorizedRequest(
-        (token, client) async {
-          final multipartRequest = http.MultipartRequest(
-            'POST',
-            Uri.parse('$_baseUrl/transcription/chunk-raw'),
-          );
-          multipartRequest.headers['Authorization'] = 'Bearer $token';
-          multipartRequest.fields['session_id'] = request.sessionId;
-          multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
-          multipartRequest.files.add(
-            http.MultipartFile.fromBytes(
-              'audio_blob',
-              request.audioBytes,
-              filename: request.filename,
-              contentType: MediaType.parse(request.contentType),
-            ),
-          );
-
-          print(
-            'DEBUG - Uploading transcription chunk (RAW): session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}',
-          );
-
-          final streamedResponse = await client.send(multipartRequest);
-          return http.Response.fromStream(streamedResponse);
-        },
-      );
-
-      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
-      print('DEBUG - Chunk upload response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData =
-            response.body.isNotEmpty ? json.decode(response.body) : {};
-        return TranscriptionResponse.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut enviar el fragment d\'àudio via raw endpoint.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<TranscriptionResponse> _uploadTranscriptionChunkOriginal(
-    TranscriptionChunkRequest request,
-  ) async {
-    try {
-      // Validación básica del chunk antes del envío
-      if (request.audioBytes.isEmpty) {
-        throw ApiException('Chunk de audio vacío', 400);
-      }
-      
-      // Format-aware size validation - MP4/M4A chunks can be smaller initially
-      int minSize = 1000;  // Default for regular endpoint
-      if (request.contentType.contains('mp4') || request.contentType.contains('mpeg') || request.contentType.contains('m4a')) {
-        minSize = 200; // MP4/MP3 can have smaller header chunks
-      }
-      
-      if (request.audioBytes.length < minSize) {
-        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
       }
 
       final response = await _sendAuthorizedRequest(
@@ -783,14 +848,6 @@ class ApiService {
 
       print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
       print('DEBUG - Chunk upload response body: ${response.body}');
-      
-      // Log adicional para chunks que fallan
-      if (response.statusCode == 500 && response.body.contains('error inesperat')) {
-        print('CRITICAL - Backend internal error for chunk ${request.chunkIndex}. Possible causes:');
-        print('  - Session state corruption after first chunk');
-        print('  - Audio format incompatibility after restart');
-        print('  - Backend chunking logic error');
-      }
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =
@@ -902,6 +959,29 @@ class ApiService {
     }
   }
 
+  static Future<void> _persistUserProfile(
+    UserProfile profile, {
+    bool? alreadyRespondedToday,
+  }) async {
+    final inferredType = profile.role.inferUserType();
+    final data = {
+      'name': profile.name,
+      'surname': profile.surname,
+      'email': profile.email,
+      'role': profile.role.toJson(),
+      'user_type': inferredType.name,
+      if (alreadyRespondedToday != null)
+        'already_responded_today': alreadyRespondedToday,
+    };
+    final saved = await SessionManager.saveUserData(data);
+    if (!saved) {
+      throw ApiException(
+        'Sessió iniciada però no s\'ha pogut guardar el perfil localment.',
+        0,
+      );
+    }
+  }
+
   static Map<String, String> _jsonHeaders(
     String token, {
     Map<String, String>? extra,
@@ -997,13 +1077,17 @@ class ApiService {
           throw ApiException('Resposta invàlida del servidor.', 500);
         }
 
-        final newToken = data['access_token']?.toString();
-        if (newToken == null || newToken.isEmpty) {
-          throw ApiException('No s\'ha rebut un nou token de sessió.', 500);
-        }
+        final loginResponse = LoginResponse.fromJson(data);
+        await SessionManager.saveToken(loginResponse.accessToken);
 
-        await SessionManager.saveToken(newToken);
-        return newToken;
+        // Merge existing user data with the fresh daily flag
+        final existingUserData =
+            await SessionManager.getUserData() ?? <String, dynamic>{};
+        final mergedUserData = Map<String, dynamic>.from(existingUserData)
+          ..['already_responded_today'] = loginResponse.alreadyRespondedToday;
+        await SessionManager.saveUserData(mergedUserData);
+
+        return loginResponse.accessToken;
       }
 
       throw _apiExceptionFromResponse(

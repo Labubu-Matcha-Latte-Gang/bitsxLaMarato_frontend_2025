@@ -60,36 +60,8 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      // Left: back button container
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.getBlurContainerColor(isDarkMode),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.containerShadow,
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: AppColors.getPrimaryTextColor(isDarkMode),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-
-                      // Center: placeholder to keep spacing for centered logo below
-                      const Expanded(child: SizedBox()),
-
-                      // Right: theme toggle container
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),

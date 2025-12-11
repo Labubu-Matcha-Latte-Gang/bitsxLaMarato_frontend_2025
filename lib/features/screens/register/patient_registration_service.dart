@@ -29,15 +29,18 @@ class PatientRegistrationFormData {
   });
 
   PatientRegistrationRequest toRequest() {
+    final ailmentsValue = ailments.trim();
+    final treatmentsValue = treatments.trim();
+
     return PatientRegistrationRequest(
       name: name.trim(),
       surname: surname.trim(),
       email: email.trim(),
       password: password,
-      ailments: ailments.trim(),
+      ailments: ailmentsValue.isEmpty ? null : ailmentsValue,
       gender: gender.trim(),
       age: age,
-      treatments: treatments.trim(),
+      treatments: treatmentsValue.isEmpty ? null : treatmentsValue,
       heightCm: heightCm,
       weightKg: weightKg,
       doctors: doctors,
