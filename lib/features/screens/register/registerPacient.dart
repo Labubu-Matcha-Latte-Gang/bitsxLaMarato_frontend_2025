@@ -4,6 +4,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import 'patient_registration_service.dart';
 import '../micro/mic.dart';
+import '../login/login.dart';
 
 class RegisterPacient extends StatefulWidget {
   final bool isDarkMode;
@@ -661,7 +662,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Password',
+              'Contrasenya',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.getSecondaryTextColor(isDarkMode),
@@ -948,7 +949,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                                                   strokeWidth: 2),
                                             )
                                           : const Text(
-                                              'REGISTER',
+                                              'REGISTRA\'T',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -991,10 +992,15 @@ class _RegisterPacientState extends State<RegisterPacient> {
                         // Link "Ja tens un compte? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context); // Volver atrás
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    LoginScreen(isDarkMode: isDarkMode),
+                              ),
+                            );
                           },
                           child: Text(
-                            'Ja tens un compte? Login',
+                            'Ja tens un compte? Inicia sessió',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getPrimaryTextColor(isDarkMode),
