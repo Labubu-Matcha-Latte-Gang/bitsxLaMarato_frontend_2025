@@ -43,12 +43,14 @@ class TranscriptionResponse {
   final String status;
   final String? transcription;
   final String? partialText;
+  final String? questionId;
   final Map<String, dynamic> analysis;
 
   TranscriptionResponse({
     required this.status,
     this.transcription,
     this.partialText,
+    this.questionId,
     this.analysis = const {},
   });
 
@@ -57,6 +59,7 @@ class TranscriptionResponse {
       status: json['status']?.toString() ?? '',
       transcription: json['transcription']?.toString(),
       partialText: json['partial_text']?.toString(),
+      questionId: json['question_id']?.toString(),
       analysis: (json['analysis'] as Map<String, dynamic>?) ?? const {},
     );
   }
@@ -66,6 +69,7 @@ class TranscriptionResponse {
       'status': status,
       if (transcription != null) 'transcription': transcription,
       if (partialText != null) 'partial_text': partialText,
+      if (questionId != null) 'question_id': questionId,
       if (analysis.isNotEmpty) 'analysis': analysis,
     };
   }
