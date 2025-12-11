@@ -42,22 +42,110 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
 
     final shouldLogout = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Tancar sessió'),
-            content: const Text(
-              'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel·lar'),
+          builder: (context) {
+            final surfaceColor =
+                AppColors.getSecondaryBackgroundColor(isDarkMode)
+                    .withAlpha((0.95 * 255).round());
+            final borderColor = AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.25 * 255).round());
+            final iconBg = AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha((0.12 * 255).round());
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.containerShadow
+                          .withAlpha((0.35 * 255).round()),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.logout,
+                            color: AppColors.getPrimaryButtonColor(isDarkMode),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tancar sessió',
+                          style: TextStyle(
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
+                      style: TextStyle(
+                        color: AppColors.getSecondaryTextColor(isDarkMode),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                AppColors.getPrimaryTextColor(isDarkMode),
+                            side: BorderSide(color: borderColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel·lar'),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                AppColors.getPrimaryButtonColor(isDarkMode),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Tancar sessió'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Tancar sessió'),
-              ),
-            ],
-          ),
+            );
+          },
         ) ??
         false;
 
@@ -109,7 +197,6 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
                         decoration: BoxDecoration(
@@ -132,7 +219,7 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                           onPressed: _isLoggingOut ? null : _confirmAndLogout,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const Spacer(),
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),

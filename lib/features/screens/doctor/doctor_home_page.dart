@@ -111,22 +111,107 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
     final shouldLogout = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Tancar sessió'),
-            content: const Text(
-              'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel·lar'),
+          builder: (context) {
+            final surfaceColor =
+                DoctorColors.surface(isDarkMode).withOpacity(0.96);
+            final borderColor =
+                DoctorColors.primary(isDarkMode).withOpacity(0.25);
+            final iconBg = DoctorColors.primary(isDarkMode).withOpacity(0.14);
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          DoctorColors.cardShadow(isDarkMode).withOpacity(0.45),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.logout,
+                            color: DoctorColors.primary(isDarkMode),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tancar sessió',
+                          style: TextStyle(
+                            color: DoctorColors.textPrimary(isDarkMode),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
+                      style: TextStyle(
+                        color: DoctorColors.textSecondary(isDarkMode),
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                DoctorColors.textPrimary(isDarkMode),
+                            side: BorderSide(color: borderColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel·lar'),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: DoctorColors.primary(isDarkMode),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Tancar sessió'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Tancar sessió'),
-              ),
-            ],
-          ),
+            );
+          },
         ) ??
         false;
 
