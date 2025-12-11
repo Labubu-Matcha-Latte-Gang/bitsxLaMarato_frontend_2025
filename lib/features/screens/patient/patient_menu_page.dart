@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
 import 'qr_generate_page.dart';
@@ -21,6 +22,7 @@ class PatientMenuPage extends StatefulWidget {
 
 class _PatientMenuPageState extends State<PatientMenuPage> {
   late bool isDarkMode;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -32,6 +34,50 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+  }
+
+  Future<void> _confirmAndLogout() async {
+    if (_isLoggingOut) return;
+
+    final shouldLogout = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Tancar sessió'),
+            content: const Text(
+              'Vols sortir de l\'aplicació? Es tancarà la sessió actual.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel·lar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Tancar sessió'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!shouldLogout) return;
+
+    setState(() => _isLoggingOut = true);
+    final success = await SessionManager.logout();
+    if (!mounted) return;
+
+    setState(() => _isLoggingOut = false);
+
+    if (success) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/initialPage', (route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No s\'ha pogut tancar la sessió. Torna-ho a provar.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -62,6 +108,28 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getBlurContainerColor(isDarkMode),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.containerShadow,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.logout,
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                          ),
+                          tooltip: 'Tancar sessió',
+                          onPressed: _isLoggingOut ? null : _confirmAndLogout,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getBlurContainerColor(isDarkMode),
