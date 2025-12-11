@@ -41,6 +41,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   void initState() {
     super.initState();
     isDarkMode = widget.initialDarkMode;
+    _loadThemePreference();
     _bootstrap();
   }
 
@@ -104,6 +105,16 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
   }
 
   Future<void> _confirmAndLogout() async {

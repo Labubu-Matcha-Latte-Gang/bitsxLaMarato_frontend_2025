@@ -43,6 +43,7 @@ class SessionManager {
   static const String _refreshTokenKey = 'refresh_token';
   static const String _tokenExpiryKey = 'access_token_expiry';
   static const String _userDataKey = 'user_data';
+  static const String _themeModeKey = 'theme_mode';
 
   static SecureKeyValueStore? _secureStoreOverride;
   static SessionExpiredCallback? _onSessionExpired;
@@ -153,6 +154,26 @@ class SessionManager {
       return null;
     } catch (e) {
       print('Error getting user data: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> saveThemeMode(bool isDarkMode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setBool(_themeModeKey, isDarkMode);
+    } catch (e) {
+      print('Error saving theme mode: $e');
+      return false;
+    }
+  }
+
+  static Future<bool?> getThemeMode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_themeModeKey);
+    } catch (e) {
+      print('Error getting theme mode: $e');
       return null;
     }
   }
