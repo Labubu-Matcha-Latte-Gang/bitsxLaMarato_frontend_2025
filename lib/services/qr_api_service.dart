@@ -11,10 +11,8 @@ class QRApiService {
   /// Genera el código QR para informe médico según la especificación QRGenerate
   /// del backend.
   static Future<Map<String, dynamic>> generateQRCode({
-    String? timestamp,
-    String? license,
     String timezone = 'Europe/Madrid',
-    String format = 'png', // enum: png | svg | svgz
+    String format = 'svg', // enum: png | svg
     String fillColor = '#000000',
     String backColor = '#FFFFFF',
     int boxSize = 10,
@@ -29,8 +27,6 @@ class QRApiService {
         'box_size': boxSize,
         'border': border,
       };
-      if (timestamp != null) payload['timestamp'] = timestamp;
-      if (license != null) payload['license'] = license;
 
       final response = await ApiService.performAuthenticatedRequest(
         (token, client) => client.post(
@@ -68,10 +64,10 @@ class QRApiService {
             'Token JWT inválido o expirado. Inicia sesión de nuevo.');
       } else if (response.statusCode == 403) {
         throw Exception(
-            'No tienes permisos para generar QR. Contacta con soporte.');
+            'Només els pacients poden generar un codi QR d\'informe mèdic.');
       } else if (response.statusCode == 422) {
         throw Exception(
-            'El código de la solicitud no ha superado la validación.');
+            'El cos de la sol·licitud no ha superat la validació.');
       } else if (response.statusCode == 500) {
         throw Exception(
             'Error inesperado del servidor al generar el código QR.');
