@@ -5,7 +5,6 @@ import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
-import '../../../services/session_manager.dart';
 import '../register/registerLobby.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,23 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      final response = await ApiService.loginUser(request);
-
-      final tokenSaved = await SessionManager.saveToken(response.accessToken);
-      if (!tokenSaved) {
-        _showErrorDialog('Error guardant la sessió');
-        return;
-      }
-
-      if (response.user != null) {
-        await SessionManager.saveUserData({
-          'id': response.user!.id,
-          'name': response.user!.name,
-          'surname': response.user!.surname,
-          'email': response.user!.email,
-          'user_type': response.user!.userType,
-        });
-      }
+      await ApiService.loginUser(request);
 
       if (!mounted) return;
 

@@ -47,6 +47,7 @@ class PatientRegistrationResponse {
   final String name;
   final String surname;
   final String accessToken;
+  final String? refreshToken;
   final User? user;
   final PatientRole role;
 
@@ -55,6 +56,7 @@ class PatientRegistrationResponse {
     required this.name,
     required this.surname,
     required this.accessToken,
+    this.refreshToken,
     this.user,
     required this.role,
   });
@@ -62,7 +64,9 @@ class PatientRegistrationResponse {
   factory PatientRegistrationResponse.fromJson(Map<String, dynamic> json) {
     final token = json['access_token']?.toString();
     if (token == null || token.isEmpty) {
-      throw Exception('access_token is missing from patient registration response');
+      throw Exception(
+        'access_token is missing from patient registration response',
+      );
     }
 
     User? user;
@@ -75,6 +79,7 @@ class PatientRegistrationResponse {
       name: json['name'],
       surname: json['surname'],
       accessToken: token,
+      refreshToken: json['refresh_token']?.toString(),
       user: user,
       role: PatientRole.fromJson(json['role']),
     );
@@ -180,6 +185,7 @@ class DoctorRegistrationResponse {
   final String name;
   final String surname;
   final String accessToken;
+  final String? refreshToken;
   final User? user;
   final DoctorRole role;
 
@@ -188,6 +194,7 @@ class DoctorRegistrationResponse {
     required this.name,
     required this.surname,
     required this.accessToken,
+    this.refreshToken,
     this.user,
     required this.role,
   });
@@ -208,6 +215,7 @@ class DoctorRegistrationResponse {
       name: json['name'],
       surname: json['surname'],
       accessToken: token,
+      refreshToken: json['refresh_token']?.toString(),
       user: user,
       role: DoctorRole.fromJson(json['role']),
     );
@@ -259,10 +267,12 @@ class LoginRequest {
 
 class LoginResponse {
   final String accessToken;
+  final String? refreshToken;
   final User? user;
 
   LoginResponse({
     required this.accessToken,
+    this.refreshToken,
     this.user,
   });
 
@@ -290,8 +300,19 @@ class LoginResponse {
 
     return LoginResponse(
       accessToken: json['access_token'] as String,
+      refreshToken: json['refresh_token']?.toString(),
       user: user,
     );
+  }
+
+  Map<String, dynamic> toUserData() {
+    return {
+      'id': user?.id ?? '',
+      'name': user?.name ?? 'Usuari',
+      'surname': user?.surname ?? '',
+      'email': user?.email ?? '',
+      'user_type': user?.userType ?? 'unknown',
+    };
   }
 }
 

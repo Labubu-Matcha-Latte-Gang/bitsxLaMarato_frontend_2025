@@ -38,6 +38,7 @@ dependencies:
   google_fonts: ^6.1.0
   http: ^1.1.0
   shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
   record: ^4.4.0
   path_provider: ^2.0.0
   universal_html: ^2.3.0
