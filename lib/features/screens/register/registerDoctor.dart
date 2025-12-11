@@ -22,6 +22,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
   final _surnameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _selectedGender;
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -62,11 +63,16 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
       try {
         // Crear el request para la API
+        if (_selectedGender == null || _selectedGender!.isEmpty) {
+          _showErrorDialog('Si us plau, selecciona el sexe');
+          return;
+        }
         final request = DoctorRegistrationRequest(
           name: _nameController.text.trim(),
           surname: _surnameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          gender: _selectedGender!.trim(),
           patients: [], // Por defecto sin pacientes asignados
         );
 
@@ -75,6 +81,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         print('  Surname: ${request.surname}');
         print('  Email: ${request.email}');
         print('  Password: ${request.password}');
+        print('  Gender: ${request.gender}');
         print('  Patients: ${request.patients}');
 
         // Llamar a la API
@@ -412,6 +419,64 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Campo Sexe
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sexe',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.getSecondaryTextColor(isDarkMode),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: AppColors.getFieldBackgroundColor(isDarkMode),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedGender,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                                ),
+                                style: TextStyle(
+                                  color: AppColors.getInputTextColor(isDarkMode),
+                                ),
+                                dropdownColor:
+                                    AppColors.getSecondaryBackgroundColor(isDarkMode),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'male',
+                                    child: Text('Home'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'female',
+                                    child: Text('Dona'),
+                                  ),
+                                ],
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedGender = value;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Si us plau, selecciona el sexe';
+                                  }
+                                  return null;
+                                },
                               ),
                             ),
                           ],
