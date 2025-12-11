@@ -58,6 +58,51 @@ class UserRoleData {
   }
 }
 
+enum UserType { patient, doctor, admin, unknown }
+
+extension UserRoleDataX on UserRoleData {
+  UserType inferUserType() {
+    final roleType = raw['role_type']?.toString().toLowerCase();
+    if (roleType == 'doctor') return UserType.doctor;
+    if (roleType == 'patient') return UserType.patient;
+    if (roleType == 'admin') return UserType.admin;
+
+    final hasPatientSignals = [
+      ailments,
+      gender,
+      age,
+      treatments,
+      heightCm,
+      weightKg,
+    ].any((value) => value != null);
+
+    final hasDoctorsList =
+        doctors.isNotEmpty || raw.keys.map((k) => k.toString()).contains('doctors');
+    final hasPatientsList =
+        patients.isNotEmpty || raw.keys.map((k) => k.toString()).contains('patients');
+
+    if (hasPatientSignals || hasDoctorsList) return UserType.patient;
+    if (hasPatientsList) return UserType.doctor;
+    return UserType.unknown;
+  }
+}
+
+String? translateGenderToCatalan(String? gender) {
+  if (gender == null) return null;
+  final trimmed = gender.trim();
+  if (trimmed.isEmpty) return null;
+  switch (trimmed.toLowerCase()) {
+    case 'male':
+    case 'home':
+      return 'Home';
+    case 'female':
+    case 'dona':
+      return 'Dona';
+    default:
+      return trimmed;
+  }
+}
+
 class UserProfile {
   final String email;
   final String name;
@@ -282,6 +327,27 @@ class QuestionAnswerWithAnalysis {
           (json['question'] as Map<String, dynamic>?) ?? <String, dynamic>{}),
       answeredAt: json['answered_at']?.toString() ?? '',
       analysis: parsedAnalysis,
+    );
+  }
+}
+
+class PatientSearchResult {
+  final String query;
+  final List<UserProfile> results;
+
+  const PatientSearchResult({
+    required this.query,
+    required this.results,
+  });
+
+  factory PatientSearchResult.fromJson(Map<String, dynamic> json) {
+    final resultsJson = (json['results'] as List?) ?? [];
+    return PatientSearchResult(
+      query: json['query']?.toString() ?? '',
+      results: resultsJson
+          .whereType<Map<String, dynamic>>()
+          .map(UserProfile.fromJson)
+          .toList(),
     );
   }
 }
