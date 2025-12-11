@@ -6,8 +6,12 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+<<<<<<< Updated upstream
 import 'games/wordle.dart';
+=======
+import 'games/wordle_easy.dart';
 import 'games/memory.dart';
+>>>>>>> Stashed changes
 import 'widgets/activity_card.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {
@@ -23,7 +27,8 @@ class RecommendedActivitiesPage extends StatefulWidget {
       _RecommendedActivitiesPageState();
 }
 
-class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
+class _RecommendedActivitiesPageState
+    extends State<RecommendedActivitiesPage> {
   final ActivitiesApiService _api = const ActivitiesApiService();
   bool isDarkMode = false;
   bool _isLoading = true;
@@ -203,14 +208,46 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                             ),
                           ],
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            isDarkMode
-                                ? Icons.wb_sunny
-                                : Icons.nightlight_round,
-                            color: AppColors.getPrimaryTextColor(isDarkMode),
-                          ),
-                          onPressed: _toggleTheme,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              onPressed: _toggleTheme,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.sports_esports,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              tooltip: 'Jocs',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const WordleScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            // Sudoku game
+                            IconButton(
+                              icon: Icon(
+                                Icons.extension,
+                                color: AppColors.getPrimaryTextColor(isDarkMode),
+                              ),
+                              tooltip: 'Sudoku',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => SudokuPage(isDarkMode: isDarkMode),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -224,45 +261,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Juegos en el centro
-                  Center(
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        _buildGameCard(
-                          context: context,
-                          title: 'Wordle',
-                          icon: Icons.grid_3x3,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    WordleScreen(isDarkMode: isDarkMode),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildGameCard(
-                          context: context,
-                          title: 'Memory',
-                          icon: Icons.style,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    MemoryGame(isDarkMode: isDarkMode),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
 
                   // Body: loading / error / list
                   Expanded(
@@ -281,8 +280,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                               Text(
                                 'Carregant activitats…',
                                 style: TextStyle(
-                                  color: AppColors.getSecondaryTextColor(
-                                      isDarkMode),
+                                  color: AppColors.getSecondaryTextColor(isDarkMode),
                                 ),
                               ),
                             ],
@@ -291,7 +289,38 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                       }
 
                       if (_errorMessage != null) {
-                        return const SizedBox.shrink();
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                                size: 40,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadActivities,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                                  foregroundColor: AppColors.getPrimaryButtonTextColor(isDarkMode),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Torna-ho a provar'),
+                              ),
+                            ],
+                          ),
+                        );
                       }
 
                       if (_activities.isEmpty) {
@@ -299,8 +328,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                           child: Text(
                             'No hi ha activitats recomanades en aquest moment.',
                             style: TextStyle(
-                              color:
-                                  AppColors.getSecondaryTextColor(isDarkMode),
+                              color: AppColors.getSecondaryTextColor(isDarkMode),
                             ),
                           ),
                         );
@@ -327,52 +355,6 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGameCard({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 140,
-        height: 140,
-        decoration: BoxDecoration(
-          color: AppColors.getBlurContainerColor(isDarkMode),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.containerShadow,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 48,
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
