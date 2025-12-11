@@ -59,6 +59,10 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
   // M\xe1ximo de segundos por fragment (Web autom\xe1tico, m\xf3vil con buffer overlap)
   static const int _maxChunkSeconds = 5;
+  static const int _minRecordingSeconds = 10;
+
+  bool get _hasReachedMinimumDuration =>
+      _recordDuration.inSeconds >= _minRecordingSeconds;
 
   // Contador de errores consecutivos para debugging
   int _consecutiveErrors = 0;
@@ -298,6 +302,13 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
   /// Detiene la grabaci\xf3n, env\xeda el \xfaltimo fragmento y completa la sesi\xf3n.
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
+
+    if (!_hasReachedMinimumDuration) {
+      _showError(
+        'Necessites gravar almenys $_minRecordingSeconds segons abans de poder aturar-te.',
+      );
+      return;
+    }
 
     // Cancelar temporizadores
     _timer?.cancel();
@@ -1176,12 +1187,6 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() => _showCompletionOverlay = false);
-                    },
-                    child: const Text('Quedar-me aqu\xed'),
-                  ),
                 ],
               ),
             ),
@@ -1209,10 +1214,21 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    final bool recordEnabled =
+    final bool baseRecordEnabled =
         _hasMicPermission &&
             !_showCompletionOverlay &&
             (_isRecording || !_isUploading);
+    final bool stopLocked = _isRecording && !_hasReachedMinimumDuration;
+    final bool buttonEnabled = baseRecordEnabled && !stopLocked;
+    final bool showMinDurationWarning = _isRecording && stopLocked;
+    final VoidCallback? micButtonAction = baseRecordEnabled
+        ? (_isRecording
+            ? (stopLocked ? null : _stopRecording)
+            : _startRecording)
+        : null;
+    final Color micButtonColor = _isRecording
+        ? Colors.red.withOpacity(buttonEnabled ? 1.0 : 0.7)
+        : (buttonEnabled ? Colors.white : Colors.white.withOpacity(0.25));
 
     return Scaffold(
       body: Stack(
@@ -1396,16 +1412,10 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
                           // Bot\xf3 de micr\xf2fon
                           RawMaterialButton(
-                            onPressed: !recordEnabled
-                                ? null
-                                : (_isRecording
-                                    ? _stopRecording
-                                    : _startRecording),
-                            fillColor: !recordEnabled
-                                ? Colors.white.withOpacity(0.25)
-                                : (_isRecording ? Colors.red : Colors.white),
+                            onPressed: micButtonAction,
+                            fillColor: micButtonColor,
                             shape: const CircleBorder(),
-                            elevation: recordEnabled ? 4.0 : 0.0,
+                            elevation: buttonEnabled ? 4.0 : 0.0,
                             constraints: const BoxConstraints.tightFor(
                               width: 96.0,
                               height: 96.0,
@@ -1441,6 +1451,19 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                             ),
                           ),
                           const SizedBox(height: 6.0),
+                          if (showMinDurationWarning)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                'Necessites gravar almenys $_minRecordingSeconds segons abans de poder aturar la gravació.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.orange.shade200,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
 
                           // Ones simulades durant la gravaci?
                           Padding(
