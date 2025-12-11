@@ -33,6 +33,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
   List<PatientDataResponse> _assignedPatients = [];
   List<UserProfile> _searchResults = [];
   Set<String> _selectedEmails = {};
+  UserProfile? _doctorProfile;
 
   @override
   void initState() {
@@ -56,6 +57,10 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
     try {
       final profile = await ApiService.getAndCacheCurrentUser();
+      if (!mounted) return;
+      setState(() {
+        _doctorProfile = profile;
+      });
       final emails = profile.role.patients;
       await _loadAssignedPatients(emails);
     } catch (e) {
@@ -323,6 +328,23 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
 
   Widget _buildHeroCard() {
     final cardColor = DoctorColors.surface(isDarkMode);
+    final profile = _doctorProfile;
+    final fullName = [
+      profile?.name,
+      profile?.surname,
+    ]
+        .where((part) => part != null && part.trim().isNotEmpty)
+        .map((part) => part!.trim())
+        .join(' ');
+    final genderRaw = profile?.role.gender?.toLowerCase();
+    String greetingTitle = 'Doctor/a';
+    if (genderRaw != null) {
+      if (genderRaw == 'female' || genderRaw == 'dona') {
+        greetingTitle = 'Doctora';
+      } else if (genderRaw == 'male' || genderRaw == 'home') {
+        greetingTitle = 'Doctor';
+      }
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -355,7 +377,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Benvingut/da, doctor/a',
+                  fullName.isNotEmpty ? '$greetingTitle $fullName' : 'Espai del metge',
                   style: TextStyle(
                     color: DoctorColors.textPrimary(isDarkMode),
                     fontSize: 16,
