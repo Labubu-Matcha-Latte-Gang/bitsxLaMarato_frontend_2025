@@ -5,7 +5,6 @@ import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
-import '../../../services/session_manager.dart';
 import '../register/registerLobby.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,28 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      final response = await ApiService.loginUser(request);
-
-      final tokenSaved = await SessionManager.saveToken(response.accessToken);
-      if (!tokenSaved) {
-        _showErrorDialog('Error guardant la sessió');
-        return;
-      }
-
-      if (response.user != null) {
-        await SessionManager.saveUserData({
-          'id': response.user!.id,
-          'name': response.user!.name,
-          'surname': response.user!.surname,
-          'email': response.user!.email,
-          'user_type': response.user!.userType,
-        });
-      }
+      await ApiService.loginUser(request);
 
       if (!mounted) return;
 
-      final userName = response.user?.name ?? 'Usuari';
-      final userSurname = response.user?.surname ?? '';
       Navigator.of(context).pop();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -115,47 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'D\'acord',
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog(String title, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            title,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-          ),
-          content: Text(
-            message,
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-            ),
-          ),
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const MicScreen(),
-                  ),
-                );
-              },
               child: Text(
                 'D\'acord',
                 style: TextStyle(

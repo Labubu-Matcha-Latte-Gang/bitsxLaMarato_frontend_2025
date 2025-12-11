@@ -9,11 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utils/test_secure_storage.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SessionManager.configure(secureStore: InMemorySecureStore());
     ApiService.reset(closeExistingClient: true);
   });
 
@@ -387,7 +390,8 @@ void main() {
       TranscriptionChunkRequest(
         sessionId: 's1',
         chunkIndex: 1,
-        audioBytes: [1, 2, 3],
+        // Use a sufficiently large buffer to satisfy validation (>=1000 bytes for WAV)
+        audioBytes: List<int>.filled(1200, 1),
       ),
     );
 
@@ -401,6 +405,9 @@ void main() {
     ApiService.configure(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/transcription/complete');
+        final Map<String, dynamic> body = jsonDecode(request.body);
+        expect(body['session_id'], 's1');
+        expect(body['question_id'], 'q1');
         return http.Response(
           jsonEncode({'status': 'done', 'transcription': 'hello world'}),
           200,
@@ -409,7 +416,7 @@ void main() {
     );
 
     final response = await ApiService.completeTranscriptionSession(
-      TranscriptionCompleteRequest(sessionId: 's1'),
+      TranscriptionCompleteRequest(sessionId: 's1', questionId: 'q1'),
     );
 
     expect(response.status, 'done');
