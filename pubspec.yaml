@@ -47,6 +47,7 @@ dependencies:
   js: ^0.6.7
   web: ^0.5.1
   open_filex: ^4.5.0
+  webview_flutter: ^4.7.0
 
 dev_dependencies:
   flutter_test:
