@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config.dart';
-import 'session_manager.dart';
+import 'api_service.dart';
 
 class QRApiService {
   // Usa la misma URL base que el resto de servicios (configurable por API_URL)
@@ -21,11 +21,6 @@ class QRApiService {
     int border = 4,
   }) async {
     try {
-      final token = await SessionManager.getToken();
-      if (token == null) {
-        throw Exception('Token no disponible. Por favor inicia sesión.');
-      }
-
       final payload = <String, dynamic>{
         'timezone': timezone,
         'format': format,
@@ -37,14 +32,16 @@ class QRApiService {
       if (timestamp != null) payload['timestamp'] = timestamp;
       if (license != null) payload['license'] = license;
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/qr'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(payload),
+      final response = await ApiService.performAuthenticatedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/qr'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(payload),
+        ),
       );
 
       if (response.statusCode == 200) {
