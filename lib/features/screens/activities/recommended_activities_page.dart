@@ -6,7 +6,12 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+<<<<<<< Updated upstream
 import 'games/wordle.dart';
+=======
+import 'games/wordle_easy.dart';
+import 'games/memory.dart';
+>>>>>>> Stashed changes
 import 'widgets/activity_card.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {

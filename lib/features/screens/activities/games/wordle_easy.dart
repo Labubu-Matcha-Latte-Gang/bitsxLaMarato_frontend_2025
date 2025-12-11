@@ -31,6 +31,9 @@ class _WordleScreenState extends State<WordleScreen>
   List<String> guesses = [];
   String currentGuess = '';
   Map<String, LetterState> keyStates = {};
+  bool isDarkMode = false;
+  // The codebase uses `isDark` in many places; keep a local alias to avoid
+  // breaking existing references.
   bool isDark = false;
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
@@ -44,6 +47,11 @@ class _WordleScreenState extends State<WordleScreen>
   int invalidWordCount = 0;
   int incorrectGuessCount = 0;
 
+  // Shake animation for invalid-word feedback
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
+  int _shakingRow = -1;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +62,27 @@ class _WordleScreenState extends State<WordleScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showDifficultyDialog();
       });
+    });
+
+    // Setup shake animation controller
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: -12.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -12.0, end: 12.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 12.0, end: -8.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -8.0, end: 8.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 8.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.linear));
+    _shakeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Reset after animation
+        setState(() {
+          _shakingRow = -1;
+        });
+      }
     });
   }
 
@@ -148,7 +177,12 @@ class _WordleScreenState extends State<WordleScreen>
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
     } else {
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
       secretWord = 'APPLE';
+=======
+      // Default secret when easy_words isn't available
+      secretWord = 'VIOLA';
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
     }
     guesses = [];
     currentGuess = '';
@@ -214,6 +248,59 @@ class _WordleScreenState extends State<WordleScreen>
     });
   }
 
+  void _triggerInvalidWordAnimation() {
+    setState(() {
+      _shakingRow = guesses.length; // animate current row
+    });
+    _shakeController.forward(from: 0.0);
+  }
+
+  void _showEndDialog({required bool won}) {
+    final attempts = guesses.length;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(
+            won ? 'Has guanyat!' : 'Final',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(won
+                  ? 'Has endevinat la paraula en $attempts intent(s).'
+                  : 'No has encertat. La paraula era $secretWord.'),
+              const SizedBox(height: 12),
+              // simple stats: list of guesses
+              Text('Intent(s):', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              ...guesses.map((g) => Text(g)).toList(),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Navigate back to RecommendedActivitiesPage
+                Navigator.of(ctx).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        // Use the recommended activities page as requested
+                        // Pass current theme preference
+                        RecommendedActivitiesPage(initialDarkMode: isDark),
+                  ),
+                );
+              },
+              child: const Text('Acceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _onKeyTap(String key) {
     if (guesses.length >= rows) return;
     if (key == 'ENTER') {
@@ -248,10 +335,15 @@ class _WordleScreenState extends State<WordleScreen>
     // If dictionary loaded, validate word exists
     if (_dictionary != null) {
       if (!_isValidWord(guess)) {
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
         // Count invalid / non-existing word attempts
         invalidWordCount++;
         // Provide immediate feedback by shaking the current row
         _triggerInvalidWordFeedback();
+=======
+        // Play shake animation on the current row instead of showing a SnackBar
+        _triggerInvalidWordAnimation();
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
         return;
       }
     }
@@ -285,9 +377,17 @@ class _WordleScreenState extends State<WordleScreen>
     });
 
     if (guess == secretWord) {
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
       _showResultDialog(won: false);
+=======
+      // Show popup dialog with stats
+      _showEndDialog(won: true);
+    } else if (guesses.length >= rows) {
+      // Show popup with correct word and stats
+      _showEndDialog(won: false);
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
     }
   }
 
@@ -411,6 +511,7 @@ class _WordleScreenState extends State<WordleScreen>
             List<LetterState> states = List.generate(cols, (_) => LetterState.initial);
             if (r < guesses.length) states = _evaluateGuess(guesses[r], secretWord);
 
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
             return SizedBox(
               height: tileSize,
               child: AnimatedBuilder(
@@ -435,23 +536,73 @@ class _WordleScreenState extends State<WordleScreen>
 
                     final fgColor = (r < guesses.length)
                         ? ((state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))
+=======
+            // Apply a horizontal shake transform only to the currently animated row
+            return AnimatedBuilder(
+              animation: _shakeController,
+              builder: (context, child) {
+                final dx = (r == _shakingRow) ? _shakeAnimation.value : 0.0;
+                return Transform.translate(
+                  offset: Offset(dx, 0),
+                  child: child,
+                );
+              },
+              child: SizedBox(
+                height: tileSize,
+                child: Row(
+                  children: List.generate(cols, (c) {
+                    final ch = c < rowGuess.length ? rowGuess[c] : '';
+                    final state =
+                        (r < guesses.length) ? states[c] : LetterState.initial;
+                    final bgColor = (r < guesses.length)
+                        ? _colorForState(state)
+                        : (isCurrent && c < currentGuess.length)
+                            ? AppColors.getPrimaryButtonColor(isDark)
+                                .withOpacity(0.18)
+                            : AppColors.getSecondaryBackgroundColor(isDark);
+
+                    final fgColor = (r < guesses.length)
+                        ? ((state == LetterState.correct ||
+                                state == LetterState.present)
+                            ? Colors.white
+                            : AppColors.getPrimaryTextColor(isDark))
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
                         : AppColors.getPrimaryTextColor(isDark);
 
                     return Expanded(
                       child: Container(
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
                         margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+=======
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 2, vertical: 3),
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
                         decoration: BoxDecoration(
                           color: bgColor,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
                             color: (r < guesses.length) ? Colors.transparent : Colors.grey.shade500,
+=======
+                            color: (r < guesses.length)
+                                ? Colors.transparent
+                                : Colors.grey.shade500,
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
                             width: 1,
                           ),
                         ),
                         child: Center(
                           child: Text(
                             ch.toUpperCase(),
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
                             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.6, fontSize: tileSize * 0.33, color: fgColor),
+=======
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.6,
+                                fontSize: tileSize * 0.33,
+                                color: fgColor),
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
                           ),
                         ),
                       ),
@@ -471,6 +622,7 @@ class _WordleScreenState extends State<WordleScreen>
         body: Stack(
           children: [
             Positioned.fill(
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.getBackgroundGradient(isDark),
@@ -480,6 +632,17 @@ class _WordleScreenState extends State<WordleScreen>
             Positioned.fill(
               // Match the particle theme used in Login / Activities pages for visual consistency
               child: ParticleSystemWidget(isDarkMode: isDark, particleCount: 50, maxSize: 3.0, minSize: 1.0, speed: 0.5, maxOpacity: 0.6, minOpacity: 0.2, particleColor: AppColors.getParticleColor(isDark)),
+=======
+              child: ParticleSystemWidget(
+                isDarkMode: isDarkMode,
+                particleCount: 50,
+                maxSize: 3.0,
+                minSize: 1.0,
+                speed: 0.5,
+                maxOpacity: 0.6,
+                minOpacity: 0.2,
+              ),
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
             ),
             SafeArea(
               child: Column(
@@ -587,12 +750,44 @@ class _WordleScreenState extends State<WordleScreen>
                         final state = keyStates[k] ?? LetterState.initial;
                         final color = _colorForState(state);
                         return Container(
+<<<<<<< Updated upstream:lib/features/screens/activities/games/wordle.dart
                           margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 2.5),
                           decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade500, width: 1)),
                           child: InkWell(
                             onTap: () => _onKeyTap(k),
                             borderRadius: BorderRadius.circular(6),
                             child: SizedBox(width: keySize, height: keySize, child: Center(child: Text(k, style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: keySize * 0.34, color: (state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))))),
+=======
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 1.5, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                                color: Colors.grey.shade500, width: 1),
+                          ),
+                          child: InkWell(
+                            onTap: () => _onKeyTap(k),
+                            borderRadius: BorderRadius.circular(6),
+                            child: SizedBox(
+                              width: keySize,
+                              height: keySize,
+                              child: Center(
+                                child: Text(
+                                  k,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                    fontSize: keySize * 0.34,
+                                    color: (state == LetterState.correct ||
+                                            state == LetterState.present)
+                                        ? Colors.white
+                                        : AppColors.getPrimaryTextColor(isDark),
+                                  ),
+                                ),
+                              ),
+                            ),
+>>>>>>> Stashed changes:lib/features/screens/activities/games/wordle_easy.dart
                           ),
                         );
                       }
