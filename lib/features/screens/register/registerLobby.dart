@@ -5,6 +5,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../initialPage/initialPage.dart';
 import 'registerDoctor.dart';
 import 'registerPacient.dart';
+import '../login/login.dart';
 
 class RegisterLobby extends StatefulWidget {
   final bool isDarkMode;
@@ -310,10 +311,15 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                         // Texto "Already have an account? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context); // Volver al login
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    LoginScreen(isDarkMode: isDarkMode),
+                              ),
+                            );
                           },
                           child: Text(
-                            'Already have an account? Login',
+                            'Ja tens un compte? Inicia sessió',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getTertiaryTextColor(isDarkMode),
