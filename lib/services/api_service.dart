@@ -59,10 +59,6 @@ class ApiService {
       return false;
     }
 
-    if (!SessionManager.isTokenExpired(storedToken)) {
-      return true;
-    }
-
     try {
       await _refreshAccessToken();
       return true;
@@ -96,7 +92,7 @@ class ApiService {
             PatientRegistrationResponse.fromJson(responseData);
         await _persistSession(
           accessToken: registration.accessToken,
-          refreshToken: registration.refreshToken ?? registration.accessToken,
+          refreshToken: null,
           userData: registration.toUserData(),
         );
         return registration;
@@ -342,7 +338,7 @@ class ApiService {
         final registration = DoctorRegistrationResponse.fromJson(responseData);
         await _persistSession(
           accessToken: registration.accessToken,
-          refreshToken: registration.refreshToken ?? registration.accessToken,
+          refreshToken: null,
           userData: registration.toUserData(),
         );
         return registration;
@@ -423,7 +419,6 @@ class ApiService {
       print('DEBUG - Login Response Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
-        // Verificar si el body no está vacío
         if (response.body.isEmpty) {
           throw ApiException('La resposta de la API està buida', 200);
         }
@@ -432,15 +427,10 @@ class ApiService {
           final responseData = json.decode(response.body);
           print('DEBUG - Parsed Response Data: $responseData');
 
-          // Verificar que responseData no sea null
-          if (responseData == null) {
-            throw ApiException('La resposta de la API és null', 200);
-          }
-
           final loginResponse = LoginResponse.fromJson(responseData);
           await _persistSession(
             accessToken: loginResponse.accessToken,
-            refreshToken: loginResponse.refreshToken ?? loginResponse.accessToken,
+            refreshToken: null,
             userData: loginResponse.toUserData(),
           );
           return loginResponse;
@@ -651,13 +641,7 @@ class ApiService {
     TranscriptionChunkRequest request,
   ) async {
     try {
-      // Use simplified endpoint for WebM files from MediaRecorder  
-      if (request.filename.endsWith('.webm') || request.contentType.contains('webm')) {
-        return await _uploadTranscriptionChunkRaw(request);
-      }
-      
-      // Original implementation for other formats
-      return await _uploadTranscriptionChunkOriginal(request);
+      return await _uploadTranscriptionChunkMultipart(request);
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException(
@@ -667,91 +651,12 @@ class ApiService {
     }
   }
 
-  static Future<TranscriptionResponse> _uploadTranscriptionChunkRaw(
+  static Future<TranscriptionResponse> _uploadTranscriptionChunkMultipart(
     TranscriptionChunkRequest request,
   ) async {
     try {
-      // Validación básica del chunk antes del envío
       if (request.audioBytes.isEmpty) {
         throw ApiException('Chunk de audio vacío', 400);
-      }
-      
-      // Format-aware size validation - MP4/M4A chunks can be smaller initially
-      int minSize = 100;  // Default for raw endpoint
-      if (request.contentType.contains('webm')) {
-        minSize = 1000; // WebM needs bigger chunks to be valid
-      }
-      
-      if (request.audioBytes.length < minSize) {
-        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
-      }
-
-      final response = await _sendAuthorizedRequest(
-        (token, client) async {
-          final multipartRequest = http.MultipartRequest(
-            'POST',
-            Uri.parse('$_baseUrl/transcription/chunk-raw'),
-          );
-          multipartRequest.headers['Authorization'] = 'Bearer $token';
-          multipartRequest.fields['session_id'] = request.sessionId;
-          multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
-          multipartRequest.files.add(
-            http.MultipartFile.fromBytes(
-              'audio_blob',
-              request.audioBytes,
-              filename: request.filename,
-              contentType: MediaType.parse(request.contentType),
-            ),
-          );
-
-          print(
-            'DEBUG - Uploading transcription chunk (RAW): session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}',
-          );
-
-          final streamedResponse = await client.send(multipartRequest);
-          return http.Response.fromStream(streamedResponse);
-        },
-      );
-
-      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
-      print('DEBUG - Chunk upload response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData =
-            response.body.isNotEmpty ? json.decode(response.body) : {};
-        return TranscriptionResponse.fromJson(responseData);
-      }
-
-      throw _apiExceptionFromResponse(
-        response,
-        'No s\'ha pogut enviar el fragment d\'àudio via raw endpoint.',
-      );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        'Error de connexió amb el servidor: ${e.toString()}',
-        0,
-      );
-    }
-  }
-
-  static Future<TranscriptionResponse> _uploadTranscriptionChunkOriginal(
-    TranscriptionChunkRequest request,
-  ) async {
-    try {
-      // Validación básica del chunk antes del envío
-      if (request.audioBytes.isEmpty) {
-        throw ApiException('Chunk de audio vacío', 400);
-      }
-      
-      // Format-aware size validation - MP4/M4A chunks can be smaller initially
-      int minSize = 1000;  // Default for regular endpoint
-      if (request.contentType.contains('mp4') || request.contentType.contains('mpeg') || request.contentType.contains('m4a')) {
-        minSize = 200; // MP4/MP3 can have smaller header chunks
-      }
-      
-      if (request.audioBytes.length < minSize) {
-        throw ApiException('Chunk de audio demasiado pequeño (${request.audioBytes.length} bytes, mínimo: $minSize para ${request.contentType})', 400);
       }
 
       final response = await _sendAuthorizedRequest(
@@ -783,14 +688,6 @@ class ApiService {
 
       print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
       print('DEBUG - Chunk upload response body: ${response.body}');
-      
-      // Log adicional para chunks que fallan
-      if (response.statusCode == 500 && response.body.contains('error inesperat')) {
-        print('CRITICAL - Backend internal error for chunk ${request.chunkIndex}. Possible causes:');
-        print('  - Session state corruption after first chunk');
-        print('  - Audio format incompatibility after restart');
-        print('  - Backend chunking logic error');
-      }
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =
@@ -997,13 +894,17 @@ class ApiService {
           throw ApiException('Resposta invàlida del servidor.', 500);
         }
 
-        final newToken = data['access_token']?.toString();
-        if (newToken == null || newToken.isEmpty) {
-          throw ApiException('No s\'ha rebut un nou token de sessió.', 500);
-        }
+        final loginResponse = LoginResponse.fromJson(data);
+        await SessionManager.saveToken(loginResponse.accessToken);
 
-        await SessionManager.saveToken(newToken);
-        return newToken;
+        // Merge existing user data with the fresh daily flag
+        final existingUserData =
+            await SessionManager.getUserData() ?? <String, dynamic>{};
+        final mergedUserData = Map<String, dynamic>.from(existingUserData)
+          ..['already_responded_today'] = loginResponse.alreadyRespondedToday;
+        await SessionManager.saveUserData(mergedUserData);
+
+        return loginResponse.accessToken;
       }
 
       throw _apiExceptionFromResponse(
