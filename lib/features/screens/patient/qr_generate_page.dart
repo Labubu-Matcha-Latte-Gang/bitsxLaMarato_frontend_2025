@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/qr_api_service.dart';
@@ -111,67 +110,34 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
+  double _calculateQRDimension(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final double base = width * 0.6;
+    return base.clamp(240.0, 360.0).toDouble();
+  }
+
   String _colorToHex(Color color) {
     final String hex = color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${hex.substring(2)}';
   }
 
   Future<void> _openColorPicker(_QRColorRole role) async {
-    final Color initialColor = role == _QRColorRole.fill ? _fillColor : _backColor;
+    final Color initialColor =
+        role == _QRColorRole.fill ? _fillColor : _backColor;
 
-    final Color? selectedColor = await showDialog<Color>(
+    final Color? selectedColor = await showModalBottomSheet<Color>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        Color tempColor = initialColor;
-        return AlertDialog(
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: Text(
-            role == _QRColorRole.fill ? 'Color de farciment' : 'Color de fons',
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: StatefulBuilder(
-            builder: (context, setStateDialog) {
-              return SizedBox(
-                width: 360,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ColorPicker(
-                      pickerColor: tempColor,
-                      onColorChanged: (color) {
-                        setStateDialog(() {
-                          tempColor = color;
-                        });
-                      },
-                      enableAlpha: false,
-                      hexInputBar: true,
-                      displayThumbColor: true,
-                      portraitOnly: true,
-                      pickerAreaBorderRadius: BorderRadius.circular(12),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDialogPreview(tempColor),
-                  ],
-                ),
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text('Cancel·lar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(tempColor),
-              child: const Text('Aplicar'),
-            ),
-          ],
+        return _ColorPickerSheet(
+          initialColor: initialColor,
+          isDarkMode: isDarkMode,
+          pairedColor: role == _QRColorRole.fill ? _backColor : _fillColor,
+          title: role == _QRColorRole.fill
+              ? 'Color de farciment'
+              : 'Color de fons',
+          role: role,
         );
       },
     );
@@ -179,41 +145,6 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
     if (selectedColor != null) {
       _handleColorChanged(role, selectedColor);
     }
-  }
-
-  Widget _buildDialogPreview(Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Previsualització',
-          style: TextStyle(
-            color: AppColors.getSecondaryTextColor(isDarkMode),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 52,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.15),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _colorToHex(color),
-          style: TextStyle(
-            color: AppColors.getPrimaryTextColor(isDarkMode),
-            letterSpacing: 1.2,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
   }
 
   Future<void> _generateQR() async {
@@ -594,6 +525,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
 
   @override
   Widget build(BuildContext context) {
+    final double qrDimension = _calculateQRDimension(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -724,8 +656,8 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                   children: [
                                     if (_isLoading)
                                       Container(
-                                        width: 200,
-                                        height: 200,
+                                        width: qrDimension,
+                                        height: qrDimension,
                                         decoration: BoxDecoration(
                                           color:
                                               AppColors.getBlurContainerColor(
@@ -750,8 +682,8 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                       )
                                     else if (_showQR && _qrCodeUrl != null)
                                       Container(
-                                        width: 200,
-                                        height: 200,
+                                        width: qrDimension,
+                                        height: qrDimension,
                                         decoration: BoxDecoration(
                                           color:
                                               AppColors.getBlurContainerColor(
@@ -773,8 +705,8 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                       )
                                     else
                                       Container(
-                                        width: 200,
-                                        height: 200,
+                                        width: qrDimension,
+                                        height: qrDimension,
                                         decoration: BoxDecoration(
                                           color:
                                               AppColors.getBlurContainerColor(
@@ -792,7 +724,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                         child: Center(
                                           child: Icon(
                                             Icons.qr_code_2,
-                                            size: 100,
+                                            size: qrDimension * 0.45,
                                             color:
                                                 AppColors.getPrimaryTextColor(
                                                         isDarkMode)
@@ -911,6 +843,411 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ColorPickerSheet extends StatefulWidget {
+  final Color initialColor;
+  final bool isDarkMode;
+  final Color pairedColor;
+  final String title;
+  final _QRColorRole role;
+
+  const _ColorPickerSheet({
+    required this.initialColor,
+    required this.isDarkMode,
+    required this.pairedColor,
+    required this.title,
+    required this.role,
+  });
+
+  @override
+  State<_ColorPickerSheet> createState() => _ColorPickerSheetState();
+}
+
+class _ColorPickerSheetState extends State<_ColorPickerSheet> {
+  late HSLColor _hslColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _hslColor = HSLColor.fromColor(widget.initialColor);
+  }
+
+  Color get _currentColor => _hslColor.toColor();
+
+  String get _hexValue {
+    final String hex =
+        _currentColor.value.toRadixString(16).padLeft(8, '0').toUpperCase();
+    return '#${hex.substring(2)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color surfaceColor =
+        AppColors.getSecondaryBackgroundColor(widget.isDarkMode)
+            .withOpacity(0.98);
+    final Color textColor = AppColors.getPrimaryTextColor(widget.isDarkMode);
+    final Color secondaryTextColor =
+        AppColors.getSecondaryTextColor(widget.isDarkMode);
+
+    final Color backgroundColor = widget.role == _QRColorRole.back
+        ? _currentColor
+        : widget.pairedColor;
+    final Color foregroundColor = widget.role == _QRColorRole.fill
+        ? _currentColor
+        : widget.pairedColor;
+
+    final EdgeInsets viewInsets = MediaQuery.of(context).viewInsets;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 16 + viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: AppColors.getPrimaryButtonColor(widget.isDarkMode)
+                  .withOpacity(0.25),
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textColor.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.title,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ColorPreviewCard(
+                  background: backgroundColor,
+                  foreground: foregroundColor,
+                  hexValue: _hexValue,
+                  role: widget.role,
+                  textColor: textColor,
+                  secondaryTextColor: secondaryTextColor,
+                  isDarkMode: widget.isDarkMode,
+                ),
+                const SizedBox(height: 20),
+                _GradientSlider(
+                  label: 'Tonalitat',
+                  valueLabel: '${_hslColor.hue.round()}°',
+                  value: _hslColor.hue,
+                  min: 0,
+                  max: 360,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFF0000),
+                      Color(0xFFFFA500),
+                      Color(0xFFFFFF00),
+                      Color(0xFF00FF00),
+                      Color(0xFF00FFFF),
+                      Color(0xFF0000FF),
+                      Color(0xFFFF00FF),
+                      Color(0xFFFF0000),
+                    ],
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _hslColor = _hslColor.withHue(value);
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _GradientSlider(
+                  label: 'Saturació',
+                  valueLabel: '${(_hslColor.saturation * 100).round()}%',
+                  value: _hslColor.saturation,
+                  min: 0,
+                  max: 1,
+                  gradient: LinearGradient(
+                    colors: [
+                      HSLColor.fromAHSL(
+                        1,
+                        _hslColor.hue,
+                        0,
+                        _hslColor.lightness,
+                      ).toColor(),
+                      HSLColor.fromAHSL(
+                        1,
+                        _hslColor.hue,
+                        1,
+                        _hslColor.lightness,
+                      ).toColor(),
+                    ],
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _hslColor =
+                          _hslColor.withSaturation(value.clamp(0.0, 1.0));
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _GradientSlider(
+                  label: 'Lluminositat',
+                  valueLabel: '${(_hslColor.lightness * 100).round()}%',
+                  value: _hslColor.lightness,
+                  min: 0,
+                  max: 1,
+                  gradient: LinearGradient(
+                    colors: [
+                      HSLColor.fromAHSL(
+                        1,
+                        _hslColor.hue,
+                        _hslColor.saturation,
+                        0,
+                      ).toColor(),
+                      HSLColor.fromAHSL(
+                        1,
+                        _hslColor.hue,
+                        _hslColor.saturation,
+                        0.5,
+                      ).toColor(),
+                      HSLColor.fromAHSL(
+                        1,
+                        _hslColor.hue,
+                        _hslColor.saturation,
+                        1,
+                      ).toColor(),
+                    ],
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _hslColor =
+                          _hslColor.withLightness(value.clamp(0.0, 1.0));
+                    });
+                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(null),
+                        child: const Text('Cancel·lar'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(_currentColor),
+                        child: const Text('Aplicar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorPreviewCard extends StatelessWidget {
+  final Color background;
+  final Color foreground;
+  final String hexValue;
+  final _QRColorRole role;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final bool isDarkMode;
+
+  const _ColorPreviewCard({
+    required this.background,
+    required this.foreground,
+    required this.hexValue,
+    required this.role,
+    required this.textColor,
+    required this.secondaryTextColor,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String detailText = role == _QRColorRole.fill
+        ? 'Aplicat al patró del QR.'
+        : 'Aplicat al fons del QR.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: textColor.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: textColor.withOpacity(0.15),
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.qr_code_2,
+                size: 42,
+                color: foreground,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hexValue,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  detailText,
+                  style: TextStyle(
+                    color: secondaryTextColor,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GradientSlider extends StatelessWidget {
+  final String label;
+  final String valueLabel;
+  final double value;
+  final double min;
+  final double max;
+  final LinearGradient gradient;
+  final ValueChanged<double> onChanged;
+
+  const _GradientSlider({
+    required this.label,
+    required this.valueLabel,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.gradient,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color thumbColor = isDark ? Colors.white : Colors.black.withOpacity(0.85);
+    final Color overlayColor = thumbColor.withOpacity(0.15);
+    final Color frameColor =
+        (isDark ? Colors.white : Colors.black).withOpacity(0.12);
+    final SliderThemeData sliderTheme = SliderTheme.of(context).copyWith(
+      trackHeight: 18,
+      activeTrackColor: Colors.transparent,
+      inactiveTrackColor: Colors.transparent,
+      thumbColor: thumbColor,
+      overlayColor: overlayColor,
+      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
+      overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              valueLabel,
+              style: TextStyle(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height: 18,
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: frameColor,
+                ),
+              ),
+            ),
+            SliderTheme(
+              data: sliderTheme,
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                onChanged: onChanged,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
