@@ -4,13 +4,21 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/effects/particle_system.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 /// Memory (parejas) con cronómetro, contador de movimientos y puntuación.
 /// Usa las 15 imágenes de `lib/features/screens/activities/cardsMemory/historic/`
 /// generando 30 cartas (15 parejas).
 class MemoryGame extends StatefulWidget {
   final bool isDarkMode;
-  const MemoryGame({super.key, this.isDarkMode = false});
+  final String? activityId;
+
+  const MemoryGame({
+    super.key,
+    this.isDarkMode = false,
+    this.activityId,
+  });
 
   @override
   State<MemoryGame> createState() => _MemoryGameState();
@@ -168,9 +176,13 @@ class _MemoryGameState extends State<MemoryGame> {
         });
         _resetSelections();
 
-        // Si todas las parejas encontradas, parar cronómetro.
+        // Si todas las parejas encontradas, parar cronómetro y mostrar diálogo.
         if (_matchedPairs == _currentImages.length) {
           _isRunning = false;
+          // Mostrar diálogo de completado
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _showGameCompletedDialog();
+          });
         }
       } else {
         // No match: voltear después de un pequeño delay para que el usuario vea.
@@ -215,6 +227,123 @@ class _MemoryGameState extends State<MemoryGame> {
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
     return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  void _showGameCompletedDialog() {
+    final score = getFinalScore();
+    final time = _formatTime(_elapsedSeconds);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('¡Joc Completat!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Puntuació: ${score.toStringAsFixed(1)}/10'),
+            const SizedBox(height: 8),
+            Text('Temps: $time'),
+            const SizedBox(height: 8),
+            Text('Moviments: $_moves'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _startNewGame();
+            },
+            child: const Text('Jugar de Nou'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (widget.activityId != null) {
+                _submitScore(score);
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Enviar Resultats'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitScore(double score) async {
+    try {
+      // Mostrar indicador de carga
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Enviant resultats...'),
+            ],
+          ),
+        ),
+      );
+
+      // Crear request con los datos del juego
+      final request = ActivityCompleteRequest(
+        id: widget.activityId!,
+        score: score,
+        secondsToFinish: _elapsedSeconds.toDouble(),
+      );
+
+      // Llamar a la API
+      await ApiService.completeActivity(request);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      // Mostrar éxito
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Resultats Enviats'),
+          content: Text(
+            'La puntuació de ${score.toStringAsFixed(1)} ha estat registrada correctament.',
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo de éxito
+                Navigator.pop(context); // Volver a pantalla anterior
+              },
+              child: const Text('Acceptar'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      // Mostrar error
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('No s\'ha pogut enviar els resultats: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Acceptar'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
