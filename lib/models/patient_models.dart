@@ -124,6 +124,7 @@ class DoctorRegistrationRequest {
   final String surname;
   final String email;
   final String password;
+  final String gender;
   final List<String> patients;
 
   DoctorRegistrationRequest({
@@ -131,6 +132,7 @@ class DoctorRegistrationRequest {
     required this.surname,
     required this.email,
     required this.password,
+    required this.gender,
     this.patients = const [],
   });
 
@@ -140,6 +142,7 @@ class DoctorRegistrationRequest {
       'surname': surname,
       'email': email,
       'password': password,
+      'gender': gender,
     };
     if (patients.isNotEmpty) {
       data['patients'] = patients;
