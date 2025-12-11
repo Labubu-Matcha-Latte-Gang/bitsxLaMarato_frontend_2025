@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/patient_models.dart';
@@ -95,6 +96,15 @@ class ApiService {
           refreshToken: null,
           userData: registration.toUserData(),
         );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
+          alreadyRespondedToday: false,
+        );
         return registration;
       } else {
         // Manejo de errores específicos
@@ -146,6 +156,134 @@ class ApiService {
       if (e is ApiException) {
         rethrow;
       }
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<PatientSearchResult> searchPatientsForDoctor(
+    String query, {
+    int limit = 20,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/user/doctor/patients/search').replace(
+        queryParameters: {
+          'q': query,
+          'limit': limit.toString(),
+        },
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return PatientSearchResult.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'han pogut cercar els pacients.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<UserProfile> assignPatientsToDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'assign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut afegir els pacients al teu llistat.',
+    );
+  }
+
+  static Future<UserProfile> unassignPatientsFromDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'unassign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut eliminar els pacients seleccionats.',
+    );
+  }
+
+  static Future<UserProfile> _mutateDoctorPatients({
+    required String endpoint,
+    required List<String> patients,
+    required String failureMessage,
+  }) async {
+    if (patients.isEmpty) {
+      throw ApiException('Cal indicar almenys un pacient.', 400);
+    }
+
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/user/doctor/patients/$endpoint'),
+          headers: _jsonHeaders(token),
+          body: json.encode({'patients': patients}),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final profile = UserProfile.fromJson(responseData);
+        await _persistUserProfile(profile);
+        return profile;
+      }
+
+      throw _apiExceptionFromResponse(response, failureMessage);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Uint8List> downloadPatientReport(
+    String email, {
+    String timezone = 'Europe/Madrid',
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/report/$email').replace(
+        queryParameters: {'timezone': timezone},
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(
+            token,
+            extra: {'Accept': 'application/pdf'},
+          ),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return Uint8List.fromList(response.bodyBytes);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut descarregar l\'informe del pacient.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
       throw ApiException(
         'Error de connexió amb el servidor: ${e.toString()}',
         0,
@@ -341,6 +479,14 @@ class ApiService {
           refreshToken: null,
           userData: registration.toUserData(),
         );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
+        );
         return registration;
       } else {
         // Manejo de errores específicos
@@ -433,6 +579,9 @@ class ApiService {
             refreshToken: null,
             userData: loginResponse.toUserData(),
           );
+          await getAndCacheCurrentUser(
+            alreadyRespondedToday: loginResponse.alreadyRespondedToday,
+          );
           return loginResponse;
         } catch (e) {
           print('DEBUG - Error parsing JSON: $e');
@@ -522,6 +671,17 @@ class ApiService {
         0,
       );
     }
+  }
+
+  static Future<UserProfile> getAndCacheCurrentUser({
+    bool? alreadyRespondedToday,
+  }) async {
+    final profile = await getCurrentUser();
+    await _persistUserProfile(
+      profile,
+      alreadyRespondedToday: alreadyRespondedToday,
+    );
+    return profile;
   }
 
   static Future<UserProfile> updateCurrentUser(
@@ -794,6 +954,29 @@ class ApiService {
     if (!saved) {
       throw ApiException(
         'La sessió s\'ha creat però no s\'ha pogut persistir localment.',
+        0,
+      );
+    }
+  }
+
+  static Future<void> _persistUserProfile(
+    UserProfile profile, {
+    bool? alreadyRespondedToday,
+  }) async {
+    final inferredType = profile.role.inferUserType();
+    final data = {
+      'name': profile.name,
+      'surname': profile.surname,
+      'email': profile.email,
+      'role': profile.role.toJson(),
+      'user_type': inferredType.name,
+      if (alreadyRespondedToday != null)
+        'already_responded_today': alreadyRespondedToday,
+    };
+    final saved = await SessionManager.saveUserData(data);
+    if (!saved) {
+      throw ApiException(
+        'Sessió iniciada però no s\'ha pogut guardar el perfil localment.',
         0,
       );
     }
