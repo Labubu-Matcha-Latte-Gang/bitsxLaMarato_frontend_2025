@@ -3,19 +3,27 @@ import 'dart:convert';
 import 'package:bitsxlamarato_frontend_2025/models/activity_models.dart';
 import 'package:bitsxlamarato_frontend_2025/services/activities_api_service.dart';
 import 'package:bitsxlamarato_frontend_2025/services/api_service.dart';
+import 'package:bitsxlamarato_frontend_2025/services/session_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utils/test_secure_storage.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
-    SharedPreferences.setMockInitialValues({'access_token': 'token-mock'});
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    SessionManager.configure(secureStore: InMemorySecureStore());
+    await SessionManager.saveToken('token-mock');
+    ApiService.reset(closeExistingClient: true);
   });
 
-  tearDown(ApiService.reset);
+  tearDown(() async {
+    await SessionManager.logout();
+    ApiService.reset(closeExistingClient: true);
+  });
 
   group('ActivitiesApiService - recommended', () {
     test('fetchRecommendedActivities retorna una activitat amb token i capçaleres', () async {
