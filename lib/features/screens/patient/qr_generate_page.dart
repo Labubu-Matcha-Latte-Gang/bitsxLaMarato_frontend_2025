@@ -32,6 +32,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   Color? _fillColorSuggestion;
   Color? _backColorSuggestion;
   _QRColorRole _lastEditedColor = _QRColorRole.fill;
+  bool _isQRFullscreen = false;
 
   double get _currentContrastRatio =>
       _calculateContrastRatio(_fillColor, _backColor);
@@ -47,6 +48,12 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   void _toggleTheme() {
     setState(() {
       isDarkMode = !isDarkMode;
+    });
+  }
+
+  void _toggleQRFullscreen() {
+    setState(() {
+      _isQRFullscreen = !_isQRFullscreen;
     });
   }
 
@@ -114,6 +121,14 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
     final double width = MediaQuery.of(context).size.width;
     final double base = width * 0.6;
     return base.clamp(240.0, 360.0).toDouble();
+  }
+
+  double _calculateQRFullscreenSize(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double margin = 32.0;
+    final double available =
+        math.min(screenSize.width, screenSize.height) - margin;
+    return available.clamp(200.0, math.max(screenSize.width, screenSize.height));
   }
 
   String _colorToHex(Color color) {
@@ -282,6 +297,63 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
         ),
       );
     }
+  }
+
+  Widget _buildQRImageFrame() {
+    if (_qrCodeUrl == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: _buildQRImage(_qrCodeUrl!, isDarkMode),
+    );
+  }
+
+  Widget _buildQRFrame(double dimension, Widget child) {
+    return Container(
+      width: dimension,
+      height: dimension,
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.2),
+          width: 2,
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildQRContent(double dimension) {
+    if (_isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.getPrimaryButtonColor(isDarkMode),
+          strokeWidth: 2,
+        ),
+      );
+    }
+    if (_showQR && _qrCodeUrl != null) {
+      return _buildQRImageFrame();
+    }
+    return Center(
+      child: Icon(
+        Icons.qr_code_2,
+        size: math.min(dimension * 0.45, 120),
+        color: AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.5),
+      ),
+    );
+  }
+
+  Widget _buildQRArea(double dimension) {
+    final bool canToggleFullscreen =
+        !_isLoading && _showQR && _qrCodeUrl != null;
+    return GestureDetector(
+      onTap: canToggleFullscreen ? _toggleQRFullscreen : null,
+      child: _buildQRFrame(dimension, _buildQRContent(dimension)),
+    );
   }
 
   Widget _buildColorOptionCard({
@@ -503,7 +575,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                 OutlinedButton.icon(
                   onPressed: () =>
                       _handleColorChanged(suggestionRole, suggestionColor),
-                  icon: const Icon(Icons.auto_fix_high),
+                            icon: const Icon(Icons.auto_fix_high),
                   label: Text(
                     'Acceptar suggeriment ${_colorToHex(suggestionColor)}',
                   ),
@@ -654,84 +726,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                 ),
                                 child: Column(
                                   children: [
-                                    if (_isLoading)
-                                      Container(
-                                        width: qrDimension,
-                                        height: qrDimension,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              AppColors.getBlurContainerColor(
-                                                  isDarkMode),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                        isDarkMode)
-                                                    .withOpacity(0.2),
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            color:
-                                                AppColors.getPrimaryButtonColor(
-                                                    isDarkMode),
-                                          ),
-                                        ),
-                                      )
-                                    else if (_showQR && _qrCodeUrl != null)
-                                      Container(
-                                        width: qrDimension,
-                                        height: qrDimension,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              AppColors.getBlurContainerColor(
-                                                  isDarkMode),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                    isDarkMode),
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: _buildQRImage(
-                                              _qrCodeUrl!, isDarkMode),
-                                        ),
-                                      )
-                                    else
-                                      Container(
-                                        width: qrDimension,
-                                        height: qrDimension,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              AppColors.getBlurContainerColor(
-                                                  isDarkMode),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                        isDarkMode)
-                                                    .withOpacity(0.2),
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.qr_code_2,
-                                            size: qrDimension * 0.45,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                        isDarkMode)
-                                                    .withOpacity(0.5),
-                                          ),
-                                        ),
-                                      ),
+                                    _buildQRArea(qrDimension),
                                     const SizedBox(height: 24),
                                     Text(
                                       'Codi QR per a informe mèdic',
@@ -841,6 +836,22 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
               ),
             ),
           ),
+          if (_isQRFullscreen && _qrCodeUrl != null)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleQRFullscreen,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  color: Colors.black.withOpacity(0.65),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: _buildQRFrame(
+                    _calculateQRFullscreenSize(context),
+                    _buildQRImageFrame(),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
