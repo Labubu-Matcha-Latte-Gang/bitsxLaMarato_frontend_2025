@@ -3,17 +3,20 @@ import 'dart:io' show File;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../models/user_models.dart';
 import '../../../services/api_service.dart';
 import '../../../services/qr_api_service.dart';
+import '../../../services/session_manager.dart';
 import '../../../utils/doctor_colors.dart';
+import '../../../utils/platform_view_registry.dart';
 
 class DoctorPatientDetailPage extends StatefulWidget {
   final String patientEmail;
@@ -45,6 +48,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   String? _errorMessage;
   PatientDataResponse? _data;
   bool _qrPreviewReady = false;
+  String? _doctorName;
+  String? _doctorSurname;
+  String? _doctorGender;
 
   Color _fillColor = Colors.black;
   Color _backColor = Colors.white;
@@ -59,12 +65,41 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     isDarkMode = widget.initialDarkMode;
     _data = widget.initialData;
     _loadingData = widget.initialData == null;
+    _loadDoctorProfile();
     _loadPatientData();
   }
 
   double get _contrastRatio => _calculateContrastRatio(_fillColor, _backColor);
 
   bool get _isContrastValid => _contrastRatio >= _minContrastRatio;
+
+  String get _doctorGreeting {
+    final normalizedGender = (_doctorGender ?? '').trim().toLowerCase();
+    final isFemaleDoctor = normalizedGender == 'female';
+    final greetingWord = isFemaleDoctor ? 'Benvinguda' : 'Benvingut';
+    final honorific = isFemaleDoctor ? 'Dra.' : 'Dr.';
+    final fullName = [_doctorName, _doctorSurname]
+        .where((part) => part != null && part!.trim().isNotEmpty)
+        .map((part) => part!.trim())
+        .join(' ');
+    final nameSegment = fullName.isEmpty ? '' : ' $fullName';
+    return '$greetingWord $honorific$nameSegment';
+  }
+
+  Future<void> _loadDoctorProfile() async {
+    final userData = await SessionManager.getUserData();
+    if (!mounted) return;
+    final role = userData?['role'];
+    setState(() {
+      _doctorName = userData?['name']?.toString();
+      _doctorSurname = userData?['surname']?.toString();
+      if (role is Map<String, dynamic>) {
+        _doctorGender = role['gender']?.toString();
+      } else {
+        _doctorGender = userData?['gender']?.toString();
+      }
+    });
+  }
 
   Future<void> _loadPatientData() async {
     setState(() {
@@ -293,6 +328,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       IconButton(
                         icon: Icon(
@@ -303,16 +339,30 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          patient != null
-                              ? ' '
-                              : 'Detall del pacient',
-                          style: TextStyle(
-                            color: DoctorColors.textPrimary(isDarkMode),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _doctorGreeting,
+                              style: TextStyle(
+                                color: DoctorColors.textPrimary(isDarkMode),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              patient != null
+                                  ? 'Revisant ${_patientDisplayName(patient)}'
+                                  : 'Detall del pacient',
+                              style: TextStyle(
+                                color: DoctorColors.textSecondary(isDarkMode),
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                       IconButton(
@@ -397,9 +447,63 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _buildScoresSection(),
           const SizedBox(height: 12),
           _buildQuestionsSection(),
+          if ((_data?.graphFiles ?? []).isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildGraphsSection(),
+          ],
         ],
       ),
     );
+  }
+
+  String _patientDisplayName(UserProfile patient) {
+    final parts = [
+      patient.name.trim(),
+      patient.surname.trim(),
+    ].where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) return patient.email;
+    return parts.join(' ');
+  }
+
+  String _formatMeasurement(num? value, String unit,
+      {int fractionDigits = 0}) {
+    if (value == null) return '—';
+    final double numericValue = value.toDouble();
+    final bool hasDecimals =
+        numericValue - numericValue.truncateToDouble() != 0 || fractionDigits > 0;
+    final int digits = hasDecimals ? math.max(1, fractionDigits) : 0;
+    final String formatted =
+        digits > 0 ? numericValue.toStringAsFixed(digits) : numericValue.toStringAsFixed(0);
+    return '$formatted $unit';
+  }
+
+  String _formatScore(double? score) {
+    if (score == null) return '—';
+    final value = score >= 10 ? score.toStringAsFixed(0) : score.toStringAsFixed(1);
+    return value;
+  }
+
+  String _formatDateTimeLabel(String? raw) {
+    if (raw == null || raw.isEmpty) return '—';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final dt = parsed.toLocal();
+    final datePart =
+        '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    final timePart =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '$datePart · $timePart';
+  }
+
+  String _formatSeconds(double? seconds) {
+    if (seconds == null) return '—';
+    final totalSeconds = seconds.round();
+    final minutes = totalSeconds ~/ 60;
+    final remaining = totalSeconds % 60;
+    if (minutes == 0) {
+      return '${remaining}s';
+    }
+    return '${minutes}m ${remaining.toString().padLeft(2, '0')}s';
   }
 
   Widget _buildPatientInfo(UserProfile patient) {
@@ -434,7 +538,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  ' ',
+                  _patientDisplayName(patient),
                   style: TextStyle(
                     color: DoctorColors.textPrimary(isDarkMode),
                     fontSize: 16,
@@ -485,17 +589,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       ),
       _StatCard(
         title: 'Pes',
-        value: role.weightKg != null
-            ? ' kg'
-            : '—',
+        value: _formatMeasurement(role.weightKg, 'kg', fractionDigits: 1),
         icon: Icons.monitor_weight_outlined,
         isDarkMode: isDarkMode,
       ),
       _StatCard(
         title: 'Alçada',
-        value: role.heightCm != null
-            ? ' cm'
-            : '—',
+        value: _formatMeasurement(role.heightCm, 'cm', fractionDigits: 1),
         icon: Icons.height,
         isDarkMode: isDarkMode,
       ),
@@ -505,7 +605,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 3.2,
+      childAspectRatio: 2.8,
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
       children: cards,
@@ -1027,24 +1127,23 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           ),
           const SizedBox(height: 10),
           ...scores.take(5).map(
-                (s) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.analytics_outlined,
-                    color: DoctorColors.primary(isDarkMode),
-                  ),
-                  title: Text(
-                    s.activityTitle,
-                    style: TextStyle(
-                      color: DoctorColors.textPrimary(isDarkMode),
+                (s) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: _HistoryTile(
+                    icon: Icons.analytics_outlined,
+                    iconColor: DoctorColors.primary(isDarkMode),
+                    title: s.activityTitle,
+                    subtitle: _formatDateTimeLabel(s.completedAt),
+                    trailing: _ScoreBadge(
+                      label: _formatScore(s.score),
+                      isDarkMode: isDarkMode,
                     ),
-                  ),
-                  subtitle: Text(
-                    'Puntuació:  · ',
-                    style: TextStyle(
-                      color: DoctorColors.textSecondary(isDarkMode),
-                    ),
+                    metadata: [
+                      if (s.activityType != null && s.activityType!.isNotEmpty)
+                        'Tipus: ${s.activityType}',
+                      'Durada: ${_formatSeconds(s.secondsToFinish)}',
+                    ],
+                    isDarkMode: isDarkMode,
                   ),
                 ),
               ),
@@ -1080,28 +1179,70 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          ...questions.take(3).map(
-                (q) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.question_answer_outlined,
-                    color: DoctorColors.secondary(isDarkMode),
-                  ),
-                  title: Text(
-                    q.question.text ?? 'Pregunta',
-                    style: TextStyle(
-                      color: DoctorColors.textPrimary(isDarkMode),
+          ...questions.take(4).map(
+                (q) {
+                  final analysisChips = q.analysis.entries
+                      .map((entry) =>
+                          '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+                      .toList();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _HistoryTile(
+                      icon: Icons.question_answer_outlined,
+                      iconColor: DoctorColors.secondary(isDarkMode),
+                      title: q.question.text.isNotEmpty
+                          ? q.question.text
+                          : 'Pregunta',
+                      subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
+                      metadata: [
+                        if (q.question.questionType.isNotEmpty)
+                          'Tipus: ${q.question.questionType}',
+                        'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
+                        ...analysisChips,
+                      ],
+                      isDarkMode: isDarkMode,
                     ),
-                  ),
-                  subtitle: Text(
-                    'Respost el ',
-                    style: TextStyle(
-                      color: DoctorColors.textSecondary(isDarkMode),
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGraphsSection() {
+    final graphs = _data?.graphFiles ?? [];
+    if (graphs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DoctorColors.surface(isDarkMode),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DoctorColors.border(isDarkMode)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Gràfics generats',
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...graphs.map(
+            (graph) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _GraphCard(
+                graph: graph,
+                isDarkMode: isDarkMode,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1133,24 +1274,28 @@ class _StatCard extends StatelessWidget {
         children: [
           Icon(icon, color: DoctorColors.primary(isDarkMode)),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: DoctorColors.textSecondary(isDarkMode),
-                  fontSize: 12,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: DoctorColors.textSecondary(isDarkMode),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
-                  fontWeight: FontWeight.w700,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: DoctorColors.textPrimary(isDarkMode),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1182,6 +1327,360 @@ class _EmptyCard extends StatelessWidget {
           color: DoctorColors.textSecondary(isDarkMode),
         ),
       ),
+    );
+  }
+}
+
+class _HistoryTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool isDarkMode;
+  final Widget? trailing;
+  final List<String> metadata;
+
+  const _HistoryTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.isDarkMode,
+    this.trailing,
+    this.metadata = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = DoctorColors.textPrimary(isDarkMode);
+    final textSecondary = DoctorColors.textSecondary(isDarkMode);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing!,
+          ],
+        ),
+        if (metadata.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: metadata
+                .where((text) => text.trim().isNotEmpty)
+                .map(
+                  (text) => Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ScoreBadge extends StatelessWidget {
+  final String label;
+  final bool isDarkMode;
+
+  const _ScoreBadge({
+    required this.label,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: DoctorColors.primary(isDarkMode).withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: DoctorColors.primary(isDarkMode),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _GraphCard extends StatelessWidget {
+  final GraphFile graph;
+  final bool isDarkMode;
+
+  const _GraphCard({
+    required this.graph,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = graph.filename.isNotEmpty ? graph.filename : 'Gràfic';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: DoctorColors.surface(isDarkMode),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DoctorColors.border(isDarkMode)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            graph.contentType,
+            style: TextStyle(
+              color: DoctorColors.textSecondary(isDarkMode),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _GraphContentRenderer(
+              graph: graph,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GraphContentRenderer extends StatelessWidget {
+  final GraphFile graph;
+  final bool isDarkMode;
+
+  const _GraphContentRenderer({
+    required this.graph,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final type = graph.contentType.toLowerCase();
+    if (type.startsWith('image/')) {
+      try {
+        final bytes = base64.decode(graph.content);
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _GraphError(
+              message: 'No s\'ha pogut carregar el gràfic.',
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        );
+      } catch (_) {
+        return _GraphError(
+          message: 'No s\'ha pogut decodificar la imatge.',
+          isDarkMode: isDarkMode,
+        );
+      }
+    }
+
+    if (type.contains('html') || type.contains('htm')) {
+      return SizedBox(
+        height: 280,
+        child: _HtmlGraphView(
+          graph: graph,
+          isDarkMode: isDarkMode,
+        ),
+      );
+    }
+
+    return _GraphError(
+      message: 'Format no suportat (${graph.contentType}).',
+      isDarkMode: isDarkMode,
+    );
+  }
+}
+
+class _GraphError extends StatelessWidget {
+  final String message;
+  final bool isDarkMode;
+
+  const _GraphError({
+    required this.message,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: DoctorColors.critical(isDarkMode).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: DoctorColors.critical(isDarkMode),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: DoctorColors.textSecondary(isDarkMode),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HtmlGraphView extends StatefulWidget {
+  final GraphFile graph;
+  final bool isDarkMode;
+
+  const _HtmlGraphView({
+    required this.graph,
+    required this.isDarkMode,
+  });
+
+  @override
+  State<_HtmlGraphView> createState() => _HtmlGraphViewState();
+}
+
+class _HtmlGraphViewState extends State<_HtmlGraphView> {
+  WebViewController? _webViewController;
+  html.IFrameElement? _iframeElement;
+  String? _viewType;
+  String? _htmlContent;
+  late final bool _supportsNativeWebView;
+  bool _decodeFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _htmlContent = utf8.decode(base64.decode(widget.graph.content));
+    } catch (_) {
+      _decodeFailed = true;
+      _htmlContent = null;
+    }
+    _supportsNativeWebView = _canUseNativeWebView();
+
+    if (_decodeFailed || _htmlContent == null) {
+      return;
+    }
+
+    if (kIsWeb) {
+      _viewType =
+          'graph-frame-${widget.graph.filename}-${DateTime.now().millisecondsSinceEpoch}';
+      _iframeElement = html.IFrameElement()
+        ..style.border = 'none'
+        ..srcdoc = _htmlContent;
+      registerPlatformViewFactory(
+        _viewType!,
+        (int viewId) => _iframeElement!,
+      );
+    } else if (_supportsNativeWebView) {
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(Colors.transparent)
+        ..loadHtmlString(_htmlContent!);
+    }
+  }
+
+  bool _canUseNativeWebView() {
+    if (kIsWeb) return false;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_decodeFailed || _htmlContent == null) {
+      return _GraphError(
+        message: 'No s\'ha pogut processar el gràfic.',
+        isDarkMode: widget.isDarkMode,
+      );
+    }
+    if (kIsWeb && _viewType != null) {
+      return HtmlElementView(viewType: _viewType!);
+    }
+    if (_supportsNativeWebView && _webViewController != null) {
+      return WebViewWidget(controller: _webViewController!);
+    }
+    return _GraphError(
+      message: 'Aquest dispositiu no pot mostrar el gràfic embegut.',
+      isDarkMode: widget.isDarkMode,
     );
   }
 }
