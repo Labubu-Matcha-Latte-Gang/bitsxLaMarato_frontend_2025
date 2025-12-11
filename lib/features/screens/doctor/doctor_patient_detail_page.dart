@@ -1622,15 +1622,11 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
   @override
   void initState() {
     super.initState();
-    try {
-      _htmlContent = utf8.decode(base64.decode(widget.graph.content));
-    } catch (_) {
-      _decodeFailed = true;
-      _htmlContent = null;
-    }
     _supportsNativeWebView = _canUseNativeWebView();
 
-    if (_decodeFailed || _htmlContent == null) {
+    _htmlContent = _decodeHtmlContent(widget.graph.content);
+    if (_htmlContent == null) {
+      _decodeFailed = true;
       return;
     }
 
@@ -1639,6 +1635,8 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
           'graph-frame-${widget.graph.filename}-${DateTime.now().millisecondsSinceEpoch}';
       _iframeElement = html.IFrameElement()
         ..style.border = 'none'
+        ..style.width = '100%'
+        ..style.height = '100%'
         ..srcdoc = _htmlContent;
       registerPlatformViewFactory(
         _viewType!,
@@ -1650,6 +1648,56 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
         ..setBackgroundColor(Colors.transparent)
         ..loadHtmlString(_htmlContent!);
     }
+  }
+
+  String? _decodeHtmlContent(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+
+    final payload = _stripDataUriPrefix(trimmed);
+
+    try {
+      final normalized = base64.normalize(payload);
+      final decoded = utf8.decode(base64.decode(normalized));
+      if (decoded.trim().isNotEmpty) {
+        return _wrapHtml(decoded);
+      }
+    } catch (_) {
+      // Fall back to treating the payload as already-decoded HTML below.
+    }
+
+    if (payload.contains('<')) {
+      return _wrapHtml(payload);
+    }
+
+    return null;
+  }
+
+  String _stripDataUriPrefix(String input) {
+    if (input.startsWith('data:')) {
+      final commaIndex = input.indexOf(',');
+      if (commaIndex != -1 && commaIndex + 1 < input.length) {
+        return input.substring(commaIndex + 1);
+      }
+    }
+    return input;
+  }
+
+  String _wrapHtml(String body) {
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; }
+  </style>
+</head>
+<body>
+$body
+</body>
+</html>
+''';
   }
 
   bool _canUseNativeWebView() {
