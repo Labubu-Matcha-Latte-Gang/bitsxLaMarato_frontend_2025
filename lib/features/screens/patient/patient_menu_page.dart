@@ -6,6 +6,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
+import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
 
 class PatientMenuPage extends StatefulWidget {
@@ -69,8 +70,10 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
     setState(() => _isLoggingOut = false);
 
     if (success) {
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil('/initialPage', (route) => false);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const InitialPage()),
+        (route) => false,
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -221,7 +224,8 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => RecommendedActivitiesPage(
+                                        builder: (_) =>
+                                            RecommendedActivitiesPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),
