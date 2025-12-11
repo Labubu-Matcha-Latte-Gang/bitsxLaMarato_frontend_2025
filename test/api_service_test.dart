@@ -9,11 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utils/test_secure_storage.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SessionManager.configure(secureStore: InMemorySecureStore());
     ApiService.reset(closeExistingClient: true);
   });
 
