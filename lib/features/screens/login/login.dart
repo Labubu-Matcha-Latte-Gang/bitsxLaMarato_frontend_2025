@@ -4,9 +4,11 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
 import '../patient/patient_menu_page.dart';
+import '../doctor/doctor_home_page.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
 import '../register/registerLobby.dart';
+import '../../../services/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -56,17 +58,27 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final response = await ApiService.loginUser(request);
+      final userData = await SessionManager.getUserData();
+      final userType = (userData?['user_type'] as String?) ?? 'unknown';
 
       if (!mounted) return;
 
       Navigator.of(context).pop();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => response.alreadyRespondedToday
-              ? const PatientMenuPage()
-              : const MicScreen(),
-        ),
-      );
+      if (userType == 'doctor') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const DoctorHomePage(),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => response.alreadyRespondedToday
+                ? const PatientMenuPage()
+                : const MicScreen(),
+          ),
+        );
+      }
     } on ApiException catch (e) {
       _showErrorDialog(e.message);
     } catch (e) {
@@ -306,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Password',
+                              'Contrasenya',
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
