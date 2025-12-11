@@ -113,7 +113,7 @@ class _WordleScreenState extends State<WordleScreen>
   void _startNewGame() {
     // Choose secret exclusively from easy_words.json if available.
     // If easy_words.json is missing or empty, fall back to a fixed default.
-    if (_easyWords != null && _easyWords!.isNotEmpty) {
+    // (Removed an unnecessary if that caused an unmatched brace)
     // Reset stats for the new game
     invalidWordCount = 0;
     incorrectGuessCount = 0;
@@ -414,41 +414,35 @@ class _WordleScreenState extends State<WordleScreen>
                 : (isCurrent ? currentGuess : '');
             List<LetterState> states =
                 List.generate(cols, (_) => LetterState.initial);
-            if (r < guesses.length)
-              states = _evaluateGuess(guesses[r], secretWord);
+            if (r < guesses.length) states = _evaluateGuess(guesses[r], secretWord);
 
-            return SizedBox(
-              height: tileSize,
-              child: Row(
+            // Build the row tiles
+            Widget rowTiles() {
+              return Row(
                 children: List.generate(cols, (c) {
                   final ch = c < rowGuess.length ? rowGuess[c] : '';
-                  final state =
-                      (r < guesses.length) ? states[c] : LetterState.initial;
+                  final state = (r < guesses.length) ? states[c] : LetterState.initial;
+
                   final bgColor = (r < guesses.length)
                       ? _colorForState(state)
                       : (isCurrent && c < currentGuess.length)
-                          ? AppColors.getPrimaryButtonColor(isDark)
-                              .withOpacity(0.18)
+                          ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
                           : AppColors.getSecondaryBackgroundColor(isDark);
 
                   final fgColor = (r < guesses.length)
-                      ? ((state == LetterState.correct ||
-                              state == LetterState.present)
+                      ? ((state == LetterState.correct || state == LetterState.present)
                           ? Colors.white
                           : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
                   return Expanded(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 2, vertical: 3),
+                      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
                         color: bgColor,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: (r < guesses.length)
-                              ? Colors.transparent
-                              : Colors.grey.shade500,
+                          color: (r < guesses.length) ? Colors.transparent : Colors.grey.shade500,
                           width: 1,
                         ),
                       ),
@@ -456,15 +450,22 @@ class _WordleScreenState extends State<WordleScreen>
                         child: Text(
                           ch.toUpperCase(),
                           style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.6,
-                              fontSize: tileSize * 0.33,
-                              color: fgColor),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.6,
+                            fontSize: tileSize * 0.33,
+                            color: fgColor,
+                          ),
                         ),
                       ),
                     ),
                   );
                 }),
+              );
+            }
+
+            // Wrap the current row in the shake AnimatedBuilder, otherwise just show the row
+            return SizedBox(
+              height: tileSize,
               child: AnimatedBuilder(
                 animation: _shakeController,
                 builder: (context, child) {
@@ -475,41 +476,7 @@ class _WordleScreenState extends State<WordleScreen>
                   }
                   return Transform.translate(offset: Offset(dx, 0), child: child);
                 },
-                child: Row(
-                  children: List.generate(cols, (c) {
-                    final ch = c < rowGuess.length ? rowGuess[c] : '';
-                    final state = (r < guesses.length) ? states[c] : LetterState.initial;
-                    final bgColor = (r < guesses.length)
-                        ? _colorForState(state)
-                        : (isCurrent && c < currentGuess.length)
-                            ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
-                            : AppColors.getSecondaryBackgroundColor(isDark);
-
-                    final fgColor = (r < guesses.length)
-                        ? ((state == LetterState.correct || state == LetterState.present) ? Colors.white : AppColors.getPrimaryTextColor(isDark))
-                        : AppColors.getPrimaryTextColor(isDark);
-
-                    return Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: (r < guesses.length) ? Colors.transparent : Colors.grey.shade500,
-                            width: 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            ch.toUpperCase(),
-                            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.6, fontSize: tileSize * 0.33, color: fgColor),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+                child: rowTiles(),
               ),
             );
           }),
@@ -523,14 +490,6 @@ class _WordleScreenState extends State<WordleScreen>
         body: Stack(
           children: [
             Positioned.fill(
-              child: ParticleSystemWidget(
-                  isDarkMode: isDark,
-                  particleCount: 40,
-                  maxSize: 3.0,
-                  minSize: 1.0,
-                  speed: 0.6,
-                  maxOpacity: isDark ? 0.35 : 0.25,
-                  minOpacity: isDark ? 0.05 : 0.02),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.getBackgroundGradient(isDark),
