@@ -1,3 +1,5 @@
+import 'user_models.dart';
+
 class Activity {
   final String id;
   final String title;
@@ -83,7 +85,7 @@ class ActivityCompleteRequest {
 }
 
 class ActivityCompleteResponse {
-  final Map<String, dynamic> patient;
+  final UserProfile patient;
   final Activity activity;
   final DateTime? completedAt;
   final double score;
@@ -100,8 +102,10 @@ class ActivityCompleteResponse {
   factory ActivityCompleteResponse.fromJson(Map<String, dynamic> json) {
     final activityJson =
         (json['activity'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    final patientJson =
+        (json['patient'] as Map<String, dynamic>?) ?? <String, dynamic>{};
     return ActivityCompleteResponse(
-      patient: (json['patient'] as Map<String, dynamic>?) ?? {},
+      patient: UserProfile.fromJson(patientJson),
       activity: Activity.fromJson(activityJson),
       completedAt: json['completed_at'] != null
           ? DateTime.tryParse(json['completed_at'].toString())
