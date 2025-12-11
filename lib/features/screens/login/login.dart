@@ -3,6 +3,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
+import '../patient/patient_menu_page.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
 import '../register/registerLobby.dart';
@@ -54,14 +55,16 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      await ApiService.loginUser(request);
+      final response = await ApiService.loginUser(request);
 
       if (!mounted) return;
 
       Navigator.of(context).pop();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const MicScreen(),
+          builder: (context) => response.alreadyRespondedToday
+              ? const PatientMenuPage()
+              : const MicScreen(),
         ),
       );
     } on ApiException catch (e) {
