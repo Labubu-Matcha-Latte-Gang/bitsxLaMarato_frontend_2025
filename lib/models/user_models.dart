@@ -81,7 +81,10 @@ extension UserRoleDataX on UserRoleData {
     final hasPatientsList =
         patients.isNotEmpty || raw.keys.map((k) => k.toString()).contains('patients');
 
-    if (hasPatientSignals || hasDoctorsList) return UserType.patient;
+    // When a user carries a list of assigned patients, prioritize the doctor dashboard,
+    // otherwise fall back to patient heuristics.
+    if (hasPatientsList && !hasDoctorsList) return UserType.doctor;
+    if (hasDoctorsList || hasPatientSignals) return UserType.patient;
     if (hasPatientsList) return UserType.doctor;
     return UserType.unknown;
   }
