@@ -286,6 +286,7 @@ void main() {
       surname: 'Who',
       email: 'doc@example.com',
       password: 'secret',
+      gender: 'male',
       patients: const [],
     );
 
