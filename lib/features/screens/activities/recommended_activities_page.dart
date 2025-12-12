@@ -9,7 +9,6 @@ import 'games/sorting.dart';
 import 'games/sudoku.dart';
 import 'games/wordle_easy.dart';
 import 'games/memory.dart';
-import 'widgets/activity_card.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -314,20 +313,246 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                         );
                       }
 
-                      return Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 600),
-                          child: SingleChildScrollView(
+                      return SingleChildScrollView(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 900),
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 20.0),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 20.0, horizontal: 16.0),
                               child: InkWell(
                                 onTap: () =>
                                     _openActivity(_recommendedActivity!),
-                                borderRadius: BorderRadius.circular(16),
-                                child: ActivityCard(
-                                  activity: _recommendedActivity!,
-                                  isDarkMode: isDarkMode,
+                                borderRadius: BorderRadius.circular(24),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        AppColors.getSecondaryBackgroundColor(
+                                                isDarkMode)
+                                            .withAlpha((0.98 * 255).round()),
+                                        AppColors.getSecondaryBackgroundColor(
+                                                isDarkMode)
+                                            .withAlpha((0.92 * 255).round()),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.containerShadow
+                                            .withAlpha((0.6 * 255).round()),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                      BoxShadow(
+                                        color: AppColors.getPrimaryButtonColor(
+                                                isDarkMode)
+                                            .withAlpha((0.15 * 255).round()),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 12),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: AppColors.getPrimaryButtonColor(
+                                              isDarkMode)
+                                          .withAlpha((0.3 * 255).round()),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(16),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    AppColors
+                                                            .getPrimaryButtonColor(
+                                                                isDarkMode)
+                                                        .withAlpha((0.3 * 255)
+                                                            .round()),
+                                                    AppColors
+                                                            .getPrimaryButtonColor(
+                                                                isDarkMode)
+                                                        .withAlpha((0.2 * 255)
+                                                            .round()),
+                                                  ],
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppColors
+                                                          .getPrimaryButtonColor(
+                                                              isDarkMode)
+                                                      .withAlpha(
+                                                          (0.4 * 255).round()),
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                Icons.auto_awesome,
+                                                color: AppColors
+                                                    .getPrimaryButtonColor(
+                                                        isDarkMode),
+                                                size: 40,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 20),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Activitat del dia',
+                                                    style: TextStyle(
+                                                      color: AppColors
+                                                          .getSecondaryTextColor(
+                                                              isDarkMode),
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      letterSpacing: 1.2,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    _recommendedActivity!.title,
+                                                    style: TextStyle(
+                                                      color: AppColors
+                                                          .getPrimaryTextColor(
+                                                              isDarkMode),
+                                                      fontSize: 28,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      height: 1.2,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Container(
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                AppColors.getBlurContainerColor(
+                                                        isDarkMode)
+                                                    .withAlpha(
+                                                        (0.4 * 255).round()),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            border: Border.all(
+                                              color: AppColors
+                                                      .getPrimaryButtonColor(
+                                                          isDarkMode)
+                                                  .withAlpha(
+                                                      (0.2 * 255).round()),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Descripció',
+                                                style: TextStyle(
+                                                  color: AppColors
+                                                      .getPrimaryTextColor(
+                                                          isDarkMode),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                _recommendedActivity!
+                                                    .description,
+                                                style: TextStyle(
+                                                  color: AppColors
+                                                      .getSecondaryTextColor(
+                                                          isDarkMode),
+                                                  fontSize: 15,
+                                                  height: 1.6,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Wrap(
+                                          spacing: 12,
+                                          runSpacing: 12,
+                                          children: [
+                                            _InfoChip(
+                                              icon: Icons.category_outlined,
+                                              label: _recommendedActivity!
+                                                  .activityType,
+                                              isDarkMode: isDarkMode,
+                                            ),
+                                            _InfoChip(
+                                              icon: Icons.trending_up,
+                                              label:
+                                                  'Dificultat: ${_recommendedActivity!.difficulty.toStringAsFixed(1)}',
+                                              isDarkMode: isDarkMode,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 28),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () => _openActivity(
+                                                _recommendedActivity!),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors
+                                                  .getPrimaryButtonColor(
+                                                      isDarkMode),
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 18),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              elevation: 4,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const Text(
+                                                  'Començar activitat',
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w700,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Icon(
+                                                  Icons.arrow_forward_rounded,
+                                                  size: 22,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -338,6 +563,53 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDarkMode;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode)
+            .withAlpha((0.5 * 255).round()),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.getPrimaryButtonColor(isDarkMode)
+              .withAlpha((0.25 * 255).round()),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: AppColors.getPrimaryButtonColor(isDarkMode),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

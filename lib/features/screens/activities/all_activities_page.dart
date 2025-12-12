@@ -107,8 +107,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
       });
     } catch (_) {
       setState(() {
-        _errorMessage =
-        'S’ha produït un error en carregar les activitats.';
+        _errorMessage = 'S’ha produït un error en carregar les activitats.';
       });
     } finally {
       if (mounted) {
@@ -178,7 +177,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
@@ -237,7 +238,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             color: AppColors.getPlaceholderTextColor(isDarkMode),
           ),
           contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         style: TextStyle(
           color: AppColors.getInputTextColor(isDarkMode),
@@ -251,7 +252,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color:
-        AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
+            AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -293,8 +294,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Restableix'),
                 style: TextButton.styleFrom(
-                  foregroundColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode),
+                  foregroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
               ),
             ],
@@ -317,11 +317,10 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   color: AppColors.getSecondaryTextColor(isDarkMode),
                 ),
                 contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
-              dropdownColor:
-              AppColors.getSecondaryBackgroundColor(isDarkMode),
+              dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
               iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -335,15 +334,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ]
                   .map(
                     (type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(
-                    type,
-                    style: TextStyle(
-                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                      value: type,
+                      child: Text(
+                        type,
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )
+                  )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -386,8 +385,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.2),
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(
@@ -402,8 +401,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.2),
                 ),
               ],
             ),
@@ -519,7 +518,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         ),
         labelStyle: TextStyle(
           color: AppColors.getSecondaryTextColor(isDarkMode),
+          fontSize: 14,
         ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       ),
       style: TextStyle(
         color: AppColors.getInputTextColor(isDarkMode),
@@ -575,7 +578,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 foregroundColor:
-                AppColors.getPrimaryButtonTextColor(isDarkMode),
+                    AppColors.getPrimaryButtonTextColor(isDarkMode),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -598,15 +601,19 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
       );
     }
 
-    return ListView.builder(
-      itemCount: _activities.length,
-      itemBuilder: (context, index) {
-        return ActivityCard(
-          activity: _activities[index],
-          isDarkMode: isDarkMode,
-          onTap: () => _openActivity(_activities[index]),
-        );
-      },
+    return Scrollbar(
+      thumbVisibility: true,
+      trackVisibility: true,
+      child: ListView.builder(
+        itemCount: _activities.length,
+        itemBuilder: (context, index) {
+          return ActivityCard(
+            activity: _activities[index],
+            isDarkMode: isDarkMode,
+            onTap: () => _openActivity(_activities[index]),
+          );
+        },
+      ),
     );
   }
 
@@ -673,7 +680,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Tancar',
-              style: TextStyle(color: AppColors.getPrimaryButtonColor(isDarkMode)),
+              style:
+                  TextStyle(color: AppColors.getPrimaryButtonColor(isDarkMode)),
             ),
           ),
         ],
