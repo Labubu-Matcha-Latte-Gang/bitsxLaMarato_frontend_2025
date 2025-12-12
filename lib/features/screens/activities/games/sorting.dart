@@ -71,9 +71,14 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   SortingRule _currentRule = SortingRule.color;
   int _correct = 0;
   int _errors = 0;
+  int _errorsWhileExploring = 0;
+  int _errorsAfterLearning = 0;
+  int _errorsDuringRuleChange = 0;
   int _ruleChanges = 0;
   int _slowPenalties = 0;
   int _streak = 0;
+  bool _ruleLearned = false;
+  bool _postChangeGrace = false;
 
   double? _finalScore;
   double? _finalElapsedSeconds;
@@ -116,9 +121,14 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     _currentCard = _deck.first;
     _correct = 0;
     _errors = 0;
+    _errorsWhileExploring = 0;
+    _errorsAfterLearning = 0;
+    _errorsDuringRuleChange = 0;
     _ruleChanges = 0;
     _streak = 0;
     _slowPenalties = 0;
+    _ruleLearned = false;
+    _postChangeGrace = false;
     _gameFinished = false;
     _timeoutReached = false;
     _hasWarnedAboutChange = false;
@@ -240,6 +250,7 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     if (isCorrect) {
       _correct += 1;
       _streak += 1;
+      _ruleLearned = true;
       if (_config.warnBeforeRuleChange &&
           !_hasWarnedAboutChange &&
           _streak == _config.correctAnswersToChangeRule - 1) {
@@ -249,6 +260,13 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     } else {
       _errors += 1;
       _streak = 0;
+      if (_postChangeGrace) {
+        _errorsDuringRuleChange += 1;
+      } else if (_ruleLearned) {
+        _errorsAfterLearning += 1;
+      } else {
+        _errorsWhileExploring += 1;
+      }
       _hasWarnedAboutChange = false;
       if (_config.resetRuleOnError) {
         _changeRule(forceRandom: true);
@@ -266,6 +284,7 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     }
 
     _advanceDeck();
+    _postChangeGrace = false;
   }
 
   void _advanceDeck() {
@@ -289,6 +308,8 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
       _ruleChanges += 1;
       _streak = 0;
       _hasWarnedAboutChange = false;
+      _ruleLearned = false;
+      _postChangeGrace = true;
     });
 
     if (_config.showHints) {
@@ -525,28 +546,43 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   }
 
   double _calculateScore() {
-    final total = max(1, _deck.length);
-    final accuracy = _correct / total;
+    final bool hiddenCriteria = !_config.showHints;
+    final totalAttemptsForAccuracy = hiddenCriteria
+        ? max(1, _correct + _errorsAfterLearning)
+        : max(1, _deck.length - _errorsDuringRuleChange);
+    final accuracy = _correct / totalAttemptsForAccuracy;
     final streakBonus = min(
       _ruleChanges /
-          (total / _config.correctAnswersToChangeRule + 0.01),
+          (_deck.length / _config.correctAnswersToChangeRule + 0.01),
       1.0,
     );
     final normalizedDifficulty =
         (_config.difficulty.clamp(0.0, 5.0) / 5.0).clamp(0.0, 1.0);
-    // Higher difficulty softens how strongly each error subtracts from the badge.
-    final adjustedErrorPenalty = _errors *
-        _config.errorPenaltyWeight *
-        (1 - 0.35 * normalizedDifficulty);
+    final double searchPenaltyWeight = hiddenCriteria
+        ? 0
+        : _config.errorPenaltyWeight * 0.35;
+    final double masteryPenaltyWeight = hiddenCriteria
+        ? _config.errorPenaltyWeight * 0.5
+        : _config.errorPenaltyWeight;
+
+    final effectiveExplorationErrors =
+        max(0, _errorsWhileExploring - _errorsDuringRuleChange);
+    final adjustedErrorPenalty =
+        effectiveExplorationErrors * searchPenaltyWeight +
+            _errorsAfterLearning * masteryPenaltyWeight;
     final adjustedSlowPenalty = _slowPenalties *
         _config.slowPenaltyWeight *
         (1 - 0.25 * normalizedDifficulty);
+
+    final masteryBonus =
+        hiddenCriteria && _errorsAfterLearning == 0 ? 0.6 : 0.0;
 
     final baseScore = (accuracy * 0.65 +
             streakBonus * 0.3 +
             normalizedDifficulty * 0.05) *
         10;
-    final rawScore = baseScore - adjustedErrorPenalty - adjustedSlowPenalty;
+    final rawScore =
+        baseScore - adjustedErrorPenalty - adjustedSlowPenalty + masteryBonus;
     return rawScore.clamp(0, 10);
   }
 
