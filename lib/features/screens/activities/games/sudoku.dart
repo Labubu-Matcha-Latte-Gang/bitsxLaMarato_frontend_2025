@@ -191,18 +191,17 @@ class _SudokuPageState extends State<SudokuPage> {
         // and explicit TextAlign + a stable height on the TextStyle.
         child: value == null
             ? const SizedBox.shrink()
-            : Center(
-                child: Text(
-                  '${value}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    height: 1.0, // avoid extra line-height that can shift vertical centering
-                    fontWeight: fixed ? FontWeight.bold : FontWeight.w500,
-                    color: fixed
-                        ? AppColors.getPrimaryTextColor(_isDarkModeLocal)
-                        : (isWrong ? Colors.red : AppColors.getPrimaryTextColor(_isDarkModeLocal)),
-                  ),
+            : Text(
+                '${value}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  // Scale font size with the cell size but keep it within readable bounds
+                  fontSize: (size * 0.6).clamp(12.0, 28.0),
+                  height: 1.0, // avoid extra line-height that can shift vertical centering
+                  fontWeight: fixed ? FontWeight.bold : FontWeight.w500,
+                  color: fixed
+                      ? AppColors.getPrimaryTextColor(_isDarkModeLocal)
+                      : (isWrong ? Colors.red : AppColors.getPrimaryTextColor(_isDarkModeLocal)),
                 ),
               ),
       ),
@@ -317,10 +316,10 @@ class _SudokuPageState extends State<SudokuPage> {
                                 );
                               }),
                               SizedBox(
-                                width: 44,
+                                width: 92,
                                 height: 44,
                                 child: Tooltip(
-                                  message: 'Clear cell',
+                                  message: 'Remove value from selected cell',
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
@@ -329,13 +328,9 @@ class _SudokuPageState extends State<SudokuPage> {
                                       elevation: 0,
                                     ),
                                     onPressed: () => _enterNumber(null),
-                                    // Center the icon as well so it's visually aligned with the number buttons
+                                    // Use a text label so it's clearer on all platforms
                                     child: Center(
-                                      child: Icon(
-                                        Icons.backspace_outlined,
-                                        size: 20,
-                                        color: AppColors.getPrimaryButtonTextColor(_isDarkModeLocal),
-                                      ),
+                                      child: Text('Remove', textAlign: TextAlign.center, style: TextStyle(color: AppColors.getPrimaryButtonTextColor(_isDarkModeLocal))),
                                     ),
                                   ),
                                 ),

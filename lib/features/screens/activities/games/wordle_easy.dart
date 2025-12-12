@@ -10,7 +10,7 @@ import '../recommended_activities_page.dart';
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
   final bool isDarkMode;
-  const WordleScreen({Key? key, this.isDarkMode = false}) : super(key: key);
+  const WordleScreen({Key? key, this.isDarkMode = true}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -38,11 +38,18 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _easyWords;
 
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
-  int invalidWordCount = 0;
-  int incorrectGuessCount = 0;
+    int invalidWordCount = 0;
+    int incorrectGuessCount = 0;
 
-  @override
-  void initState() {
+    double difficulty = 1.5;
+
+    // Timing: track when the current game started, duration of the last finished
+    // game, and cumulative total time spent playing Wordle in this app session.
+    DateTime? _gameStartTime;
+    Duration _totalTime = Duration.zero;
+
+    @override
+    void initState() {
     super.initState();
     isDark = widget.isDarkMode;
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
@@ -53,7 +60,23 @@ class _WordleScreenState extends State<WordleScreen>
         _showDialog();
       });
     });
-  }
+    }
+
+    // Record the currently running game's time (if any) into totals and reset
+    void _recordGameTime() {
+      if (_gameStartTime != null) {
+        final dur = DateTime.now().difference(_gameStartTime!);
+        _totalTime = _totalTime + dur;
+        _gameStartTime = null;
+      }
+    }
+
+    String _formatDuration(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+    }
 
   Future<void> _loadDictionary() async {
     try {
@@ -105,7 +128,10 @@ class _WordleScreenState extends State<WordleScreen>
     }
   }
 
-  void _startNewGame() {
+    void _startNewGame() {
+    // If a game was running (user pressed New game while playing), record its time
+    _recordGameTime();
+
     // Choose secret word exclusively from easy_words.json if available.
     // If easy_words.json is missing or empty, fall back to a fixed default.
     // (Removed an unnecessary if that caused an unmatched brace)
@@ -139,8 +165,11 @@ class _WordleScreenState extends State<WordleScreen>
     keyStates.clear();
     for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
       keyStates[String.fromCharCode(c)] = LetterState.initial;
+
+    // Start timing this new game
+    _gameStartTime = DateTime.now();
     setState(() {});
-  }
+    }
 
   // Show dialog
   Future<void> _showDialog() async {
@@ -177,8 +206,16 @@ class _WordleScreenState extends State<WordleScreen>
 
   @override
   void dispose() {
+    // Ensure we record any in-progress game time when the user leaves
+    _recordGameTime();
     _shakeController.dispose();
     super.dispose();
+  }
+
+  // Called when the user navigates back from this screen so we record elapsed time
+  void _exitScreen() {
+    _recordGameTime();
+    Navigator.of(context).pop();
   }
 
   void _toggleTheme() {
@@ -208,6 +245,17 @@ class _WordleScreenState extends State<WordleScreen>
     setState(() {
       currentGuess = currentGuess.substring(0, currentGuess.length - 1);
     });
+  }
+
+  void _calculateScore() {
+    // Placeholder for score calculation logic if needed
+    double score = 0.0;
+    double guessScore = max(0, (10*(6-incorrectGuessCount)/5));
+    double invalidScore = max(5, 0.7*invalidWordCount);
+    double difficultyScore = (difficulty - 1.5) * 0.25;
+
+    score = min(10, guessScore + invalidScore + difficultyScore);
+    print('Score calculated: $score');
   }
 
   void _submitGuess() {
@@ -258,11 +306,16 @@ class _WordleScreenState extends State<WordleScreen>
     });
 
     if (guess == secretWord) {
+      // record elapsed time for this finished game so the dialog can show it
+      _recordGameTime();
+      _calculateScore();
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
+      _recordGameTime();
+      _calculateScore();
       _showResultDialog(won: false);
     }
-  }
+    }
 
   // Wordle evaluation with duplicate handling.
   List<LetterState> _evaluateGuess(String guess, String solution) {
@@ -330,7 +383,7 @@ class _WordleScreenState extends State<WordleScreen>
 
   // Centered results dialog showing statistics and an Accept button that returns
   // the user to the Recommended Activities page.
-  void _showResultDialog({required bool won}) {
+    void _showResultDialog({required bool won}) {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -346,10 +399,6 @@ class _WordleScreenState extends State<WordleScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(message, style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              const SizedBox(height: 12),
-              Text('Nombre d\'intents: ${guesses.length}', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              Text('Intents incorrectes vàlids: $incorrectGuessCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              Text('Paraules no existents: $invalidWordCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
             ],
           ),
           backgroundColor: AppColors.getSecondaryBackgroundColor(isDark),
@@ -366,17 +415,25 @@ class _WordleScreenState extends State<WordleScreen>
         );
       },
     );
-  }
+    }
 
   @override
   Widget build(BuildContext context) {
     final theme = isDark ? ThemeData.dark() : ThemeData.light();
 
-    Widget buildGrid(double maxWidth) {
-      final tileSize = maxWidth / cols;
+    Widget buildGrid(BoxConstraints constraints) {
+      final maxWidth = min(constraints.maxWidth * 0.95, 560.0);
+      final maxHeight = constraints.maxHeight;
+
+      // Determine tile size based on both available width and height so the
+      // grid always fits within the provided constraints (prevents keyboard
+      // overlapping on wide screens / web by keeping the grid height bounded).
+      final tileSize = min(maxWidth / cols, maxHeight / rows);
+
+      final gridWidth = tileSize * cols;
 
       return SizedBox(
-        width: tileSize * cols,
+        width: gridWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(rows, (r) {
@@ -407,7 +464,8 @@ class _WordleScreenState extends State<WordleScreen>
                           : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
-                  return Expanded(
+                  return SizedBox(
+                    width: tileSize,
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
@@ -507,9 +565,7 @@ class _WordleScreenState extends State<WordleScreen>
                               Icons.arrow_back,
                               color: AppColors.getPrimaryTextColor(isDark),
                             ),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
+                            onPressed: _exitScreen,
                           ),
                         ),
                         // Right-side controls: reload + theme
@@ -571,9 +627,7 @@ class _WordleScreenState extends State<WordleScreen>
                   Expanded(
                     child: Center(
                       child: LayoutBuilder(builder: (context, constraints) {
-                        final maxWidth =
-                            min(constraints.maxWidth * 0.95, 560.0);
-                        return buildGrid(maxWidth);
+                        return buildGrid(constraints);
                       }),
                     ),
                   ),
