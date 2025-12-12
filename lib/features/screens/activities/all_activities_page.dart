@@ -41,7 +41,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
   bool _useExactDifficulty = false;
   RangeValues _difficultyRange = const RangeValues(0, 5);
   double _exactDifficulty = 2.5;
-  bool _showAdvanced = false;
+  // Advanced filters removed
 
   static const Duration _debounceDuration = Duration(milliseconds: 400);
 
@@ -317,8 +317,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Reuse the same filters UI inside the popup
-                  _buildFiltersCard(),
+                  // Reuse the same filters UI inside the popup (advanced removed)
+                  _buildFiltersCard(applyOnChange: false),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -345,7 +345,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     );
   }
 
-  Widget _buildFiltersCard() {
+  Widget _buildFiltersCard({bool applyOnChange = true}) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -387,7 +387,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     _exactDifficulty = 2.5;
                     _titleController.clear();
                   });
-                  _fetchActivities();
+                  if (applyOnChange) {
+                    _fetchActivities();
+                  }
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Restableix'),
@@ -446,7 +448,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 setState(() {
                   _selectedType = value;
                 });
-                _scheduleSearch();
+                if (applyOnChange) {
+                  _scheduleSearch();
+                }
               },
             ),
           ),
@@ -464,7 +468,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               setState(() {
                 _useDifficultyFilter = value;
               });
-              _scheduleSearch();
+              if (applyOnChange) {
+                _scheduleSearch();
+              }
             },
             activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
           ),
@@ -478,7 +484,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     setState(() {
                       _useExactDifficulty = !selected;
                     });
-                    _scheduleSearch();
+                    if (applyOnChange) {
+                      _scheduleSearch();
+                    }
                   },
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -494,7 +502,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     setState(() {
                       _useExactDifficulty = selected;
                     });
-                    _scheduleSearch();
+                    if (applyOnChange) {
+                      _scheduleSearch();
+                    }
                   },
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
@@ -521,7 +531,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                         _exactDifficulty = value;
                       });
                     },
-                    onChangeEnd: (_) => _scheduleSearch(),
+                    onChangeEnd: (_) {
+                      if (applyOnChange) {
+                        _scheduleSearch();
+                      }
+                    },
                   ),
                   Text(
                     'Dificultat exacta: ${_exactDifficulty.toStringAsFixed(1)}',
@@ -550,7 +564,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                         _difficultyRange = value;
                       });
                     },
-                    onChangeEnd: (_) => _scheduleSearch(),
+                    onChangeEnd: (_) {
+                      if (applyOnChange) {
+                        _scheduleSearch();
+                      }
+                    },
                   ),
                   Text(
                     'Rang seleccionat: ${_difficultyRange.start.toStringAsFixed(1)} - ${_difficultyRange.end.toStringAsFixed(1)}',
@@ -561,73 +579,13 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 ],
               ),
           ],
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () => setState(() => _showAdvanced = !_showAdvanced),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Filtres avançats',
-                  style: TextStyle(
-                    color: AppColors.getPrimaryTextColor(isDarkMode),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Icon(
-                  _showAdvanced
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                ),
-              ],
-            ),
-          ),
-          if (_showAdvanced) ...[
-            const SizedBox(height: 10),
-            _buildAdvancedField(
-              controller: _titleController,
-              label: 'Títol exacte',
-              icon: Icons.title,
-            ),
-          ],
+          // Advanced filters removed
         ],
       ),
     );
   }
 
-  Widget _buildAdvancedField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.getFieldBackgroundColor(isDarkMode),
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        labelStyle: TextStyle(
-          color: AppColors.getSecondaryTextColor(isDarkMode),
-          fontSize: 14,
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      ),
-      style: TextStyle(
-        color: AppColors.getInputTextColor(isDarkMode),
-      ),
-      onChanged: (_) => _scheduleSearch(),
-    );
-  }
+  // Advanced filters field removed
 
   Widget _buildBody() {
     if (_isLoading) {
