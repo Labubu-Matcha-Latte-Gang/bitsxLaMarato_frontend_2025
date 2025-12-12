@@ -301,7 +301,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 60,
+            height: 68,
             child: DropdownButtonFormField<String>(
               value: _selectedType,
               isExpanded: true,
@@ -315,9 +315,10 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 ),
                 labelStyle: TextStyle(
                   color: AppColors.getSecondaryTextColor(isDarkMode),
+                  fontSize: 13,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
@@ -325,25 +326,24 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
               ),
-              items: const [
-                'concentration',
-                'speed',
-                'words',
-                'sorting',
-                'multitasking',
-              ]
-                  .map(
-                    (type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(
-                        type,
-                        style: TextStyle(
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('Tots'),
+                ),
+                ...const [
+                  'concentration',
+                  'speed',
+                  'words',
+                  'sorting',
+                  'multitasking',
+                ].map(
+                  (type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  ),
+                ),
+              ],
               onChanged: (value) {
                 setState(() {
                   _selectedType = value;
