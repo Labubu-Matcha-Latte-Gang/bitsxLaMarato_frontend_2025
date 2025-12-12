@@ -84,6 +84,8 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   bool _gameFinished = false;
   bool _submitting = false;
   bool _timeoutReached = false;
+  bool _hasStarted = false;
+  bool _instructionsVisible = true;
 
   final Stopwatch _elapsedStopwatch = Stopwatch();
   final Stopwatch _reactionStopwatch = Stopwatch();
@@ -126,29 +128,40 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
         _random.nextInt(SortingRule.values.length)];
 
     _elapsedStopwatch
-      ..reset()
-      ..start();
+      ..reset();
     _reactionStopwatch
-      ..reset()
-      ..start();
-
+      ..reset();
     _remainingTime = _config.totalTimeLimit;
     _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _gameFinished) return;
-      setState(() {
-        if (_config.totalTimeLimit != null) {
+    _hasStarted = false;
+    _instructionsVisible = true;
+    setState(() {});
+  }
+
+  void _startGameplay() {
+    if (_hasStarted) return;
+    setState(() {
+      _hasStarted = true;
+      _instructionsVisible = false;
+    });
+    _elapsedStopwatch.start();
+    _reactionStopwatch.start();
+    if (_config.totalTimeLimit != null) {
+      _remainingTime = _config.totalTimeLimit;
+      _ticker?.cancel();
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted || _gameFinished) return;
+        setState(() {
           final elapsed = _elapsedStopwatch.elapsed;
           final remaining = _config.totalTimeLimit! - elapsed;
           _remainingTime = remaining.isNegative ? Duration.zero : remaining;
-          if (remaining.isNegative || remaining == Duration.zero) {
+          if (remaining <= Duration.zero) {
             _timeoutReached = true;
             _finishGame();
           }
-        }
+        });
       });
-    });
-    setState(() {});
+    }
   }
 
   List<SortingCardData> _buildDeck() {
@@ -194,7 +207,7 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   }
 
   void _handleSelection(int targetIndex) {
-    if (_gameFinished || _currentCard == null) return;
+    if (!_hasStarted || _gameFinished || _currentCard == null) return;
     if (targetIndex < 0 || targetIndex >= _referenceCards.length) return;
 
     final target = _referenceCards[targetIndex];
@@ -540,6 +553,179 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     final progress =
         _deck.isEmpty ? 0.0 : (_currentIndex / _deck.length).clamp(0.0, 1.0);
 
+    final content = SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _GlassButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onPressed: () => Navigator.of(context).pop(),
+                  isDarkMode: isDarkMode,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.activity.title,
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        _config.variantName,
+                        style: TextStyle(
+                          color: AppColors.getSecondaryTextColor(isDarkMode),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _GlassButton(
+                  icon: isDarkMode
+                      ? Icons.wb_sunny_rounded
+                      : Icons.nightlight_round,
+                  onPressed: _toggleTheme,
+                  isDarkMode: isDarkMode,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white24,
+                        valueColor: AlwaysStoppedAnimation(
+                          AppColors.getPrimaryButtonColor(isDarkMode),
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.getBlurContainerColor(isDarkMode)
+                            .withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        'Puntuació ${currentScore.toStringAsFixed(1)}',
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_config.totalTimeLimit != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.timer, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Text(
+                        _formatDuration(
+                          _remainingTime ?? _config.totalTimeLimit!,
+                        ),
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: LinearProgressIndicator(
+                            value: (_remainingTime?.inMilliseconds ?? 0) /
+                                _config.totalTimeLimit!.inMilliseconds,
+                            backgroundColor: Colors.white12,
+                            valueColor: const AlwaysStoppedAnimation(
+                              Color(0xFFE76F51),
+                            ),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (_config.showHints && !_gameFinished)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _HintBanner(
+                rule: _currentRule,
+                isDarkMode: isDarkMode,
+              ),
+            ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontal =
+                    constraints.maxWidth > 900 && constraints.maxHeight > 500;
+                final referenceBoard = _ReferenceBoard(
+                  cards: _referenceCards,
+                  currentRule: _currentRule,
+                  config: _config,
+                  onTap: _handleSelection,
+                  isDarkMode: isDarkMode,
+                );
+                final playArea = _PlayArea(
+                  card: _currentCard,
+                  attempts: _recentAttempts,
+                  isDarkMode: isDarkMode,
+                  total: _deck.length,
+                  currentIndex: _currentIndex,
+                  showRule: _config.showHints,
+                  reaction: _reactionStopwatch.elapsed,
+                  slowThreshold: _config.slowThreshold,
+                );
+
+                if (horizontal) {
+                  return Row(
+                    children: [
+                      Expanded(flex: 2, child: referenceBoard),
+                      Expanded(flex: 3, child: playArea),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    Expanded(child: referenceBoard),
+                    Expanded(child: playArea),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       body: Stack(
         children: [
@@ -553,184 +739,171 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
             maxOpacity: 0.5,
             minOpacity: 0.2,
           ),
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      _GlassButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onPressed: () => Navigator.of(context).pop(),
-                        isDarkMode: isDarkMode,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.activity.title,
-                              style: TextStyle(
-                                color:
-                                    AppColors.getPrimaryTextColor(isDarkMode),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _config.variantName,
-                              style: TextStyle(
-                                color:
-                                    AppColors.getSecondaryTextColor(isDarkMode),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _GlassButton(
-                        icon: isDarkMode
-                            ? Icons.wb_sunny_rounded
-                            : Icons.nightlight_round,
-                        onPressed: _toggleTheme,
-                        isDarkMode: isDarkMode,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.white24,
-                              valueColor: AlwaysStoppedAnimation(
-                                AppColors.getPrimaryButtonColor(isDarkMode),
-                              ),
-                              minHeight: 6,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.getBlurContainerColor(isDarkMode)
-                                  .withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Text(
-                              'Puntuació ${currentScore.toStringAsFixed(1)}',
-                              style: TextStyle(
-                                color: AppColors.getPrimaryTextColor(isDarkMode),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_config.totalTimeLimit != null) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.timer, color: Colors.white),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatDuration(
-                                _remainingTime ?? _config.totalTimeLimit!,
-                              ),
-                              style: TextStyle(
-                                color:
-                                    AppColors.getPrimaryTextColor(isDarkMode),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: LinearProgressIndicator(
-                                  value: (_remainingTime?.inMilliseconds ?? 0) /
-                                      _config.totalTimeLimit!.inMilliseconds,
-                                  backgroundColor: Colors.white12,
-                                  valueColor: const AlwaysStoppedAnimation(
-                                    Color(0xFFE76F51),
-                                  ),
-                                  minHeight: 6,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (_config.showHints && !_gameFinished)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _HintBanner(
-                      rule: _currentRule,
-                      isDarkMode: isDarkMode,
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final horizontal =
-                          constraints.maxWidth > 900 && constraints.maxHeight > 500;
-                      final referenceBoard = _ReferenceBoard(
-                        cards: _referenceCards,
-                        currentRule: _currentRule,
-                        config: _config,
-                        onTap: _handleSelection,
-                        isDarkMode: isDarkMode,
-                      );
-                      final playArea = _PlayArea(
-                        card: _currentCard,
-                        attempts: _recentAttempts,
-                        isDarkMode: isDarkMode,
-                        total: _deck.length,
-                        currentIndex: _currentIndex,
-                        showRule: _config.showHints,
-                        reaction: _reactionStopwatch.elapsed,
-                        slowThreshold: _config.slowThreshold,
-                      );
-
-                      if (horizontal) {
-                        return Row(
-                          children: [
-                            Expanded(flex: 2, child: referenceBoard),
-                            Expanded(flex: 3, child: playArea),
-                          ],
-                        );
-                      }
-                      return Column(
-                        children: [
-                          Expanded(child: referenceBoard),
-                          Expanded(child: playArea),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+          content,
+          if (_instructionsVisible && !_gameFinished)
+            _buildIntroOverlay(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildIntroOverlay(BuildContext context) {
+    final surfaceColor =
+        AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.95);
+    final ruleVisibility = _config.showHints
+        ? 'Veus la pista de la regla actual (color, forma o nombre).'
+        : 'No veuràs la regla: dedueix-la a partir dels encerts i errors.';
+    final ruleChange = _config.warnBeforeRuleChange
+        ? 'T\'avisarem abans de canviar la regla perquè et puguis adaptar.'
+        : 'La regla pot canviar sense avís; segueix el feedback per detectar-ho.';
+    final speed = _config.penalizeSlowResponses || _config.totalTimeLimit != null
+        ? 'Hi ha límit de temps i les respostes lentes es penalitzen, així que sigues àgil.'
+        : 'No hi ha penalització per temps; centra\'t en encertar la regla.';
+    return Positioned.fill(
+      child: Material(
+        color: Colors.black.withOpacity(0.55),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withOpacity(0.25),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.containerShadow.withOpacity(0.45),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      widget.activity.title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.activity.description,
+                      style: TextStyle(
+                        color: AppColors.getSecondaryTextColor(isDarkMode),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Com funciona',
+                      style: TextStyle(
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _IntroBullet(text: ruleVisibility, isDarkMode: isDarkMode),
+                        const SizedBox(height: 6),
+                        _IntroBullet(text: ruleChange, isDarkMode: isDarkMode),
+                        const SizedBox(height: 6),
+                        _IntroBullet(text: speed, isDarkMode: isDarkMode),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              side: BorderSide(
+                                color: AppColors.getPrimaryButtonColor(isDarkMode)
+                                    .withOpacity(0.7),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: const Text('Sortir'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _startGameplay,
+                            style: FilledButton.styleFrom(
+                              backgroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text('Començar'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IntroBullet extends StatelessWidget {
+  final String text;
+  final bool isDarkMode;
+
+  const _IntroBullet({
+    required this.text,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.check_circle_rounded,
+          color: AppColors.getPrimaryButtonColor(isDarkMode),
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1556,7 +1729,7 @@ class _SubmissionStatus extends StatelessWidget {
       textColor = Colors.greenAccent;
     } else if (errorMessage != null) {
       icon = const Icon(Icons.error_outline, color: Colors.orangeAccent);
-      text = 'Error en enviar: $errorMessage';
+      text = 'Error en l\'enviament: $errorMessage';
       textColor = Colors.orangeAccent;
     } else {
       icon = Icon(Icons.info_outline,
