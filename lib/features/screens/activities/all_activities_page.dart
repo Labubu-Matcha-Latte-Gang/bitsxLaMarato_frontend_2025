@@ -204,9 +204,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildSearchField(),
                   const SizedBox(height: 12),
-                  _buildFiltersCard(),
+                  // Inline filters removed; they are shown in a popup now
+                  _buildSearchWithFiltersButton(),
+                  const SizedBox(height: 12),
+                  // Filters moved to popup; inline card removed
                   const SizedBox(height: 12),
                   Expanded(child: _buildBody()),
                 ],
@@ -218,32 +220,128 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     );
   }
 
-  Widget _buildSearchField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getFieldBackgroundColor(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (_) => _scheduleSearch(),
-        decoration: InputDecoration(
-          hintText: 'Cerca activitats…',
-          hintStyle: TextStyle(
-            color: AppColors.getPlaceholderTextColor(isDarkMode),
+  Widget _buildSearchWithFiltersButton() {
+    return Row(
+      children: [
+        // Expanded search field
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.getFieldBackgroundColor(isDarkMode),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => _scheduleSearch(),
+              decoration: InputDecoration(
+                hintText: 'Cerca activitats…',
+                hintStyle: TextStyle(
+                  color: AppColors.getPlaceholderTextColor(isDarkMode),
+                ),
+                border: InputBorder.none,
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.getPlaceholderTextColor(isDarkMode),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              style: TextStyle(
+                color: AppColors.getInputTextColor(isDarkMode),
+              ),
+            ),
           ),
-          border: InputBorder.none,
-          prefixIcon: Icon(
-            Icons.search,
-            color: AppColors.getPlaceholderTextColor(isDarkMode),
+        ),
+        const SizedBox(width: 10),
+        // Filters button on the opposite side of the search icon
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.getBlurContainerColor(isDarkMode),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.containerShadow,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: IconButton(
+            tooltip: 'Obrir filtres',
+            icon: Icon(
+              Icons.tune,
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+            onPressed: _openFiltersPopup,
+          ),
         ),
-        style: TextStyle(
-          color: AppColors.getInputTextColor(isDarkMode),
-        ),
-      ),
+      ],
+    );
+  }
+
+  void _openFiltersPopup() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Filtres',
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Reuse the same filters UI inside the popup
+                  _buildFiltersCard(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _fetchActivities();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              AppColors.getPrimaryButtonColor(isDarkMode),
+                        ),
+                        child: const Text('Aplicar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
