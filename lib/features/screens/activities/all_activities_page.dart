@@ -283,69 +283,93 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     showDialog<void>(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filtres',
-                        style: TextStyle(
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Reuse the same filters UI inside the popup (advanced removed)
-                  _buildFiltersCard(applyOnChange: false),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _fetchActivities();
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor:
-                              AppColors.getPrimaryButtonColor(isDarkMode),
-                        ),
-                        child: const Text('Aplicar'),
-                      ),
-                    ],
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (context, innerSetState) {
+            void _uiSetState(VoidCallback fn) {
+              setState(fn);
+              innerSetState(fn);
+            }
+
+            return Dialog(
+              backgroundColor:
+                  AppColors.getSecondaryBackgroundColor(isDarkMode),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
-          ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Filtres',
+                            style: TextStyle(
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Reuse the same filters UI inside the popup (no auto-apply)
+                      _buildFiltersCard(
+                        applyOnChange: false,
+                        uiSetState: _uiSetState,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _fetchActivities();
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                            ),
+                            child: const Text('Aplicar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildFiltersCard({bool applyOnChange = true}) {
+  Widget _buildFiltersCard({
+    bool applyOnChange = true,
+    void Function(VoidCallback fn)? uiSetState,
+  }) {
+    void _updateState(VoidCallback fn) {
+      if (uiSetState != null) {
+        uiSetState!(fn);
+      } else {
+        setState(fn);
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -379,7 +403,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ),
               TextButton.icon(
                 onPressed: () {
-                  setState(() {
+                  _updateState(() {
                     _selectedType = null;
                     _useDifficultyFilter = false;
                     _useExactDifficulty = false;
@@ -418,8 +442,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   fontSize: 13,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
               dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
               iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
@@ -445,7 +469,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 ),
               ],
               onChanged: (value) {
-                setState(() {
+                _updateState(() {
                   _selectedType = value;
                 });
                 if (applyOnChange) {
@@ -465,7 +489,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             ),
             value: _useDifficultyFilter,
             onChanged: (value) {
-              setState(() {
+              _updateState(() {
                 _useDifficultyFilter = value;
               });
               if (applyOnChange) {
@@ -481,7 +505,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   label: const Text('Rang'),
                   selected: !_useExactDifficulty,
                   onSelected: (selected) {
-                    setState(() {
+                    _updateState(() {
                       _useExactDifficulty = !selected;
                     });
                     if (applyOnChange) {
@@ -499,7 +523,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   label: const Text('Exacta'),
                   selected: _useExactDifficulty,
                   onSelected: (selected) {
-                    setState(() {
+                    _updateState(() {
                       _useExactDifficulty = selected;
                     });
                     if (applyOnChange) {
@@ -527,7 +551,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     label: _exactDifficulty.toStringAsFixed(1),
                     activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
                     onChanged: (value) {
-                      setState(() {
+                      _updateState(() {
                         _exactDifficulty = value;
                       });
                     },
@@ -560,7 +584,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     ),
                     activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
                     onChanged: (value) {
-                      setState(() {
+                      _updateState(() {
                         _difficultyRange = value;
                       });
                     },
