@@ -7,6 +7,10 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import 'games/memory.dart';
+import 'games/sorting.dart';
+import 'games/sudoku.dart';
+import 'games/wordle_easy.dart';
 import 'widgets/activity_card.dart';
 
 class AllActivitiesPage extends StatefulWidget {
@@ -600,8 +604,80 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         return ActivityCard(
           activity: _activities[index],
           isDarkMode: isDarkMode,
+          onTap: () => _openActivity(_activities[index]),
         );
       },
+    );
+  }
+
+  void _openActivity(Activity activity) {
+    final lowerType = activity.activityType.toLowerCase();
+    final lowerTitle = activity.title.toLowerCase();
+
+    if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SudokuPage(isDarkMode: isDarkMode),
+        ),
+      );
+      return;
+    }
+
+    if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const WordleScreen(),
+        ),
+      );
+      return;
+    }
+
+    if (lowerType.contains('memory') || lowerTitle.contains('memory')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MemoryGame(
+            isDarkMode: isDarkMode,
+            activityId: activity.id,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (lowerType.contains('sorting')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SortingActivityPage(
+            activity: activity,
+            initialDarkMode: isDarkMode,
+          ),
+        ),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          activity.title,
+          style: TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode)),
+        ),
+        content: Text(
+          activity.description,
+          style: TextStyle(color: AppColors.getSecondaryTextColor(isDarkMode)),
+        ),
+        backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Tancar',
+              style: TextStyle(color: AppColors.getPrimaryButtonColor(isDarkMode)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

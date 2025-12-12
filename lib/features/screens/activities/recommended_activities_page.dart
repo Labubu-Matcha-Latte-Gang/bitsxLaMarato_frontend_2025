@@ -1,4 +1,3 @@
-import 'package:bitsxlamarato_frontend_2025/features/screens/activities/games/sudoku.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/activity_models.dart';
@@ -6,6 +5,8 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import 'games/sorting.dart';
+import 'games/sudoku.dart';
 import 'games/wordle_easy.dart';
 import 'games/memory.dart';
 import 'widgets/activity_card.dart';
@@ -125,6 +126,18 @@ class _RecommendedActivitiesPageState
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => const WordleScreen(),
+        ),
+      );
+      return;
+    }
+
+    if (lowerType.contains('sorting')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SortingActivityPage(
+            activity: activity,
+            initialDarkMode: isDarkMode,
+          ),
         ),
       );
       return;
