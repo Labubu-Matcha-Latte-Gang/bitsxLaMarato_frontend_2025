@@ -527,16 +527,26 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   double _calculateScore() {
     final total = max(1, _deck.length);
     final accuracy = _correct / total;
-    final errorPenalty = _errors * _config.errorPenaltyWeight;
-    final slowPenalty = _slowPenalties * _config.slowPenaltyWeight;
     final streakBonus = min(
       _ruleChanges /
           (total / _config.correctAnswersToChangeRule + 0.01),
       1.0,
     );
+    final normalizedDifficulty =
+        (_config.difficulty.clamp(0.0, 5.0) / 5.0).clamp(0.0, 1.0);
+    // Higher difficulty softens how strongly each error subtracts from the badge.
+    final adjustedErrorPenalty = _errors *
+        _config.errorPenaltyWeight *
+        (1 - 0.35 * normalizedDifficulty);
+    final adjustedSlowPenalty = _slowPenalties *
+        _config.slowPenaltyWeight *
+        (1 - 0.25 * normalizedDifficulty);
 
-    final rawScore =
-        (accuracy * 0.65 + streakBonus * 0.35) * 10 - errorPenalty - slowPenalty;
+    final baseScore = (accuracy * 0.65 +
+            streakBonus * 0.3 +
+            normalizedDifficulty * 0.05) *
+        10;
+    final rawScore = baseScore - adjustedErrorPenalty - adjustedSlowPenalty;
     return rawScore.clamp(0, 10);
   }
 
@@ -917,6 +927,7 @@ class SortingVariantConfig {
   final Duration slowThreshold;
   final double slowPenaltyWeight;
   final double errorPenaltyWeight;
+  final double difficulty;
   final Duration? totalTimeLimit;
   final int deckSize;
   final int correctAnswersToChangeRule;
@@ -930,6 +941,7 @@ class SortingVariantConfig {
     required this.slowThreshold,
     required this.slowPenaltyWeight,
     required this.errorPenaltyWeight,
+    required this.difficulty,
     required this.totalTimeLimit,
     required this.deckSize,
     required this.correctAnswersToChangeRule,
@@ -940,47 +952,50 @@ class SortingVariantConfig {
         SortingBlueprintRegistry.resolve(activity.id, activity.difficulty);
 
     if (blueprint.difficulty <= 2) {
-      return SortingVariantConfig(
-        variantName: blueprint.title,
-        showHints: true,
-        warnBeforeRuleChange: true,
-        resetRuleOnError: false,
-        penalizeSlowResponses: false,
-        slowThreshold: const Duration(seconds: 6),
-        slowPenaltyWeight: 0,
-        errorPenaltyWeight: 0.3,
-        totalTimeLimit: null,
-        deckSize: 18,
-        correctAnswersToChangeRule: 4,
-      );
-    } else if (blueprint.difficulty < 4) {
-      return SortingVariantConfig(
+        return SortingVariantConfig(
+          variantName: blueprint.title,
+          showHints: true,
+          warnBeforeRuleChange: true,
+          resetRuleOnError: false,
+          penalizeSlowResponses: false,
+          slowThreshold: const Duration(seconds: 6),
+          slowPenaltyWeight: 0,
+          errorPenaltyWeight: 0.3,
+          difficulty: blueprint.difficulty,
+          totalTimeLimit: null,
+          deckSize: 18,
+          correctAnswersToChangeRule: 4,
+        );
+      } else if (blueprint.difficulty < 4) {
+        return SortingVariantConfig(
         variantName: blueprint.title,
         showHints: false,
         warnBeforeRuleChange: false,
         resetRuleOnError: false,
         penalizeSlowResponses: false,
-        slowThreshold: const Duration(seconds: 5),
-        slowPenaltyWeight: 0,
-        errorPenaltyWeight: 0.45,
-        totalTimeLimit: null,
-        deckSize: 24,
-        correctAnswersToChangeRule: 5,
-      );
-    } else {
-      return SortingVariantConfig(
+          slowThreshold: const Duration(seconds: 5),
+          slowPenaltyWeight: 0,
+          errorPenaltyWeight: 0.45,
+          difficulty: blueprint.difficulty,
+          totalTimeLimit: null,
+          deckSize: 24,
+          correctAnswersToChangeRule: 5,
+        );
+      } else {
+        return SortingVariantConfig(
         variantName: blueprint.title,
         showHints: false,
         warnBeforeRuleChange: false,
         resetRuleOnError: false,
         penalizeSlowResponses: true,
-        slowThreshold: const Duration(seconds: 3),
-        slowPenaltyWeight: 0.4,
-        errorPenaltyWeight: 0.5,
-        totalTimeLimit: const Duration(minutes: 2),
-        deckSize: 28,
-        correctAnswersToChangeRule: 4,
-      );
+          slowThreshold: const Duration(seconds: 3),
+          slowPenaltyWeight: 0.4,
+          errorPenaltyWeight: 0.5,
+          difficulty: blueprint.difficulty,
+          totalTimeLimit: const Duration(minutes: 2),
+          deckSize: 28,
+          correctAnswersToChangeRule: 4,
+        );
     }
   }
 }
