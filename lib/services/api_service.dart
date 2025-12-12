@@ -89,8 +89,7 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        final registration =
-            PatientRegistrationResponse.fromJson(responseData);
+        final registration = PatientRegistrationResponse.fromJson(responseData);
         await _persistSession(
           accessToken: registration.accessToken,
           refreshToken: null,
@@ -297,9 +296,15 @@ class ApiService {
     try {
       Uri uri = Uri.parse('$_baseUrl/activity');
       final params = query?.toQueryParameters() ?? {};
-      if (params.isNotEmpty) {
-        uri = uri.replace(queryParameters: params);
+
+      // Add a dummy parameter when no filters are applied to avoid ad-blocker issues
+      if (params.isEmpty) {
+        params['all'] = 'true';
       }
+
+      uri = uri.replace(queryParameters: params);
+
+      print('DEBUG: Fetching activities from URL: $uri');
 
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(
@@ -330,8 +335,8 @@ class ApiService {
 
   static Future<Activity> getActivity(String id) async {
     try {
-      final uri = Uri.parse('$_baseUrl/activity')
-          .replace(queryParameters: {'id': id});
+      final uri =
+          Uri.parse('$_baseUrl/activity').replace(queryParameters: {'id': id});
 
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(
@@ -827,7 +832,8 @@ class ApiService {
           );
           multipartRequest.headers['Authorization'] = 'Bearer $token';
           multipartRequest.fields['session_id'] = request.sessionId;
-          multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
+          multipartRequest.fields['chunk_index'] =
+              request.chunkIndex.toString();
           multipartRequest.files.add(
             http.MultipartFile.fromBytes(
               'audio_blob',
@@ -846,7 +852,8 @@ class ApiService {
         },
       );
 
-      print('DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
+      print(
+          'DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
       print('DEBUG - Chunk upload response body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -899,18 +906,18 @@ class ApiService {
   }
 
   static Future<TranscriptionResponse> uploadRecordingFromBytes(
-      List<int> bytes, {
-        required String questionId,
-        String filename = 'recording.wav',
-        String contentType = 'audio/wav',
-        int chunkSize = 512 * 1024,
-      }) async {
+    List<int> bytes, {
+    required String questionId,
+    String filename = 'recording.wav',
+    String contentType = 'audio/wav',
+    int chunkSize = 512 * 1024,
+  }) async {
     try {
       final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
       final total = bytes.length;
       int chunkIndex = 0;
 
-      while(chunkIndex * chunkSize < total) {
+      while (chunkIndex * chunkSize < total) {
         final start = chunkIndex * chunkSize;
         final end = (start + chunkSize) > total ? total : (start + chunkSize);
         final chunkBytes = bytes.sublist(start, end);
@@ -935,7 +942,7 @@ class ApiService {
       );
       return completeResponse;
     } catch (e) {
-      if(e is ApiException) rethrow;
+      if (e is ApiException) rethrow;
       throw ApiException('Error uploading recording: ${e.toString()}', 0);
     }
   }
@@ -997,7 +1004,8 @@ class ApiService {
   }
 
   static Future<http.Response> performAuthenticatedRequest(
-    Future<http.Response> Function(String token, http.Client client) requestFn, {
+    Future<http.Response> Function(String token, http.Client client)
+        requestFn, {
     bool retryOnUnauthorized = true,
   }) {
     return _sendAuthorizedRequest(

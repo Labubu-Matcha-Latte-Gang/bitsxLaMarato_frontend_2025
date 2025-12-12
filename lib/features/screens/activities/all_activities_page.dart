@@ -41,7 +41,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
   bool _useExactDifficulty = false;
   RangeValues _difficultyRange = const RangeValues(0, 5);
   double _exactDifficulty = 2.5;
-  bool _showAdvanced = false;
+  // Advanced filters removed
 
   static const Duration _debounceDuration = Duration(milliseconds: 400);
 
@@ -107,8 +107,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
       });
     } catch (_) {
       setState(() {
-        _errorMessage =
-        'S’ha produït un error en carregar les activitats.';
+        _errorMessage = 'S’ha produït un error en carregar les activitats.';
       });
     } finally {
       if (mounted) {
@@ -178,7 +177,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                            isDarkMode
+                                ? Icons.wb_sunny
+                                : Icons.nightlight_round,
                             color: AppColors.getPrimaryTextColor(isDarkMode),
                           ),
                           onPressed: _toggleTheme,
@@ -203,9 +204,11 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildSearchField(),
                   const SizedBox(height: 12),
-                  _buildFiltersCard(),
+                  // Inline filters removed; they are shown in a popup now
+                  _buildSearchWithFiltersButton(),
+                  const SizedBox(height: 12),
+                  // Filters moved to popup; inline card removed
                   const SizedBox(height: 12),
                   Expanded(child: _buildBody()),
                 ],
@@ -217,41 +220,161 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     );
   }
 
-  Widget _buildSearchField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getFieldBackgroundColor(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (_) => _scheduleSearch(),
-        decoration: InputDecoration(
-          hintText: 'Cerca activitats…',
-          hintStyle: TextStyle(
-            color: AppColors.getPlaceholderTextColor(isDarkMode),
+  Widget _buildSearchWithFiltersButton() {
+    return Row(
+      children: [
+        // Expanded search field
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.getFieldBackgroundColor(isDarkMode),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => _scheduleSearch(),
+              decoration: InputDecoration(
+                hintText: 'Cerca activitats…',
+                hintStyle: TextStyle(
+                  color: AppColors.getPlaceholderTextColor(isDarkMode),
+                ),
+                border: InputBorder.none,
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.getPlaceholderTextColor(isDarkMode),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              style: TextStyle(
+                color: AppColors.getInputTextColor(isDarkMode),
+              ),
+            ),
           ),
-          border: InputBorder.none,
-          prefixIcon: Icon(
-            Icons.search,
-            color: AppColors.getPlaceholderTextColor(isDarkMode),
+        ),
+        const SizedBox(width: 10),
+        // Filters button on the opposite side of the search icon
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.getBlurContainerColor(isDarkMode),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.containerShadow,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: IconButton(
+            tooltip: 'Obrir filtres',
+            icon: Icon(
+              Icons.tune,
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+            onPressed: _openFiltersPopup,
+          ),
         ),
-        style: TextStyle(
-          color: AppColors.getInputTextColor(isDarkMode),
-        ),
-      ),
+      ],
     );
   }
 
-  Widget _buildFiltersCard() {
+  void _openFiltersPopup() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, innerSetState) {
+            void _uiSetState(VoidCallback fn) {
+              setState(fn);
+              innerSetState(fn);
+            }
+
+            return Dialog(
+              backgroundColor:
+                  AppColors.getSecondaryBackgroundColor(isDarkMode),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Filtres',
+                            style: TextStyle(
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Reuse the same filters UI inside the popup (no auto-apply)
+                      _buildFiltersCard(
+                        applyOnChange: false,
+                        uiSetState: _uiSetState,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _fetchActivities();
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor:
+                                  AppColors.getPrimaryButtonColor(isDarkMode),
+                            ),
+                            child: const Text('Aplicar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFiltersCard({
+    bool applyOnChange = true,
+    void Function(VoidCallback fn)? uiSetState,
+  }) {
+    void _updateState(VoidCallback fn) {
+      if (uiSetState != null) {
+        uiSetState!(fn);
+      } else {
+        setState(fn);
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color:
-        AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
+            AppColors.getSecondaryBackgroundColor(isDarkMode).withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -280,7 +403,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ),
               TextButton.icon(
                 onPressed: () {
-                  setState(() {
+                  _updateState(() {
                     _selectedType = null;
                     _useDifficultyFilter = false;
                     _useExactDifficulty = false;
@@ -288,20 +411,21 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     _exactDifficulty = 2.5;
                     _titleController.clear();
                   });
-                  _fetchActivities();
+                  if (applyOnChange) {
+                    _fetchActivities();
+                  }
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Restableix'),
                 style: TextButton.styleFrom(
-                  foregroundColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode),
+                  foregroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 60,
+            height: 68,
             child: DropdownButtonFormField<String>(
               value: _selectedType,
               isExpanded: true,
@@ -315,41 +439,42 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 ),
                 labelStyle: TextStyle(
                   color: AppColors.getSecondaryTextColor(isDarkMode),
+                  fontSize: 13,
                 ),
                 contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                floatingLabelBehavior: FloatingLabelBehavior.auto,
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
-              dropdownColor:
-              AppColors.getSecondaryBackgroundColor(isDarkMode),
+              dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
               iconEnabledColor: AppColors.getPrimaryTextColor(isDarkMode),
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
               ),
-              items: const [
-                'concentration',
-                'speed',
-                'words',
-                'sorting',
-                'multitasking',
-              ]
-                  .map(
-                    (type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(
-                    type,
-                    style: TextStyle(
-                      color: AppColors.getPrimaryTextColor(isDarkMode),
-                    ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('Tots'),
+                ),
+                ...const [
+                  'concentration',
+                  'speed',
+                  'words',
+                  'sorting',
+                  'multitasking',
+                ].map(
+                  (type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
                   ),
                 ),
-              )
-                  .toList(),
+              ],
               onChanged: (value) {
-                setState(() {
+                _updateState(() {
                   _selectedType = value;
                 });
-                _scheduleSearch();
+                if (applyOnChange) {
+                  _scheduleSearch();
+                }
               },
             ),
           ),
@@ -364,10 +489,12 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             ),
             value: _useDifficultyFilter,
             onChanged: (value) {
-              setState(() {
+              _updateState(() {
                 _useDifficultyFilter = value;
               });
-              _scheduleSearch();
+              if (applyOnChange) {
+                _scheduleSearch();
+              }
             },
             activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
           ),
@@ -378,32 +505,36 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   label: const Text('Rang'),
                   selected: !_useExactDifficulty,
                   onSelected: (selected) {
-                    setState(() {
+                    _updateState(() {
                       _useExactDifficulty = !selected;
                     });
-                    _scheduleSearch();
+                    if (applyOnChange) {
+                      _scheduleSearch();
+                    }
                   },
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.2),
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text('Exacta'),
                   selected: _useExactDifficulty,
                   onSelected: (selected) {
-                    setState(() {
+                    _updateState(() {
                       _useExactDifficulty = selected;
                     });
-                    _scheduleSearch();
+                    if (applyOnChange) {
+                      _scheduleSearch();
+                    }
                   },
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
-                  selectedColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.2),
+                  selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.2),
                 ),
               ],
             ),
@@ -420,11 +551,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     label: _exactDifficulty.toStringAsFixed(1),
                     activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
                     onChanged: (value) {
-                      setState(() {
+                      _updateState(() {
                         _exactDifficulty = value;
                       });
                     },
-                    onChangeEnd: (_) => _scheduleSearch(),
+                    onChangeEnd: (_) {
+                      if (applyOnChange) {
+                        _scheduleSearch();
+                      }
+                    },
                   ),
                   Text(
                     'Dificultat exacta: ${_exactDifficulty.toStringAsFixed(1)}',
@@ -449,11 +584,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                     ),
                     activeColor: AppColors.getPrimaryButtonColor(isDarkMode),
                     onChanged: (value) {
-                      setState(() {
+                      _updateState(() {
                         _difficultyRange = value;
                       });
                     },
-                    onChangeEnd: (_) => _scheduleSearch(),
+                    onChangeEnd: (_) {
+                      if (applyOnChange) {
+                        _scheduleSearch();
+                      }
+                    },
                   ),
                   Text(
                     'Rang seleccionat: ${_difficultyRange.start.toStringAsFixed(1)} - ${_difficultyRange.end.toStringAsFixed(1)}',
@@ -464,69 +603,13 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                 ],
               ),
           ],
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () => setState(() => _showAdvanced = !_showAdvanced),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Filtres avançats',
-                  style: TextStyle(
-                    color: AppColors.getPrimaryTextColor(isDarkMode),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Icon(
-                  _showAdvanced
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                ),
-              ],
-            ),
-          ),
-          if (_showAdvanced) ...[
-            const SizedBox(height: 10),
-            _buildAdvancedField(
-              controller: _titleController,
-              label: 'Títol exacte',
-              icon: Icons.title,
-            ),
-          ],
+          // Advanced filters removed
         ],
       ),
     );
   }
 
-  Widget _buildAdvancedField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.getFieldBackgroundColor(isDarkMode),
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        labelStyle: TextStyle(
-          color: AppColors.getSecondaryTextColor(isDarkMode),
-        ),
-      ),
-      style: TextStyle(
-        color: AppColors.getInputTextColor(isDarkMode),
-      ),
-      onChanged: (_) => _scheduleSearch(),
-    );
-  }
+  // Advanced filters field removed
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -575,7 +658,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 foregroundColor:
-                AppColors.getPrimaryButtonTextColor(isDarkMode),
+                    AppColors.getPrimaryButtonTextColor(isDarkMode),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -598,15 +681,19 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
       );
     }
 
-    return ListView.builder(
-      itemCount: _activities.length,
-      itemBuilder: (context, index) {
-        return ActivityCard(
-          activity: _activities[index],
-          isDarkMode: isDarkMode,
-          onTap: () => _openActivity(_activities[index]),
-        );
-      },
+    return Scrollbar(
+      thumbVisibility: true,
+      trackVisibility: true,
+      child: ListView.builder(
+        itemCount: _activities.length,
+        itemBuilder: (context, index) {
+          return ActivityCard(
+            activity: _activities[index],
+            isDarkMode: isDarkMode,
+            onTap: () => _openActivity(_activities[index]),
+          );
+        },
+      ),
     );
   }
 
@@ -673,7 +760,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Tancar',
-              style: TextStyle(color: AppColors.getPrimaryButtonColor(isDarkMode)),
+              style:
+                  TextStyle(color: AppColors.getPrimaryButtonColor(isDarkMode)),
             ),
           ),
         ],
