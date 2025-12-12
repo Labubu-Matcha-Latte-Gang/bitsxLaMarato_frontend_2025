@@ -10,7 +10,7 @@ import '../recommended_activities_page.dart';
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
   final bool isDarkMode;
-  const WordleScreen({Key? key, this.isDarkMode = false}) : super(key: key);
+  const WordleScreen({Key? key, this.isDarkMode = true}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -20,8 +20,7 @@ enum LetterState { initial, correct, present, absent }
 
 class _WordleScreenState extends State<WordleScreen>
     with SingleTickerProviderStateMixin {
-  static const int rows =
-  6; // changed to 6 guesses x 5 columns (classic Wordle)
+  static const int rows = 6; // changed to 6 guesses x 5 columns (classic Wordle)
   static const int cols = 5;
 
   // Shake animation controller for invalid-word feedback
@@ -38,11 +37,14 @@ class _WordleScreenState extends State<WordleScreen>
   Set<String>? _dictionarySet;
   List<String>? _hardWords;
 
-  double difficulty = 2.0;
-
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
   int invalidWordCount = 0;
   int incorrectGuessCount = 0;
+
+  double difficulty = 4.5; // Medium difficulty
+
+  DateTime? _gameStartTime;
+  Duration _totalTime = Duration.zero;
 
   @override
   void initState() {
@@ -158,7 +160,7 @@ class _WordleScreenState extends State<WordleScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(height: 8),
-                Text('Aquí ens trobem en la versió més difícil.\n'),
+                Text('Aquí ens trobem en la versió més fàcil.\n'),
                 Text('Intenta endevinar la paraula secreta en només 6 intents. Només es poden utilitzar paraules de 5 lletres del català.\n'),
                 Text('Bona sort!'),
               ],
@@ -213,6 +215,25 @@ class _WordleScreenState extends State<WordleScreen>
     });
   }
 
+  void _recordGameTime() {
+    if (_gameStartTime != null) {
+      final dur = DateTime.now().difference(_gameStartTime!);
+      _totalTime = _totalTime + dur;
+      _gameStartTime = null;
+    }
+  }
+
+  void _calculateScore() {
+    // Placeholder for score calculation logic if needed
+    double score = 0.0;
+    double guessScore = max(0, (10*(6-incorrectGuessCount)/5));
+    double invalidScore = max(5, 0.7*invalidWordCount);
+    double difficultyScore = (difficulty - 1.5) * 0.25;
+
+    score = min(10, guessScore + invalidScore + difficultyScore);
+    print('Score calculated: $score');
+  }
+
   void _submitGuess() {
     if (currentGuess.length != cols) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -261,8 +282,12 @@ class _WordleScreenState extends State<WordleScreen>
     });
 
     if (guess == secretWord) {
+      _recordGameTime();
+      _calculateScore();
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
+      _recordGameTime();
+      _calculateScore();
       _showResultDialog(won: false);
     }
   }
@@ -375,11 +400,19 @@ class _WordleScreenState extends State<WordleScreen>
   Widget build(BuildContext context) {
     final theme = isDark ? ThemeData.dark() : ThemeData.light();
 
-    Widget buildGrid(double maxWidth) {
-      final tileSize = maxWidth / cols;
+    Widget buildGrid(BoxConstraints constraints) {
+      final maxWidth = min(constraints.maxWidth * 0.95, 560.0);
+      final maxHeight = constraints.maxHeight;
+
+      // Determine tile size based on both available width and height so the
+      // grid always fits within the provided constraints (prevents keyboard
+      // overlapping on wide screens / web by keeping the grid height bounded).
+      final tileSize = min(maxWidth / cols, maxHeight / rows);
+
+      final gridWidth = tileSize * cols;
 
       return SizedBox(
-        width: tileSize * cols,
+        width: gridWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(rows, (r) {
@@ -410,7 +443,8 @@ class _WordleScreenState extends State<WordleScreen>
                       : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
-                  return Expanded(
+                  return SizedBox(
+                    width: tileSize,
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
@@ -574,9 +608,7 @@ class _WordleScreenState extends State<WordleScreen>
                   Expanded(
                     child: Center(
                       child: LayoutBuilder(builder: (context, constraints) {
-                        final maxWidth =
-                        min(constraints.maxWidth * 0.95, 560.0);
-                        return buildGrid(maxWidth);
+                        return buildGrid(constraints);
                       }),
                     ),
                   ),
