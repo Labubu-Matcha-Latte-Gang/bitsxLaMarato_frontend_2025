@@ -26,7 +26,7 @@ class _WordleScreenState extends State<WordleScreen>
   // Shake animation controller for invalid-word feedback
   late AnimationController _shakeController;
 
-  // Note: word list removed — secret word will be chosen from easy_words.json
+  // Note: word list removed — secret word will be chosen from med_words.json
 
   late String secretWord;
   List<String> guesses = [];
@@ -35,7 +35,7 @@ class _WordleScreenState extends State<WordleScreen>
   bool isDark = false;
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
-  List<String>? _easyWords;
+  List<String>? _medWords;
 
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
   int invalidWordCount = 0;
@@ -65,7 +65,7 @@ class _WordleScreenState extends State<WordleScreen>
         final decoded = raw.trim();
         if (decoded.startsWith('[')) {
           final List<dynamic> arr =
-              (await Future.value(jsonDecode(decoded))) as List<dynamic>;
+          (await Future.value(jsonDecode(decoded))) as List<dynamic>;
           words = arr.map((e) => e.toString().toUpperCase()).toList();
         } else {
           // Fallback: treat as newline-separated text
@@ -91,11 +91,11 @@ class _WordleScreenState extends State<WordleScreen>
       // Try loading easy words as well (optional)
       try {
         final rawEasy = await rootBundle.loadString(
-            'lib/features/screens/activities/dictionary/easy_words.json');
+            'lib/features/screens/activities/dictionary/med_words.json');
         final List<dynamic> arr2 = jsonDecode(rawEasy) as List<dynamic>;
-        _easyWords = arr2.map((e) => e.toString().toUpperCase()).toList();
+        _medWords = arr2.map((e) => e.toString().toUpperCase()).toList();
       } catch (_) {
-        _easyWords = null;
+        _medWords = null;
       }
       // print('Loaded dictionary with ${words.length} words');
     } catch (e) {
@@ -106,15 +106,15 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   void _startNewGame() {
-    // Choose secret word exclusively from easy_words.json if available.
-    // If easy_words.json is missing or empty, fall back to a fixed default.
+    // Choose secret word exclusively from med_words.json if available.
+    // If med_words.json is missing or empty, fall back to a fixed default.
     // (Removed an unnecessary if that caused an unmatched brace)
     // Reset stats for the new game
     invalidWordCount = 0;
     incorrectGuessCount = 0;
 
     // Set the pool to the easy words list since this is the easy version.
-    List<String>? pool = _easyWords;
+    List<String>? pool = _medWords;
 
     if (pool != null && pool.isNotEmpty) {
       final copy = List<String>.from(pool);
@@ -126,13 +126,13 @@ class _WordleScreenState extends State<WordleScreen>
       final copy = List<String>.from(_dictionary!);
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
-    } else if (_easyWords != null && _easyWords!.isNotEmpty) {
-      final copy = List<String>.from(_easyWords!);
+    } else if (_medWords != null && _medWords!.isNotEmpty) {
+      final copy = List<String>.from(_medWords!);
       copy.shuffle();
       secretWord = copy.first.toUpperCase();
     } else {
-      // Default secret when easy_words isn't available
-      secretWord = 'PORTA';
+      // Default secret when med_words isn't available
+      secretWord = 'VISIO';
     }
     guesses = [];
     currentGuess = '';
@@ -155,7 +155,7 @@ class _WordleScreenState extends State<WordleScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(height: 8),
-                Text('Aquí ens trobem en la versió més fàcil.\n'),
+                Text('Aquí ens trobem en la versió mitjana.\n'),
                 Text('Intenta endevinar la paraula secreta en només 6 intents. Només es poden utilitzar paraules de 5 lletres del català.\n'),
                 Text('Bona sort!'),
               ],
@@ -385,7 +385,7 @@ class _WordleScreenState extends State<WordleScreen>
                 ? guesses[r]
                 : (isCurrent ? currentGuess : '');
             List<LetterState> states =
-                List.generate(cols, (_) => LetterState.initial);
+            List.generate(cols, (_) => LetterState.initial);
             if (r < guesses.length) states = _evaluateGuess(guesses[r], secretWord);
 
             // Build the row tiles
@@ -398,13 +398,13 @@ class _WordleScreenState extends State<WordleScreen>
                   final bgColor = (r < guesses.length)
                       ? _colorForState(state)
                       : (isCurrent && c < currentGuess.length)
-                          ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
-                          : AppColors.getSecondaryBackgroundColor(isDark);
+                      ? AppColors.getPrimaryButtonColor(isDark).withAlpha((0.18 * 255).round())
+                      : AppColors.getSecondaryBackgroundColor(isDark);
 
                   final fgColor = (r < guesses.length)
                       ? ((state == LetterState.correct || state == LetterState.present)
-                          ? Colors.white
-                          : AppColors.getPrimaryTextColor(isDark))
+                      ? Colors.white
+                      : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
                   return Expanded(
@@ -572,7 +572,7 @@ class _WordleScreenState extends State<WordleScreen>
                     child: Center(
                       child: LayoutBuilder(builder: (context, constraints) {
                         final maxWidth =
-                            min(constraints.maxWidth * 0.95, 560.0);
+                        min(constraints.maxWidth * 0.95, 560.0);
                         return buildGrid(maxWidth);
                       }),
                     ),
@@ -584,7 +584,7 @@ class _WordleScreenState extends State<WordleScreen>
                     child: Builder(builder: (ctx) {
                       // Slightly smaller keys and margins for mobile so the full keyboard fits on screen
                       final keySize =
-                          min(40.0, MediaQuery.of(ctx).size.width / 12);
+                      min(40.0, MediaQuery.of(ctx).size.width / 12);
 
                       Widget keyWidget(String k) {
                         final state = keyStates[k] ?? LetterState.initial;
@@ -610,12 +610,12 @@ class _WordleScreenState extends State<WordleScreen>
                                             letterSpacing: -0.5,
                                             fontSize: keySize * 0.34,
                                             color: (state ==
-                                                        LetterState.correct ||
-                                                    state ==
-                                                        LetterState.present)
+                                                LetterState.correct ||
+                                                state ==
+                                                    LetterState.present)
                                                 ? Colors.white
                                                 : AppColors.getPrimaryTextColor(
-                                                    isDark))))),
+                                                isDark))))),
                           ),
                         );
                       }
@@ -648,7 +648,7 @@ class _WordleScreenState extends State<WordleScreen>
                                     horizontal: 1.5, vertical: 2.5),
                                 decoration: BoxDecoration(
                                     color:
-                                        AppColors.getPrimaryButtonColor(isDark),
+                                    AppColors.getPrimaryButtonColor(isDark),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                         color: Colors.grey.shade500, width: 1)),
@@ -672,7 +672,7 @@ class _WordleScreenState extends State<WordleScreen>
                                     horizontal: 1.5, vertical: 2.5),
                                 decoration: BoxDecoration(
                                     color:
-                                        AppColors.getPrimaryButtonColor(isDark),
+                                    AppColors.getPrimaryButtonColor(isDark),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                         color: Colors.grey.shade500, width: 1)),

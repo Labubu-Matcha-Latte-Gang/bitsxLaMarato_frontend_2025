@@ -119,13 +119,13 @@ class _SudokuPageState extends State<SudokuPage> {
       showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Great!', style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal))),
-          content: Text('You completed the Sudoku!', style: TextStyle(color: AppColors.getSecondaryTextColor(_isDarkModeLocal))),
+          title: Text('Genial!', style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal))),
+          content: Text('Has completat el Sudoku!', style: TextStyle(color: AppColors.getSecondaryTextColor(_isDarkModeLocal))),
           backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
+              child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
             )
           ],
         ),
@@ -134,13 +134,13 @@ class _SudokuPageState extends State<SudokuPage> {
       showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Not yet', style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal))),
-          content: Text(wrong > 0 ? 'There are $wrong incorrect entries.' : 'Some cells are still empty.', style: TextStyle(color: AppColors.getSecondaryTextColor(_isDarkModeLocal))),
+          title: Text('Encara no', style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal))),
+          content: Text(wrong > 0 ? 'Hi ha $wrong valors incorrectes.' : 'Hi ha algunes cel·les buides.', style: TextStyle(color: AppColors.getSecondaryTextColor(_isDarkModeLocal))),
           backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
+              child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
             )
           ],
         ),
