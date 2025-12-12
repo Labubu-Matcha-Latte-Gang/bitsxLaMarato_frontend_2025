@@ -75,6 +75,11 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   int _slowPenalties = 0;
   int _streak = 0;
 
+  double? _finalScore;
+  double? _finalElapsedSeconds;
+  bool _submissionSuccess = false;
+  String? _submissionError;
+
   bool _hasWarnedAboutChange = false;
   bool _gameFinished = false;
   bool _submitting = false;
@@ -335,7 +340,19 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
     _elapsedStopwatch.stop();
     _reactionStopwatch.stop();
     _ticker?.cancel();
-    setState(() {});
+
+    final computedScore = _calculateScore();
+    final elapsedSeconds = _elapsedStopwatch.elapsed.inSeconds.toDouble();
+
+    setState(() {
+      _finalScore = computedScore;
+      _finalElapsedSeconds = elapsedSeconds;
+      _submissionSuccess = false;
+      _submissionError = null;
+      _submitting = true;
+    });
+
+    _submitScore(computedScore, elapsedSeconds);
 
     Future.delayed(const Duration(milliseconds: 350), () {
       if (!mounted) return;
@@ -351,8 +368,9 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
       builder: (context) {
         final bgColor = AppColors.getSecondaryBackgroundColor(isDarkMode)
             .withOpacity(0.98);
-        final score = _calculateScore();
-        final elapsedSeconds = _elapsedStopwatch.elapsed.inSeconds.toDouble();
+        final score = _finalScore ?? _calculateScore();
+        final elapsedSeconds =
+            _finalElapsedSeconds ?? _elapsedStopwatch.elapsed.inSeconds.toDouble();
         return Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(24),
@@ -416,6 +434,16 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
                 slow: _slowPenalties,
                 ruleChanges: _ruleChanges,
               ),
+              const SizedBox(height: 16),
+              _SubmissionStatus(
+                isDarkMode: isDarkMode,
+                submitting: _submitting,
+                success: _submissionSuccess,
+                errorMessage: _submissionError,
+                onRetry: (_finalScore != null && _finalElapsedSeconds != null)
+                    ? () => _submitScore(_finalScore!, _finalElapsedSeconds!)
+                    : null,
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -431,20 +459,13 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _submitting ? null : () {
-                        _submitScore(score, elapsedSeconds);
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
                       },
-                      icon: _submitting
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.cloud_upload_rounded),
-                      label: Text(_submitting
-                          ? 'Enviant...'
-                          : 'Enviar resultats'),
+                      icon: const Icon(Icons.check_rounded),
+                      label: const Text('Tancar'),
                     ),
                   ),
                 ],
@@ -457,8 +478,10 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
   }
 
   Future<void> _submitScore(double score, double elapsedSeconds) async {
-    if (_submitting) return;
-    setState(() => _submitting = true);
+    setState(() {
+      _submitting = true;
+      _submissionError = null;
+    });
     try {
       final request = ActivityCompleteRequest(
         id: widget.activity.id,
@@ -467,20 +490,20 @@ class _SortingActivityPageState extends State<SortingActivityPage> {
       );
       await ApiService.completeActivity(request);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      setState(() {
+        _submissionSuccess = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Resultats enviats correctament!'),
+          content: Text('Resultats enviats automàticament.'),
         ),
       );
-      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No s\'ha pogut enviar: $e'),
-        ),
-      );
+      setState(() {
+        _submissionError = e.toString();
+        _submissionSuccess = false;
+      });
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -1492,6 +1515,91 @@ class _SummaryChip extends StatelessWidget {
               ),
             ],
           )
+        ],
+      ),
+    );
+  }
+}
+
+class _SubmissionStatus extends StatelessWidget {
+  final bool isDarkMode;
+  final bool submitting;
+  final bool success;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
+
+  const _SubmissionStatus({
+    required this.isDarkMode,
+    required this.submitting,
+    required this.success,
+    required this.errorMessage,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget icon;
+    String text;
+    Color textColor;
+
+    if (submitting) {
+      icon = const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+      text = 'Enviant resultats...';
+      textColor = AppColors.getPrimaryTextColor(isDarkMode);
+    } else if (success) {
+      icon = const Icon(Icons.check_circle, color: Colors.greenAccent);
+      text = 'Resultats enviats correctament.';
+      textColor = Colors.greenAccent;
+    } else if (errorMessage != null) {
+      icon = const Icon(Icons.error_outline, color: Colors.orangeAccent);
+      text = 'Error en enviar: $errorMessage';
+      textColor = Colors.orangeAccent;
+    } else {
+      icon = Icon(Icons.info_outline,
+          color: AppColors.getPrimaryTextColor(isDarkMode));
+      text = 'Resultats pendents d\'enviament.';
+      textColor = AppColors.getPrimaryTextColor(isDarkMode);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.getBlurContainerColor(isDarkMode),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              icon,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (errorMessage != null && onRetry != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: submitting ? null : onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Torna-ho a provar'),
+              ),
+            ),
+          ],
         ],
       ),
     );
