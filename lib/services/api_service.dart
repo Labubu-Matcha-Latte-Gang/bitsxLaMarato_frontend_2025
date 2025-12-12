@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/patient_models.dart';
@@ -8,6 +9,11 @@ import '../models/user_models.dart';
 import '../models/transcription_models.dart';
 import '../config.dart';
 import 'session_manager.dart';
+
+typedef _AuthorizedRequest = Future<http.Response> Function(
+  String token,
+  http.Client client,
+);
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -48,19 +54,18 @@ class ApiService {
     _instance._baseUrlOverride = null;
   }
 
-  static Future<Map<String, String>> _authHeaders() async {
-    final token = await SessionManager.getToken();
-    if (token == null || token.isEmpty) {
-      throw ApiException(
-        'Sessió no trobada o caducada. Torna a iniciar sessió.',
-        401,
-      );
+  static Future<bool> restoreSession() async {
+    final storedToken = await SessionManager.getToken();
+    if (storedToken == null || storedToken.isEmpty) {
+      return false;
     }
 
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
+    try {
+      await _refreshAccessToken();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<PatientRegistrationResponse> registerPatient(
@@ -84,11 +89,20 @@ class ApiService {
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
-        final registration =
-            PatientRegistrationResponse.fromJson(responseData);
+        final registration = PatientRegistrationResponse.fromJson(responseData);
         await _persistSession(
-          registration.accessToken,
-          registration.toUserData(),
+          accessToken: registration.accessToken,
+          refreshToken: null,
+          userData: registration.toUserData(),
+        );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
+          alreadyRespondedToday: false,
         );
         return registration;
       } else {
@@ -148,18 +162,156 @@ class ApiService {
     }
   }
 
+  static Future<PatientSearchResult> searchPatientsForDoctor(
+    String query, {
+    int limit = 20,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/user/doctor/patients/search').replace(
+        queryParameters: {
+          'q': query,
+          'limit': limit.toString(),
+        },
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return PatientSearchResult.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'han pogut cercar els pacients.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<UserProfile> assignPatientsToDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'assign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut afegir els pacients al teu llistat.',
+    );
+  }
+
+  static Future<UserProfile> unassignPatientsFromDoctor(
+    List<String> patients,
+  ) {
+    return _mutateDoctorPatients(
+      endpoint: 'unassign',
+      patients: patients,
+      failureMessage: 'No s\'han pogut eliminar els pacients seleccionats.',
+    );
+  }
+
+  static Future<UserProfile> _mutateDoctorPatients({
+    required String endpoint,
+    required List<String> patients,
+    required String failureMessage,
+  }) async {
+    if (patients.isEmpty) {
+      throw ApiException('Cal indicar almenys un pacient.', 400);
+    }
+
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/user/doctor/patients/$endpoint'),
+          headers: _jsonHeaders(token),
+          body: json.encode({'patients': patients}),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final profile = UserProfile.fromJson(responseData);
+        await _persistUserProfile(profile);
+        return profile;
+      }
+
+      throw _apiExceptionFromResponse(response, failureMessage);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<Uint8List> downloadPatientReport(
+    String email, {
+    String timezone = 'Europe/Madrid',
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/report/$email').replace(
+        queryParameters: {'timezone': timezone},
+      );
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(
+            token,
+            extra: {'Accept': 'application/pdf'},
+          ),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return Uint8List.fromList(response.bodyBytes);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut descarregar l\'informe del pacient.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
   static Future<List<Activity>> listActivities({
     ActivityQueryParams? query,
   }) async {
     try {
-      final headers = await _authHeaders();
       Uri uri = Uri.parse('$_baseUrl/activity');
       final params = query?.toQueryParameters() ?? {};
-      if (params.isNotEmpty) {
-        uri = uri.replace(queryParameters: params);
+
+      // Add a dummy parameter when no filters are applied to avoid ad-blocker issues
+      if (params.isEmpty) {
+        params['all'] = 'true';
       }
 
-      final response = await _sharedClient.get(uri, headers: headers);
+      uri = uri.replace(queryParameters: params);
+
+      print('DEBUG: Fetching activities from URL: $uri');
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(token),
+        ),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> responseData = json.decode(response.body);
@@ -183,11 +335,15 @@ class ApiService {
 
   static Future<Activity> getActivity(String id) async {
     try {
-      final headers = await _authHeaders();
-      final uri = Uri.parse('$_baseUrl/activity')
-          .replace(queryParameters: {'id': id});
+      final uri =
+          Uri.parse('$_baseUrl/activity').replace(queryParameters: {'id': id});
 
-      final response = await _sharedClient.get(uri, headers: headers);
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          uri,
+          headers: _jsonHeaders(token),
+        ),
+      );
 
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
@@ -219,10 +375,11 @@ class ApiService {
 
   static Future<Activity> getRecommendedActivity() async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.get(
-        Uri.parse('$_baseUrl/activity/recommended'),
-        headers: headers,
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/activity/recommended'),
+          headers: _jsonHeaders(token),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -247,11 +404,12 @@ class ApiService {
     ActivityCompleteRequest request,
   ) async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.post(
-        Uri.parse('$_baseUrl/activity/complete'),
-        headers: headers,
-        body: json.encode(request.toJson()),
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/activity/complete'),
+          headers: _jsonHeaders(token),
+          body: json.encode(request.toJson()),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -274,10 +432,11 @@ class ApiService {
 
   static Future<Question> getDailyQuestion() async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.get(
-        Uri.parse('$_baseUrl/question/daily'),
-        headers: headers,
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/question/daily'),
+          headers: _jsonHeaders(token),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -321,8 +480,17 @@ class ApiService {
         final responseData = json.decode(response.body);
         final registration = DoctorRegistrationResponse.fromJson(responseData);
         await _persistSession(
-          registration.accessToken,
-          registration.toUserData(),
+          accessToken: registration.accessToken,
+          refreshToken: null,
+          userData: registration.toUserData(),
+        );
+        await _persistUserProfile(
+          UserProfile(
+            email: registration.email,
+            name: registration.name,
+            surname: registration.surname,
+            role: registration.role,
+          ),
         );
         return registration;
       } else {
@@ -402,7 +570,6 @@ class ApiService {
       print('DEBUG - Login Response Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
-        // Verificar si el body no está vacío
         if (response.body.isEmpty) {
           throw ApiException('La resposta de la API està buida', 200);
         }
@@ -411,12 +578,16 @@ class ApiService {
           final responseData = json.decode(response.body);
           print('DEBUG - Parsed Response Data: $responseData');
 
-          // Verificar que responseData no sea null
-          if (responseData == null) {
-            throw ApiException('La resposta de la API és null', 200);
-          }
-
-          return LoginResponse.fromJson(responseData);
+          final loginResponse = LoginResponse.fromJson(responseData);
+          await _persistSession(
+            accessToken: loginResponse.accessToken,
+            refreshToken: null,
+            userData: loginResponse.toUserData(),
+          );
+          await getAndCacheCurrentUser(
+            alreadyRespondedToday: loginResponse.alreadyRespondedToday,
+          );
+          return loginResponse;
         } catch (e) {
           print('DEBUG - Error parsing JSON: $e');
           throw ApiException(
@@ -482,10 +653,11 @@ class ApiService {
 
   static Future<UserProfile> getCurrentUser() async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.get(
-        Uri.parse('$_baseUrl/user'),
-        headers: headers,
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/user'),
+          headers: _jsonHeaders(token),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -506,15 +678,27 @@ class ApiService {
     }
   }
 
+  static Future<UserProfile> getAndCacheCurrentUser({
+    bool? alreadyRespondedToday,
+  }) async {
+    final profile = await getCurrentUser();
+    await _persistUserProfile(
+      profile,
+      alreadyRespondedToday: alreadyRespondedToday,
+    );
+    return profile;
+  }
+
   static Future<UserProfile> updateCurrentUser(
     UserUpdateRequest request,
   ) async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.put(
-        Uri.parse('$_baseUrl/user'),
-        headers: headers,
-        body: json.encode(request.toJson()),
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.put(
+          Uri.parse('$_baseUrl/user'),
+          headers: _jsonHeaders(token),
+          body: json.encode(request.toJson()),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -539,11 +723,12 @@ class ApiService {
     UserPartialUpdateRequest request,
   ) async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.patch(
-        Uri.parse('$_baseUrl/user'),
-        headers: headers,
-        body: json.encode(request.toJson()),
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.patch(
+          Uri.parse('$_baseUrl/user'),
+          headers: _jsonHeaders(token),
+          body: json.encode(request.toJson()),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -566,10 +751,11 @@ class ApiService {
 
   static Future<void> deleteCurrentUser() async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.delete(
-        Uri.parse('$_baseUrl/user'),
-        headers: headers,
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.delete(
+          Uri.parse('$_baseUrl/user'),
+          headers: _jsonHeaders(token),
+        ),
       );
 
       if (response.statusCode == 204) {
@@ -591,10 +777,11 @@ class ApiService {
 
   static Future<PatientDataResponse> getPatientData(String email) async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.get(
-        Uri.parse('$_baseUrl/user/$email'),
-        headers: headers,
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/user/$email'),
+          headers: _jsonHeaders(token),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -619,27 +806,55 @@ class ApiService {
     TranscriptionChunkRequest request,
   ) async {
     try {
-      final headers = await _authHeaders();
-      headers.remove('Content-Type');
-
-      final multipartRequest = http.MultipartRequest(
-        'POST',
-        Uri.parse('$_baseUrl/transcription/chunk'),
+      return await _uploadTranscriptionChunkMultipart(request);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
       );
-      multipartRequest.headers.addAll(headers);
-      multipartRequest.fields['session_id'] = request.sessionId;
-      multipartRequest.fields['chunk_index'] = request.chunkIndex.toString();
-      multipartRequest.files.add(
-        http.MultipartFile.fromBytes(
-          'audio_blob',
-          request.audioBytes,
-          filename: request.filename,
-          contentType: MediaType.parse(request.contentType),
-        ),
+    }
+  }
+
+  static Future<TranscriptionResponse> _uploadTranscriptionChunkMultipart(
+    TranscriptionChunkRequest request,
+  ) async {
+    try {
+      if (request.audioBytes.isEmpty) {
+        throw ApiException('Chunk de audio vacío', 400);
+      }
+
+      final response = await _sendAuthorizedRequest(
+        (token, client) async {
+          final multipartRequest = http.MultipartRequest(
+            'POST',
+            Uri.parse('$_baseUrl/transcription/chunk'),
+          );
+          multipartRequest.headers['Authorization'] = 'Bearer $token';
+          multipartRequest.fields['session_id'] = request.sessionId;
+          multipartRequest.fields['chunk_index'] =
+              request.chunkIndex.toString();
+          multipartRequest.files.add(
+            http.MultipartFile.fromBytes(
+              'audio_blob',
+              request.audioBytes,
+              filename: request.filename,
+              contentType: MediaType.parse(request.contentType),
+            ),
+          );
+
+          print(
+            'DEBUG - Uploading transcription chunk: session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}',
+          );
+
+          final streamedResponse = await client.send(multipartRequest);
+          return http.Response.fromStream(streamedResponse);
+        },
       );
 
-      final streamedResponse = await _sharedClient.send(multipartRequest);
-      final response = await http.Response.fromStream(streamedResponse);
+      print(
+          'DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
+      print('DEBUG - Chunk upload response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =
@@ -664,11 +879,12 @@ class ApiService {
     TranscriptionCompleteRequest request,
   ) async {
     try {
-      final headers = await _authHeaders();
-      final response = await _sharedClient.post(
-        Uri.parse('$_baseUrl/transcription/complete'),
-        headers: headers,
-        body: json.encode(request.toJson()),
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.post(
+          Uri.parse('$_baseUrl/transcription/complete'),
+          headers: _jsonHeaders(token),
+          body: json.encode(request.toJson()),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -689,24 +905,209 @@ class ApiService {
     }
   }
 
-  static Future<void> _persistSession(
-    String accessToken,
-    Map<String, dynamic> userData,
-  ) async {
-    final tokenSaved = await SessionManager.saveToken(accessToken);
-    if (!tokenSaved) {
+  static Future<TranscriptionResponse> uploadRecordingFromBytes(
+    List<int> bytes, {
+    required String questionId,
+    String filename = 'recording.wav',
+    String contentType = 'audio/wav',
+    int chunkSize = 512 * 1024,
+  }) async {
+    try {
+      final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+      final total = bytes.length;
+      int chunkIndex = 0;
+
+      while (chunkIndex * chunkSize < total) {
+        final start = chunkIndex * chunkSize;
+        final end = (start + chunkSize) > total ? total : (start + chunkSize);
+        final chunkBytes = bytes.sublist(start, end);
+
+        final chunkRequest = TranscriptionChunkRequest(
+          sessionId: sessionId,
+          chunkIndex: chunkIndex,
+          audioBytes: chunkBytes,
+          filename: filename,
+          contentType: contentType,
+        );
+
+        await uploadTranscriptionChunk(chunkRequest);
+        chunkIndex += 1;
+      }
+
+      final completeResponse = await completeTranscriptionSession(
+        TranscriptionCompleteRequest(
+          sessionId: sessionId,
+          questionId: questionId,
+        ),
+      );
+      return completeResponse;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Error uploading recording: ${e.toString()}', 0);
+    }
+  }
+
+  static Future<void> _persistSession({
+    required String accessToken,
+    String? refreshToken,
+    Map<String, dynamic>? userData,
+  }) async {
+    final saved = await SessionManager.saveSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userData: userData,
+    );
+
+    if (!saved) {
       throw ApiException(
-        'El registre s\'ha completat però no s\'ha pogut guardar la sessió localment.',
+        'La sessió s\'ha creat però no s\'ha pogut persistir localment.',
         0,
       );
     }
+  }
 
-    final userDataSaved = await SessionManager.saveUserData(userData);
-    if (!userDataSaved) {
-      await SessionManager.logout();
+  static Future<void> _persistUserProfile(
+    UserProfile profile, {
+    bool? alreadyRespondedToday,
+  }) async {
+    final inferredType = profile.role.inferUserType();
+    final data = {
+      'name': profile.name,
+      'surname': profile.surname,
+      'email': profile.email,
+      'role': profile.role.toJson(),
+      'user_type': inferredType.name,
+      if (alreadyRespondedToday != null)
+        'already_responded_today': alreadyRespondedToday,
+    };
+    final saved = await SessionManager.saveUserData(data);
+    if (!saved) {
       throw ApiException(
-        'El registre s\'ha completat però no s\'han pogut guardar les dades de l\'usuari.',
+        'Sessió iniciada però no s\'ha pogut guardar el perfil localment.',
         0,
+      );
+    }
+  }
+
+  static Map<String, String> _jsonHeaders(
+    String token, {
+    Map<String, String>? extra,
+  }) {
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    if (extra != null && extra.isNotEmpty) {
+      headers.addAll(extra);
+    }
+    return headers;
+  }
+
+  static Future<http.Response> performAuthenticatedRequest(
+    Future<http.Response> Function(String token, http.Client client)
+        requestFn, {
+    bool retryOnUnauthorized = true,
+  }) {
+    return _sendAuthorizedRequest(
+      requestFn,
+      retryOnUnauthorized: retryOnUnauthorized,
+    );
+  }
+
+  static Future<http.Response> _sendAuthorizedRequest(
+    _AuthorizedRequest requestFn, {
+    bool retryOnUnauthorized = true,
+  }) async {
+    var token = await _requireValidAccessToken();
+    var response = await requestFn(token, _sharedClient);
+    if (response.statusCode != 401 || !retryOnUnauthorized) {
+      return response;
+    }
+
+    token = await _refreshAccessToken();
+    response = await requestFn(token, _sharedClient);
+    if (response.statusCode == 401) {
+      await SessionManager.handleExpiredSession();
+      throw ApiException(
+        'Sessió caducada. Torna a iniciar sessió.',
+        401,
+      );
+    }
+    return response;
+  }
+
+  static Future<String> _requireValidAccessToken() async {
+    var token = await SessionManager.getToken();
+    if (token == null || token.isEmpty) {
+      await SessionManager.handleExpiredSession();
+      throw ApiException(
+        'Sessió no trobada o caducada. Torna a iniciar sessió.',
+        401,
+      );
+    }
+
+    if (SessionManager.isTokenExpired(token)) {
+      token = await _refreshAccessToken();
+    }
+    return token;
+  }
+
+  static Future<String> _refreshAccessToken({double? hoursValidity}) async {
+    var refreshToken = await SessionManager.getRefreshToken();
+    refreshToken ??= await SessionManager.getToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await SessionManager.handleExpiredSession();
+      throw ApiException(
+        'Sessió caducada. Torna a iniciar sessió.',
+        401,
+      );
+    }
+
+    try {
+      Uri uri = Uri.parse('$_baseUrl/user/login');
+      if (hoursValidity != null) {
+        uri = uri.replace(
+          queryParameters: {'hours_validity': hoursValidity.toString()},
+        );
+      }
+
+      final response = await _sharedClient.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $refreshToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is! Map<String, dynamic>) {
+          throw ApiException('Resposta invàlida del servidor.', 500);
+        }
+
+        final loginResponse = LoginResponse.fromJson(data);
+        await SessionManager.saveToken(loginResponse.accessToken);
+
+        // Merge existing user data with the fresh daily flag
+        final existingUserData =
+            await SessionManager.getUserData() ?? <String, dynamic>{};
+        final mergedUserData = Map<String, dynamic>.from(existingUserData)
+          ..['already_responded_today'] = loginResponse.alreadyRespondedToday;
+        await SessionManager.saveUserData(mergedUserData);
+
+        return loginResponse.accessToken;
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut refrescar la sessió.',
+      );
+    } catch (e) {
+      await SessionManager.handleExpiredSession();
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'No s\'ha pogut refrescar la sessió: ${e.toString()}',
+        401,
       );
     }
   }

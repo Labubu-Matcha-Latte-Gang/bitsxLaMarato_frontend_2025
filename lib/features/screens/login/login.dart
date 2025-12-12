@@ -3,8 +3,11 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../micro/mic.dart';
+import '../patient/patient_menu_page.dart';
+import '../doctor/doctor_home_page.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
+import '../register/registerLobby.dart';
 import '../../../services/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode;
+    _loadThemePreference();
   }
 
   @override
@@ -41,6 +45,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
   }
 
   void _submitLogin() async {
@@ -55,31 +69,27 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final response = await ApiService.loginUser(request);
-
-      final tokenSaved = await SessionManager.saveToken(response.accessToken);
-      if (!tokenSaved) {
-        _showErrorDialog('Error guardant la sessió');
-        return;
-      }
-
-      if (response.user != null) {
-        await SessionManager.saveUserData({
-          'id': response.user!.id,
-          'name': response.user!.name,
-          'surname': response.user!.surname,
-          'email': response.user!.email,
-          'user_type': response.user!.userType,
-        });
-      }
+      final userData = await SessionManager.getUserData();
+      final userType = (userData?['user_type'] as String?) ?? 'unknown';
 
       if (!mounted) return;
 
-      final userName = response.user?.name ?? 'Usuari';
-      final userSurname = response.user?.surname ?? '';
-      _showSuccessDialog(
-        'Sessió iniciada amb èxit!',
-        'Benvingut/da $userName $userSurname'.trim(),
-      );
+      Navigator.of(context).pop();
+      if (userType == 'doctor') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => DoctorHomePage(initialDarkMode: isDarkMode),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => response.alreadyRespondedToday
+                ? PatientMenuPage(initialDarkMode: isDarkMode)
+                : const MicScreen(),
+          ),
+        );
+      }
     } on ApiException catch (e) {
       _showErrorDialog(e.message);
     } catch (e) {
@@ -112,47 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'D\'acord',
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog(String title, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            title,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-          ),
-          content: Text(
-            message,
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-            ),
-          ),
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const MicScreen(),
-                  ),
-                );
-              },
               child: Text(
                 'D\'acord',
                 style: TextStyle(
@@ -360,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Password',
+                              'Contrasenya',
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
@@ -478,8 +447,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Link "Nou a LMLG? Registra't"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(
-                                context); // Volver atrás para registrarse
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterLobby(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Nou a LMLG? Registra\'t',

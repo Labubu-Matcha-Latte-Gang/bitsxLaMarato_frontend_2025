@@ -9,11 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utils/test_secure_storage.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SessionManager.configure(secureStore: InMemorySecureStore());
     ApiService.reset(closeExistingClient: true);
   });
 
@@ -127,7 +130,7 @@ void main() {
     );
 
     expect(response.activity.id, '42');
-    expect(response.patient['email'], 'pat@example.com');
+    expect(response.patient.email, 'pat@example.com');
     expect(response.score, 90.0);
     expect(response.secondsToFinish, 120.0);
   });
@@ -137,13 +140,7 @@ void main() {
       client: MockClient((request) async {
         final body = {
           'access_token': 'jwt-token',
-          'user': {
-            '_id': 'u1',
-            'name': 'Doc',
-            'surname': 'Who',
-            'email': 'doc@example.com',
-            'user_type': 'doctor',
-          },
+          'already_responded_today': true,
         };
         return http.Response(jsonEncode(body), 200);
       }),
@@ -154,8 +151,7 @@ void main() {
     );
 
     expect(response.accessToken, 'jwt-token');
-    expect(response.user?.name, 'Doc');
-    expect(response.user?.userType, 'doctor');
+    expect(response.alreadyRespondedToday, true);
   });
 
   test('loginUser maps validation errors from server', () async {
@@ -290,6 +286,7 @@ void main() {
       surname: 'Who',
       email: 'doc@example.com',
       password: 'secret',
+      gender: 'male',
       patients: const [],
     );
 
@@ -387,7 +384,8 @@ void main() {
       TranscriptionChunkRequest(
         sessionId: 's1',
         chunkIndex: 1,
-        audioBytes: [1, 2, 3],
+        // Use a sufficiently large buffer to satisfy validation (>=1000 bytes for WAV)
+        audioBytes: List<int>.filled(1200, 1),
       ),
     );
 
@@ -401,6 +399,9 @@ void main() {
     ApiService.configure(
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/transcription/complete');
+        final Map<String, dynamic> body = jsonDecode(request.body);
+        expect(body['session_id'], 's1');
+        expect(body['question_id'], 'q1');
         return http.Response(
           jsonEncode({'status': 'done', 'transcription': 'hello world'}),
           200,
@@ -409,7 +410,7 @@ void main() {
     );
 
     final response = await ApiService.completeTranscriptionSession(
-      TranscriptionCompleteRequest(sessionId: 's1'),
+      TranscriptionCompleteRequest(sessionId: 's1', questionId: 'q1'),
     );
 
     expect(response.status, 'done');

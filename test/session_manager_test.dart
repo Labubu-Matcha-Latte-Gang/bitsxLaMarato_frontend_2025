@@ -2,11 +2,14 @@ import 'package:bitsxlamarato_frontend_2025/services/session_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'utils/test_secure_storage.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    SessionManager.configure(secureStore: InMemorySecureStore());
   });
 
   test('saveToken stores and retrieves token', () async {
