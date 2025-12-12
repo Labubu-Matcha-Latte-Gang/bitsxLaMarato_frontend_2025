@@ -44,11 +44,26 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       _errorMessage = null;
     });
     try {
+      print('DEBUG - Fetching recommended activity from API...');
       final results = await _api.fetchRecommendedActivities();
+
+      if (results.isNotEmpty) {
+        final activity = results.first;
+        print('DEBUG - ✓ Recommended activity loaded successfully');
+        print('DEBUG - Activity ID: ${activity.id}');
+        print('DEBUG - Activity Title: ${activity.title}');
+        print('DEBUG - Activity Type: ${activity.activityType}');
+        print('DEBUG - Activity Difficulty: ${activity.difficulty}');
+        print('DEBUG - Activity Description: ${activity.description}');
+      } else {
+        print('DEBUG - ⚠ API returned empty results');
+      }
+
       setState(() {
         _recommendedActivity = results.isNotEmpty ? results.first : null;
       });
     } catch (e) {
+      print('DEBUG - ✗ Error loading recommended activity: $e');
       setState(() {
         _errorMessage =
             'No s\'ha pogut carregar l\'activitat recomanada. Torna-ho a provar.';
