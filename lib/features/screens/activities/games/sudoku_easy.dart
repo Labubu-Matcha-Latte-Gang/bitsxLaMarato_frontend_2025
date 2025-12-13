@@ -16,34 +16,45 @@ class SudokuPage extends StatefulWidget {
 class _SudokuPageState extends State<SudokuPage> {
   // A known puzzle and its solution (classic easy puzzle)
   final List<List<int>> _initial = const [
-    [5,3,0,0,7,0,0,0,0],
-    [6,0,0,1,9,5,0,0,0],
-    [0,9,8,0,0,0,0,6,0],
-    [8,0,0,0,6,0,0,0,3],
-    [4,0,0,8,0,3,0,0,1],
-    [7,0,0,0,2,0,0,0,6],
-    [0,6,0,0,0,0,2,8,0],
-    [0,0,0,4,1,9,0,0,5],
-    [0,0,0,0,8,0,0,7,9],
+    [6,9,0,1,7,0,0,0,0],
+    [3,5,0,0,4,0,1,0,0],
+    [8,0,2,3,6,0,7,0,4],
+    [0,0,0,0,0,0,9,0,8],
+    [9,4,0,0,0,0,0,0,5],
+    [0,0,0,5,9,0,6,3,0],
+    [2,6,0,0,5,0,0,8,7],
+    [0,8,1,0,0,6,4,9,0],
+    [0,7,3,0,8,2,0,1,0],
   ];
 
   final List<List<int>> _solution = const [
-    [5,3,4,6,7,8,9,1,2],
-    [6,7,2,1,9,5,3,4,8],
-    [1,9,8,3,4,2,5,6,7],
-    [8,5,9,7,6,1,4,2,3],
-    [4,2,6,8,5,3,7,9,1],
-    [7,1,3,9,2,4,8,5,6],
-    [9,6,1,5,3,7,2,8,4],
-    [2,8,7,4,1,9,6,3,5],
-    [3,4,5,2,8,6,1,7,9],
+    [6,9,4,1,7,5,8,2,3],
+    [3,5,7,2,4,8,1,6,9],
+    [8,1,2,3,6,9,7,5,4],
+    [1,3,5,6,2,7,9,4,8],
+    [9,4,6,8,1,3,2,7,5],
+    [7,2,8,5,9,4,6,3,1],
+    [2,6,9,4,5,1,3,8,7],
+    [5,8,1,7,3,6,4,9,2],
+    [4,7,3,9,8,2,5,1,6],
   ];
 
   late List<List<int?>> _board;
   late List<List<bool>> _fixed; // true if not editable
   int? _selectedRow;
   int? _selectedCol;
-  bool _isDarkModeLocal = false;
+  bool _isDarkModeLocal = true;
+
+  int numIncorrect = 0;
+  DateTime? _gameStartTime;
+  Duration _totalTime = Duration.zero;
+
+  int totalSquares = 81;
+  int filledSquares = 39;
+  int? difference;
+  double score = 0.0;
+
+  double difficulty = 1.5;
 
   @override
   void initState() {
@@ -101,7 +112,28 @@ class _SudokuPageState extends State<SudokuPage> {
         if (_board[r][c] != _solution[r][c]) return false;
       }
     }
+    _recordGameTime();
+    _calculateScore();
+    _sendCompleted();
     return true;
+  }
+
+  void _sendCompleted() {
+
+  }
+
+  void _recordGameTime() {
+    if (_gameStartTime != null) {
+      final dur = DateTime.now().difference(_gameStartTime!);
+      _totalTime = _totalTime + dur;
+      _gameStartTime = null;
+    }
+  }
+
+  void _calculateScore() {
+    difference= totalSquares - filledSquares;
+
+    score = max(0.0, 10*(difference! - numIncorrect)/difference! + (difficulty - 1.5) * 0.25);
   }
 
   void _checkSolution() {
@@ -114,6 +146,8 @@ class _SudokuPageState extends State<SudokuPage> {
         }
       }
     }
+
+    numIncorrect += wrong;
 
     if (_isCompleteCorrect()) {
       showDialog<void>(

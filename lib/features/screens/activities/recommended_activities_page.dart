@@ -6,7 +6,7 @@ import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import 'games/sorting.dart';
-import 'games/sudoku.dart';
+import 'games/sudoku_easy.dart';
 import 'games/wordle_easy.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
