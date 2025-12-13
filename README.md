@@ -1,166 +1,105 @@
-# bitsxLaMarato_frontend_2025
+<div align="center">
+  <img src="assets/logos/logo-text-blau.png" alt="logo" width="200" height="auto" />
+  <h1>bitsxLaMarató 2025 - Frontend</h1>
+  
+  <p>
+    Frontend de l'aplicació per a la gestió de pacients i activitats, desenvolupat per a l'esdeveniment BitsxLaMarató 2025.
+  </p>
+  
+  <h4>
+    <a href="https://github.com/Labubu-Matcha-Latte-Gang/bitsxLaMarato_frontend_2025/issues/">Informar d'un error</a>
+    <span> · </span>
+    <a href="https://github.com/Labubu-Matcha-Latte-Gang/bitsxLaMarato_frontend_2025/issues/">Sol·licitar una funcionalitat</a>
+    <span> · </span>
+    <a href="https://github.com/Labubu-Matcha-Latte-Gang/bitsxLaMarato_frontend_2025/pulls">Contribuir</a>
+  </h4>
+</div>
 
-Aplicación Flutter del frontend para BitsXMarató 2025.
+<br />
 
-## Stack del proyecto
-- Flutter 3.27.1 (Dart 3.5+)
-- Construcción web con Docker y nginx
-- Tests iniciales en `test/widget_test.dart`
-- Configuración multi-plataforma (Android, iOS, Web, Windows, Linux y macOS)
+## Sobre el Projecte
 
-## Requisitos previos
-1. **Docker Desktop** instalado y funcionando
-2. **PowerShell** (incluido en Windows)
+Aquest repositori conté el codi font del client (frontend) per a l'aplicació de **bitsxLaMarató 2025**. L'objectiu principal és proporcionar una interfície d'usuari intuïtiva i accessible perquè pacients i metges puguin interactuar amb el sistema de seguiment de la salut en el context de La Marató de TV3.
 
-### Para desarrollo local (opcional)
-- **Flutter SDK** disponible en el PATH (`flutter --version`)
-- **Java 11-19** recomendado para Android (considera Temurin 17)
-- **Android Studio** (para Android SDK/AVD) o dispositivo físico
-- Plugins Flutter/Dart en tu editor favorito
+L'aplicació està construïda amb Flutter, la qual cosa permet la seva execució en múltiples plataformes (web, Windows, Linux, macOS) a partir d'una única base de codi.
 
-## 🚀 Puesta en marcha rápida (Docker)
+### Tecnologies principals
 
-### Opción 1: Script automático (recomendado)
-```powershell
-# Ejecuta el gestor interactivo
-.\start.ps1
-```
+*   **Flutter 3.x**: Framework principal per al desenvolupament multiplataforma.
+*   **Dart**: Llenguatge de programació utilitzat per Flutter.
+*   **http**: Per a la comunicació amb l'API REST del backend.
+*   **provider**: Per a la gestió de l'estat de l'aplicació.
+*   **flutter_test**: Per a la realització de tests de widgets i unitaris.
 
-El script `start.ps1` proporciona un menú interactivo con las siguientes opciones:
-- **Opción 1**: Construir y ejecutar preview (automáticamente abre http://localhost:8080)
-- **Opción 2**: Detener preview
-- **Opción 3**: Salir y limpiar contenedores
+## Com començar
 
-### Opción 2: Comandos manuales
-```powershell
-# Construir y ejecutar con Docker Compose
-docker-compose up -d --build
+Per poder executar el projecte en un entorn de desenvolupament local, segueix els passos següents.
 
-# Ver en el navegador
-# http://localhost:8080
+### Prerequisits
 
-# Detener el contenedor
-docker-compose down
-```
+Assegura't de tenir instal·lat el següent programari:
+*   **Flutter SDK**: Versió 3.19 o superior. Pots seguir la [guia oficial d'instal·lació](https://docs.flutter.dev/get-started/install).
+*   Un editor de codi com [Visual Studio Code](https://code.visualstudio.com/) amb l'extensió de Flutter, o [Android Studio](https://developer.android.com/studio).
+*   Per a desenvolupament d'escriptori, les eines de compilació necessàries per al teu sistema operatiu (Visual Studio per a Windows, eines de compilació de C++ per a Linux).
 
-## Desarrollo local sin Docker
+### Instal·lació
 
-Si prefieres trabajar directamente con Flutter:
+1.  **Clona el repositori**
+    ```bash
+    git clone https://github.com/Labubu-Matcha-Latte-Gang/bitsxLaMarato_frontend_2025.git
+    cd bitsxLaMarato_frontend_2025
+    ```
 
-```powershell
-# 1) Diagnóstico del entorno
-flutter doctor
+2.  **Obté les dependències**
+    Executa la següent comanda per descarregar totes les dependències del projecte:
+    ```bash
+    flutter pub get
+    ```
 
-# 2) Instalar dependencias
-flutter pub get
+3.  **Configuració de l'entorn**
+    Crea un fitxer `lib/config.dart` a partir de `lib/config.example.dart` i ajusta la variable `apiUrl` perquè apunti a la instància del backend que estiguis utilitzant.
 
-# 3) Ejecutar tests
-flutter test
+## Ús
 
-# 4) Ejecutar en modo desarrollo (web)
+Pots executar l'aplicació en diferents plataformes. Assegura't de tenir un dispositiu o emulador disponible (`flutter devices`).
+
+### Execució per a Web
+
+```bash
 flutter run -d chrome
-
-# 5) Ejecutar en otros dispositivos
-flutter devices                 # Lista dispositivos disponibles
-flutter run -d android         # Android (emulador o dispositivo)
-flutter run -d windows         # Windows (aplicación nativa)
 ```
 
-## Configuración del proyecto
+### Execució per a Escriptori (Windows, macOS, Linux)
 
-### Variables de entorno
-El proyecto permite configurar la URL de la API mediante la variable `API_URL`:
-
-```powershell
-# Ejemplo con API personalizada
-$env:API_URL="https://mi-api.ejemplo.com"
-docker-compose up -d --build
+Primer, assegura't que el suport per a escriptori estigui habilitat a Flutter:
+```bash
+flutter config --enable-windows-desktop
+flutter config --enable-macos-desktop
+flutter config --enable-linux-desktop
 ```
 
-Por defecto usa `http://localhost:5000` si no se especifica.
-
-### Arquitectura Docker
-- **Build Stage**: Usa imagen oficial de Flutter 3.27.1 para compilar la app web
-- **Runtime Stage**: nginx alpine para servir los archivos estáticos
-- **Puerto**: Expone el puerto 8080 para acceder a la aplicación
-- **Cache**: Configuración de nginx optimizada para desarrollo (sin cache en archivos JS/JSON)
-
-## Estructura del proyecto
-| Ruta | Descripción |
-| --- | --- |
-| `start.ps1` | **Script principal** - Gestor interactivo para Docker |
-| `docker-compose.yml` | Configuración de servicios Docker |
-| `Dockerfile` | Construcción multi-stage con Flutter + nginx |
-| `nginx.conf` | Configuración del servidor web nginx |
-| `lib/main.dart` | Punto de entrada Flutter |
-| `pubspec.yaml` | Dependencias y configuración del proyecto |
-| `test/widget_test.dart` | Tests automatizados |
-| `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/` | Targets nativos |
-
-## Comandos útiles
-
-### Docker
-```powershell
-# Ver logs del contenedor
-docker logs flutter_local_preview
-
-# Entrar al contenedor (debug)
-docker exec -it flutter_local_preview sh
-
-# Reconstruir sin cache
-docker-compose build --no-cache
-docker-compose up -d
+Després, executa l'aplicació:
+```bash
+flutter run -d windows
+# O -d macos, -d linux
 ```
 
-### Flutter (desarrollo)
-```powershell
-# Análisis de código
-flutter analyze
+## Tests
 
-# Formateo de código
-flutter format .
+Per executar la suite de tests de widgets, utilitza la següent comanda:
 
-# Limpiar y reconstruir
-flutter clean
-flutter pub get
-
-# Hot reload en desarrollo
-flutter run -d chrome --hot
+```bash
+flutter test
 ```
 
-## Troubleshooting
+Això executarà tots els tests definits al directori `test/`.
 
-### Error de puertos
-Si el puerto 8080 está ocupado, modifica `docker-compose.yml`:
-```yaml
-ports:
-  - "3000:80"  # Cambia 8080 por 3000 o el puerto que prefieras
-```
+## Documentació de l'API
 
-### Problemas con Docker
-```powershell
-# Limpiar contenedores y volúmenes
-docker system prune -a
+Aquesta aplicació consumeix l'API del backend. Pots trobar la documentació interactiva de l'API (Swagger UI) a l'endpoint `/api/docs` del servidor del backend. Si el backend s'executa localment, l'URL seria:
 
-# Verificar que Docker está funcionando
-docker --version
-docker-compose --version
-```
+[http://localhost:5000/api/docs](http://localhost:5000/api/docs)
 
-### Flutter no encontrado
-Si trabajas sin Docker, asegúrate de que Flutter está en el PATH:
-```powershell
-# Verificar instalación
-flutter --version
-flutter doctor
+## Llicència
 
-# Agregar al PATH de la sesión actual
-$env:Path += ';C:\tools\flutter\bin'
-```
-
-## Próximos pasos
-- [ ] Configurar CI/CD con GitHub Actions
-- [ ] Definir flavours (dev/staging/prod)
-- [ ] Implementar sistema de diseño base
-- [ ] Configurar análisis estático avanzado
-- [ ] Integrar testing automatizado en Docker
+Distribuït sota la Llicència MIT. Consulta el fitxer `LICENSE` per a més informació.
