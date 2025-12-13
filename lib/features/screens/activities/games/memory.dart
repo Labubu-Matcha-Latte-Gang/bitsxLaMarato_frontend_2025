@@ -204,17 +204,18 @@ class _MemoryGameState extends State<MemoryGame> {
   }
 
   void _updateScore({required bool isMatch}) {
-    // Puntuación sobre 10 basada en eficiencia de movimientos.
-    // Movimientos óptimos = 15 (número de parejas).
-    // Fórmula: 10 - (movimientos - 15) * penalización, con mínimo de 0.
-    const int optimalMoves = 15;
-    const double penaltyPerExtraMove = 0.3;
+    // Puntuació basada en l'eficiència de moviments (escala 0–100).
+    // Moviments òptims = nombre de parelles (p. ex. 15 per 30 cartes).
+    // Penalització lineal per cada moviment extra, amb mínim 0.
+    int optimalMoves = 30; // nombre de parelles
+    const double penaltyPerExtraMovePoints = 3.0; // punts per moviment extra
 
-    if (_moves >= optimalMoves) {
-      final extraMoves = _moves - optimalMoves;
-      _score = max(0, (10 - (extraMoves * penaltyPerExtraMove) * 10).round());
+    if (_moves <= optimalMoves) {
+      _score = 100;
     } else {
-      _score = 100; // 10.0 en escala de 100 para mantener int
+      final extraMoves = _moves - optimalMoves;
+      final computed = 100 - (extraMoves * penaltyPerExtraMovePoints);
+      _score = max(0, computed.round());
     }
   }
 
@@ -230,20 +231,25 @@ class _MemoryGameState extends State<MemoryGame> {
   }
 
   void _showGameCompletedDialog() {
-    final score = getFinalScore();
     final time = _formatTime(_elapsedSeconds);
+    final accent = _getModeAccentColor();
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('¡Joc Completat!'),
+        backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+        title: Text(
+          '¡Joc Completat!',
+          style: TextStyle(
+            color: accent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Puntuació: ${score.toStringAsFixed(1)}/10'),
-            const SizedBox(height: 8),
             Text('Temps: $time'),
             const SizedBox(height: 8),
             Text('Moviments: $_moves'),
@@ -255,17 +261,25 @@ class _MemoryGameState extends State<MemoryGame> {
               Navigator.pop(context);
               _startNewGame();
             },
-            child: const Text('Jugar de Nou'),
+            child: Text(
+              'Jugar de Nou',
+              style:
+                  TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               if (widget.activityId != null) {
-                _submitScore(score);
+                _submitScore(getFinalScore());
               } else {
                 Navigator.pop(context);
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Enviar Resultats'),
           ),
         ],
@@ -310,9 +324,16 @@ class _MemoryGameState extends State<MemoryGame> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('Resultats Enviats'),
-          content: Text(
-            'La puntuació de ${score.toStringAsFixed(1)} ha estat registrada correctament.',
+          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+          title: Text(
+            'Resultats Enviats',
+            style: TextStyle(
+              color: _getModeAccentColor(),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Els resultats s\'han registrat correctament.',
           ),
           actions: [
             ElevatedButton(
@@ -320,6 +341,10 @@ class _MemoryGameState extends State<MemoryGame> {
                 Navigator.pop(context); // Cerrar diálogo de éxito
                 Navigator.pop(context); // Volver a pantalla anterior
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _getModeAccentColor(),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Acceptar'),
             ),
           ],
@@ -343,6 +368,19 @@ class _MemoryGameState extends State<MemoryGame> {
           ],
         ),
       );
+    }
+  }
+
+  Color _getModeAccentColor() {
+    // Choose accent per mode and theme for dialog actions/titles
+    if (_selectedMode == 'Animals') {
+      return isDarkMode
+          ? const Color(0xFF80CBC4)
+          : const Color(0xFF00796B); // teal variants
+    } else {
+      return isDarkMode
+          ? const Color(0xFF90CAF9)
+          : const Color(0xFF1565C0); // blue variants (Monuments)
     }
   }
 
@@ -751,8 +789,16 @@ class _MemoryCardWidget extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: card.isFaceUp || card.isMatched
-              ? Image.asset(card.imagePath, fit: BoxFit.cover)
-              : Image.asset(cardBack, fit: BoxFit.cover),
+              ? Image.asset(
+                  card.imagePath,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                )
+              : Image.asset(
+                  cardBack,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
         ),
       ),
     );
