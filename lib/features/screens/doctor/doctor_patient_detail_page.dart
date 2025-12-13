@@ -369,12 +369,29 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-                          color: DoctorColors.textPrimary(isDarkMode),
-                        ),
-                        onPressed: _toggleTheme,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton.filledTonal(
+                            onPressed: _loadPatientData,
+                            icon: const Icon(Icons.refresh),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  DoctorColors.secondary(isDarkMode)
+                                      .withOpacity(0.2),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            icon: Icon(
+                              isDarkMode
+                                  ? Icons.wb_sunny
+                                  : Icons.nightlight_round,
+                              color: DoctorColors.textPrimary(isDarkMode),
+                            ),
+                            onPressed: _toggleTheme,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -684,18 +701,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 52,
-                  height: 48,
-                  child: IconButton.filledTonal(
-                    onPressed: _loadPatientData,
-                    icon: const Icon(Icons.refresh),
-                    style: IconButton.styleFrom(
-                      backgroundColor:
-                          DoctorColors.secondary(isDarkMode).withOpacity(0.2),
                     ),
                   ),
                 ),
