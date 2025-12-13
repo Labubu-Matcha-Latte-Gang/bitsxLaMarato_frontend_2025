@@ -250,12 +250,14 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(_getAccentColor()),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -277,6 +279,14 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
 
       final response = await ApiService.completeActivity(request);
 
+      // DEBUG: Mostrar respuesta API en consola
+      print('DEBUG - Activity Complete Response:');
+      print('  Activity Title: ${response.activity.title}');
+      print('  Score: ${response.score}/10');
+      print('  Seconds to Finish: ${response.secondsToFinish}');
+      print('  Completed At: ${response.completedAt}');
+      print('  Patient Email: ${response.patient.email}');
+
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -284,71 +294,32 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
           title: Text(
             'Resultats Enviats',
             style: TextStyle(
-              color: _getAccentColor(),
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Els resultats s\'han registrat correctament.',
-                style: TextStyle(
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Resposta de l\'API:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Activitat: ${response.activity.title}',
-                style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(isDarkMode),
-                ),
-              ),
-              Text(
-                'Puntuació: ${response.score.toStringAsFixed(1)}/10',
-                style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(isDarkMode),
-                ),
-              ),
-              Text(
-                'Temps: ${(response.secondsToFinish / 60).floor()}:${(response.secondsToFinish % 60).round().toString().padLeft(2, '0')}',
-                style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(isDarkMode),
-                ),
-              ),
-              if (response.completedAt != null)
-                Text(
-                  'Completat: ${response.completedAt!.day}/${response.completedAt!.month}/${response.completedAt!.year} ${response.completedAt!.hour}:${response.completedAt!.minute.toString().padLeft(2, '0')}',
-                  style: TextStyle(
-                    color: AppColors.getSecondaryTextColor(isDarkMode),
-                  ),
-                ),
-            ],
+          content: Text(
+            'Els resultats s\'han registrat correctament.',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
           ),
           actions: [
-            ElevatedButton(
+            TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getAccentColor(),
-                foregroundColor: Colors.white,
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
               ),
-              child: const Text('Acceptar'),
             ),
           ],
         ),
@@ -359,27 +330,28 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
           title: Text(
             'Error',
             style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
+              color: AppColors.getPrimaryTextColor(isDarkMode),
             ),
           ),
           content: Text(
             'No s\'ha pogut enviar els resultats: $e',
             style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
+              color: AppColors.getSecondaryTextColor(isDarkMode),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: _getAccentColor(),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
               ),
-              child: const Text('Acceptar'),
             ),
           ],
         ),
