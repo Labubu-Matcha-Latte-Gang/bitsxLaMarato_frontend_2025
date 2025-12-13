@@ -466,6 +466,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _buildScoresSection(),
           const SizedBox(height: 12),
           _buildQuestionsSection(),
+          const SizedBox(height: 12),
+          _buildDiarySection(),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildGraphsSection(),
@@ -1261,7 +1263,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   }
 
   Widget _buildQuestionsSection() {
-    final questions = _data?.questions ?? [];
+    final allAnswers = _data?.questions ?? [];
+    // Show only non-diary answers here
+    final questions = allAnswers.where((q) => q.question.questionType.toLowerCase() != 'diary').toList();
     if (questions.isEmpty) {
       return _EmptyCard(
         message: 'Sense qüestionaris contestats.',
@@ -1288,30 +1292,86 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           ),
           const SizedBox(height: 10),
           ...questions.take(4).map(
-            (q) {
-              final analysisChips = q.analysis.entries
-                  .map((entry) =>
-                      '${entry.key}: ${entry.value.toStringAsFixed(2)}')
-                  .toList();
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: _HistoryTile(
-                  icon: Icons.question_answer_outlined,
-                  iconColor: DoctorColors.secondary(isDarkMode),
-                  title:
-                      q.question.text.isNotEmpty ? q.question.text : 'Pregunta',
-                  subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
-                  metadata: [
-                    if (q.question.questionType.isNotEmpty)
-                      'Tipus: ${q.question.questionType}',
-                    'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
-                    ...analysisChips,
-                  ],
-                  isDarkMode: isDarkMode,
-                ),
-              );
-            },
+                (q) {
+                  final analysisChips = q.analysis.entries
+                      .map((entry) =>
+                          '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+                      .toList();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _HistoryTile(
+                      icon: Icons.question_answer_outlined,
+                      iconColor: DoctorColors.secondary(isDarkMode),
+                      title:
+                          q.question.text.isNotEmpty ? q.question.text : 'Pregunta',
+                      subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
+                      metadata: [
+                        if (q.question.questionType.isNotEmpty)
+                          'Tipus: ${q.question.questionType}',
+                        'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
+                        ...analysisChips,
+                      ],
+                      isDarkMode: isDarkMode,
+                    ),
+                  );
+                },
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiarySection() {
+    final allAnswers = _data?.questions ?? [];
+    // Show only diary-typed answers here
+    final diaryAnswers = allAnswers.where((q) => q.question.questionType.toLowerCase() == 'diary').toList();
+    if (diaryAnswers.isEmpty) {
+      return _EmptyCard(
+        message: 'Diari no respòs.',
+        isDarkMode: isDarkMode,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DoctorColors.surface(isDarkMode),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DoctorColors.border(isDarkMode)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Respostes del diari',
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w700,
+            ),
           ),
+          const SizedBox(height: 10),
+          ...diaryAnswers.take(4).map(
+                (q) {
+                  final analysisChips = q.analysis.entries
+                      .map((entry) => '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+                      .toList();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _HistoryTile(
+                      icon: Icons.question_answer_outlined,
+                      iconColor: DoctorColors.secondary(isDarkMode),
+                      title: q.question.text.isNotEmpty ? q.question.text : 'Pregunta',
+                      subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
+                      metadata: [
+                        if (q.question.questionType.isNotEmpty) 'Tipus: ${q.question.questionType}',
+                        'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
+                        ...analysisChips,
+                      ],
+                      isDarkMode: isDarkMode,
+                    ),
+                  );
+                },
+              ),
         ],
       ),
     );
