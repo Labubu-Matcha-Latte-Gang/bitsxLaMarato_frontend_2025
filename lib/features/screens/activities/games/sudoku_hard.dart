@@ -2,12 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 /// A simple 9x9 Sudoku page where the user fills blanks.
 /// Maintains the same header/particle styling and AppColors from the app.
 class SudokuPage extends StatefulWidget {
   final bool isDarkMode;
-  const SudokuPage({Key? key, this.isDarkMode = false}) : super(key: key);
+  final String? activityId;
+  const SudokuPage({Key? key, this.isDarkMode = false, this.activityId}) : super(key: key);
 
   @override
   State<SudokuPage> createState() => _SudokuPageState();
@@ -119,7 +122,10 @@ class _SudokuPageState extends State<SudokuPage> {
   }
 
   void _sendCompleted() {
-
+    if (widget.activityId == null) return;
+    final seconds = _totalTime.inSeconds.toDouble();
+    final req = ActivityCompleteRequest(id: widget.activityId!, score: score, secondsToFinish: seconds);
+    ApiService.completeActivity(req);
   }
 
   void _recordGameTime() {
