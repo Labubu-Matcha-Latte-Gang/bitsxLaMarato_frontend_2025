@@ -10,6 +10,7 @@ import '../../../utils/effects/particle_system.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 import 'games/sorting.dart';
+import 'games/stroop.dart';
 import 'games/sudoku_easy.dart';
 import 'games/wordle_easy.dart';
 import 'widgets/activity_card.dart';
@@ -705,6 +706,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
   void _openActivity(Activity activity) {
     final lowerType = activity.activityType.toLowerCase();
     final lowerTitle = activity.title.toLowerCase();
+
+    if (lowerType.contains('stroop') || lowerTitle.contains('stroop')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SroopTestPage(isDarkMode: isDarkMode),
+        ),
+      );
+      return;
+    }
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
       Navigator.of(context).push(
