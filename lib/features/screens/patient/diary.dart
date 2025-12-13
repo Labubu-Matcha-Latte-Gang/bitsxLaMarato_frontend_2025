@@ -359,7 +359,8 @@ class _DiaryPageState extends State<DiaryPage>
         contentType: 'audio/wav',
       );
 
-      print('DEBUG - Sending web diary chunk: index=$_nextChunkIndex, size=${bytes.length}');
+      print(
+          'DEBUG - Sending web diary chunk: index=$_nextChunkIndex, size=${bytes.length}');
       await ApiService.uploadTranscriptionChunk(chunkRequest);
       _consecutiveErrors = 0;
       _nextChunkIndex += 1;
@@ -404,6 +405,7 @@ class _DiaryPageState extends State<DiaryPage>
         _pendingChunkUploads.remove(f);
       } catch (e) {
         print('ERROR stopping recording: $e');
+      }
     }
 
     setState(() {
@@ -480,6 +482,14 @@ class _DiaryPageState extends State<DiaryPage>
 
     try {
       setState(() => _isUploading = true);
+
+      // Wait for all pending chunk uploads to complete
+      if (_pendingChunkUploads.isNotEmpty) {
+        print(
+            'DEBUG - Waiting for ${_pendingChunkUploads.length} pending chunks...');
+        await Future.wait(_pendingChunkUploads);
+        print('DEBUG - All pending chunks uploaded');
+      }
 
       final request = TranscriptionCompleteRequest(
         sessionId: _currentSessionId!,
