@@ -1608,12 +1608,20 @@ class _GraphContentRenderer extends StatelessWidget {
     }
 
     if (type.contains('html') || type.contains('htm')) {
-      return SizedBox(
-        height: 280,
-        child: _HtmlGraphView(
-          graph: graph,
-          isDarkMode: isDarkMode,
-        ),
+      // Make HTML graphs responsive: height scales with width (approx 16:9),
+      // with sensible clamps to fit various screen sizes.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final double w = constraints.maxWidth;
+          final double h = (w / (16 / 9)).clamp(220.0, 420.0);
+          return SizedBox(
+            height: h,
+            child: _HtmlGraphView(
+              graph: graph,
+              isDarkMode: isDarkMode,
+            ),
+          );
+        },
       );
     }
 
@@ -1749,17 +1757,55 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
   }
 
   String _wrapHtml(String body) {
+    // Inject a minimal responsive stylesheet so incoming HTML graphs adapt
+    // to the page style and screen resolution.
+    final bool dark = widget.isDarkMode;
+    final String bg = dark ? '#121212' : '#FFFFFF';
+    final String text = dark ? '#E6E6E6' : '#1B1B1B';
+    final String border = dark ? '#2A2A2A' : '#E0E0E0';
+
     return '''
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
-    html, body { margin: 0; padding: 0; background: transparent; }
+    :root {
+      --bg: ${bg};
+      --text: ${text};
+      --border: ${border};
+    }
+    html, body {
+      margin: 0; padding: 0; background: transparent; color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    }
+    /* Container to constrain content width and add padding */
+    .graph-container {
+      box-sizing: border-box;
+      width: 100%; height: 100%;
+      padding: 8px;
+      background: transparent;
+    }
+    /* Make images and SVGs scale to container width */
+    img, svg, canvas {
+      max-width: 100%; height: auto; display: block;
+    }
+    /* Tables/charts common resets */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--border); padding: 6px; }
+    /* If chart libs inject fixed sizes, allow them to shrink in flex */
+    .responsive { width: 100% !important; height: auto !important; }
+    /* Text */
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    h2 { font-size: 1.1rem; margin: 0 0 6px; }
+    p { margin: 0 0 6px; }
   </style>
 </head>
 <body>
-$body
+  <div class="graph-container">
+    $body
+  </div>
 </body>
 </html>
 ''';
