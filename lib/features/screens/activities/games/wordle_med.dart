@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
-import '../recommended_activities_page.dart';
 import '../../../../services/api_service.dart';
 import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
@@ -41,6 +40,10 @@ class _WordleMedScreenState extends State<WordleMedScreen>
   Set<String>? _dictionarySet;
   List<String>? _medWords;
 
+  ApiService apiService = ApiService();
+  // Local resolved activity id if not provided by caller
+  String? _resolvedActivityId;
+
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
   int invalidWordCount = 0;
   int incorrectGuessCount = 0;
@@ -59,6 +62,11 @@ class _WordleMedScreenState extends State<WordleMedScreen>
     super.initState();
     isDark = widget.isDarkMode;
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    // Attempt to resolve activity id from backend if not provided
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
+
     // Load dictionaries first, then start the game so we can prefer med words
     _loadDictionary().whenComplete(() {
       // After the first frame, show difficulty selector before starting
@@ -66,6 +74,19 @@ class _WordleMedScreenState extends State<WordleMedScreen>
         _showDialog();
       });
     });
+  }
+
+  // Fallback: resolve activity id from API by known title
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      final activity = await ApiService.getActivity('Wordle (mitjà)');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      debugPrint('Failed to resolve Wordle Medium activity id: $e');
+    }
   }
 
   // Helper to ensure we have an activity id (prefer explicit, else try to resolve)

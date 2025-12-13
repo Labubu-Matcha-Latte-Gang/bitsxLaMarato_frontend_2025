@@ -8,7 +8,6 @@ import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../services/api_service.dart';
 import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
-import '../recommended_activities_page.dart';
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleHardScreen extends StatefulWidget {
@@ -40,6 +39,7 @@ class _WordleHardScreenState extends State<WordleHardScreen>
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
   List<String>? _hardWords;
+  ApiService apiService = ApiService();
   // Local resolved activity id if not provided by caller
   String? _resolvedActivityId;
 
@@ -777,32 +777,32 @@ class _WordleHardScreenState extends State<WordleHardScreen>
                         final state = keyStates[k] ?? LetterState.initial;
                         final color = _colorForState(state);
                         return Container(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 1.5, vertical: 2.5),
+                          margin: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 2.5),
                           decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                  color: Colors.grey.shade500, width: 1)),
+                            color: color,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.grey.shade500, width: 1),
+                          ),
                           child: InkWell(
                             onTap: () => _onKeyTap(k),
                             borderRadius: BorderRadius.circular(6),
                             child: SizedBox(
-                                width: keySize,
-                                height: keySize,
-                                child: Center(
-                                    child: Text(k,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: -0.5,
-                                            fontSize: keySize * 0.34,
-                                            color: (state ==
-                                                LetterState.correct ||
-                                                state ==
-                                                    LetterState.present)
-                                                ? Colors.white
-                                                : AppColors.getPrimaryTextColor(
-                                                isDark))))),
+                              width: keySize,
+                              height: keySize,
+                              child: Center(
+                                child: Text(
+                                  k,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                    fontSize: keySize * 0.34,
+                                    color: (state == LetterState.correct || state == LetterState.present)
+                                        ? Colors.white
+                                        : AppColors.getPrimaryTextColor(isDark),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       }
