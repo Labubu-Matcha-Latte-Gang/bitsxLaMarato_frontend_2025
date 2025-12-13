@@ -247,7 +247,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DoctorColors.background(isDarkMode),
+      backgroundColor: AppColors.getBackgroundColor(isDarkMode),
       body: SafeArea(
         child: _currentPhase == _SroopPhase.results
             ? _buildResultsScreen()
@@ -271,7 +271,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
                   Text(
                     _getPhaseName(),
                     style: TextStyle(
-                      color: DoctorColors.textPrimary(isDarkMode),
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
@@ -280,8 +280,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
                     '$_timeRemaining s',
                     style: TextStyle(
                       color: _timeRemaining < 10
-                          ? DoctorColors.critical(isDarkMode)
-                          : DoctorColors.primary(isDarkMode),
+                          ? AppColors.getErrorColor(isDarkMode)
+                          : AppColors.getPrimaryButtonColor(isDarkMode),
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
@@ -295,9 +295,9 @@ class _SroopTestPageState extends State<SroopTestPage> {
                   value: _phaseProgress / _itemsPerPhase,
                   minHeight: 6,
                   backgroundColor:
-                      DoctorColors.textSecondary(isDarkMode).withOpacity(0.2),
+                      AppColors.getSecondaryTextColor(isDarkMode).withOpacity(0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    DoctorColors.primary(isDarkMode),
+                    AppColors.getPrimaryButtonColor(isDarkMode),
                   ),
                 ),
               ),
@@ -305,7 +305,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
               Text(
                 '$_phaseProgress / $_itemsPerPhase',
                 style: TextStyle(
-                  color: DoctorColors.textSecondary(isDarkMode),
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
                   fontSize: 12,
                 ),
               ),
