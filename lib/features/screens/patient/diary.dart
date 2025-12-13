@@ -837,6 +837,11 @@ class _DiaryPageState extends State<DiaryPage>
     return Scaffold(
       body: Stack(
         children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.getBackgroundGradient(isDarkMode),
+            ),
+          ),
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
           ),
@@ -864,7 +869,7 @@ class _DiaryPageState extends State<DiaryPage>
                           Icons.arrow_back,
                           color: AppColors.getPrimaryTextColor(isDarkMode),
                         ),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Navigator.of(context).pop(isDarkMode),
                       ),
                       Text(
                         'Diari Personal',
