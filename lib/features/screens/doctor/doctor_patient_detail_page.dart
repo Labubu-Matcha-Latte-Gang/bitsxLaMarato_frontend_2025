@@ -19,6 +19,25 @@ import '../../../services/session_manager.dart';
 import '../../../utils/doctor_colors.dart';
 import '../../../utils/platform_view_registry.dart';
 
+// Top-level helper decoration so all local widgets can reuse it (soft border + shadow)
+BoxDecoration _sectionDecoration(bool isDarkMode, {double radius = 14}) {
+  return BoxDecoration(
+    color: DoctorColors.surface(isDarkMode),
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(
+      color: DoctorColors.border(isDarkMode).withOpacity(0.18),
+      width: 1,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: DoctorColors.cardShadow(isDarkMode).withOpacity(0.06),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+}
+
 class DoctorPatientDetailPage extends StatefulWidget {
   final String patientEmail;
   final bool initialDarkMode;
@@ -317,6 +336,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     return '#${hex.substring(2)}';
   }
 
+
   @override
   Widget build(BuildContext context) {
     final bg = DoctorColors.background(isDarkMode);
@@ -567,18 +587,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Widget _buildPatientInfo(UserProfile patient) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-        boxShadow: [
-          BoxShadow(
-            color: DoctorColors.cardShadow(isDarkMode),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 16),
       child: Row(
         children: [
           CircleAvatar(
@@ -764,11 +773,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         (MediaQuery.of(context).size.width * 0.55).clamp(220.0, 320.0);
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -780,6 +785,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 style: TextStyle(
                   color: DoctorColors.textPrimary(isDarkMode),
                   fontWeight: FontWeight.w700,
+                  fontSize: 16,
                 ),
               ),
               if (_generatingQr)
@@ -790,6 +796,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 ),
             ],
           ),
+          const SizedBox(height: 8),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
           const SizedBox(height: 10),
           Center(
             child: GestureDetector(
@@ -1220,11 +1228,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1233,8 +1237,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
           const SizedBox(height: 10),
           ...scores.take(5).map(
                 (s) => Padding(
@@ -1275,11 +1282,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1288,8 +1291,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
           const SizedBox(height: 10),
           ...questions.take(4).map(
                 (q) {
@@ -1334,11 +1340,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1347,8 +1349,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
           const SizedBox(height: 10),
           ...diaryAnswers.take(4).map(
                 (q) {
@@ -1395,11 +1400,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1408,8 +1409,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
           const SizedBox(height: 10),
           ...graphs.asMap().entries.map((entry) {
             final int idx = entry.key;
@@ -1473,11 +1477,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1493,10 +1493,12 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: DoctorColors.textSecondary(isDarkMode),
-              fontSize: 12,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
+          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.12), height: 1),
+          const SizedBox(height: 6),
           Text(
             value,
             textAlign: TextAlign.center,
@@ -1525,11 +1527,7 @@ class _EmptyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 12),
       child: Text(
         message,
         style: TextStyle(
@@ -1589,6 +1587,7 @@ class _HistoryTile extends StatelessWidget {
                     style: TextStyle(
                       color: textPrimary,
                       fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1632,7 +1631,7 @@ class _HistoryTile extends StatelessWidget {
                   ),
                 )
                 .toList(),
-          ),
+              ),
         ],
       ],
     );
@@ -1686,11 +1685,7 @@ class _GraphCard extends StatelessWidget {
         (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1699,6 +1694,7 @@ class _GraphCard extends StatelessWidget {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
           const SizedBox(height: 2),
