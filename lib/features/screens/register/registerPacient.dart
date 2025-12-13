@@ -798,7 +798,7 @@ class _RegisterPacientState extends State<RegisterPacient> {
                     height: 120,
                     width: 180,
                     child: Image.asset(
-                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
+                      isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
