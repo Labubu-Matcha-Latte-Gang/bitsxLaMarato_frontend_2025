@@ -126,38 +126,24 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                       children: [
                         // Logo LMLG con imagen real
                         Container(
-                          margin: const EdgeInsets.only(bottom: 40),
-                          child: Column(
-                            children: [
-                              // Logo con imagen real
-                              SizedBox(
-                                height: 180,
-                                width: 280,
-                                child: Image.asset(
-                                  isDarkMode
-                                      ? TImages.lightLogoText
-                                      : TImages.darkLogoText,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    // Fallback en caso de que la imagen no se encuentre
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.local_hospital,
-                                          size: 60,
-                                          color: AppColors.getPrimaryTextColor(
-                                              isDarkMode),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'LMLG',
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
+                          margin: const EdgeInsets.only(bottom: 30),
+                          child: SizedBox(
+                            height: 120,
+                            width: 180,
+                            child: Image.asset(
+                              isDarkMode ? TImages.lightLogo : TImages.darkLogo,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.local_hospital,
+                                  size: 60,
+                                  color: AppColors.getPrimaryTextColor(
+                                      isDarkMode),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                                                     isDarkMode),
                                             letterSpacing: 3,
                                           ),
