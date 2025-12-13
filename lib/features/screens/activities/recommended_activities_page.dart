@@ -8,7 +8,8 @@ import '../../../utils/effects/particle_system.dart';
 import 'games/sorting.dart';
 import 'games/sudoku.dart';
 import 'games/wordle_easy.dart';
-import 'games/memory.dart';
+import 'games/memory_animals.dart';
+import 'games/memory_monuments.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -109,14 +110,37 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
         lowerTitle.contains('memory') ||
         lowerTitle.contains('memoritzar') ||
         lowerType.contains('concentration')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => MemoryGame(
-            activityId: activity.id,
-            isDarkMode: isDarkMode,
+      // Route to specific memory game based on title
+      if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (lowerTitle.contains('monuments') ||
+          lowerTitle.contains('monument')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameMonuments(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        );
+      } else {
+        // Default to animals if no specific match
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        );
+      }
       return;
     }
 
