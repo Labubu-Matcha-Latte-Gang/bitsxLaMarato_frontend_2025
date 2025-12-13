@@ -194,11 +194,11 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+        backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
         title: Text(
           '¡Joc Completat!',
           style: TextStyle(
-            color: _getAccentColor(),
+            color: AppColors.getPrimaryButtonColor(isDarkMode),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -206,9 +206,19 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Temps: $time'),
+            Text(
+              'Temps: $time',
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('Moviments: $_moves'),
+            Text(
+              'Moviments: $_moves',
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -219,8 +229,9 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
             },
             child: Text(
               'Jugar de Nou',
-              style:
-                  TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode)),
+              style: TextStyle(
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+              ),
             ),
           ),
           ElevatedButton(
@@ -233,7 +244,7 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _getAccentColor(),
+              backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
               foregroundColor: Colors.white,
             ),
             child: const Text('Enviar Resultats'),
