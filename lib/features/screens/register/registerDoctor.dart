@@ -269,17 +269,17 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
                 // Logo
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 30),
                   child: SizedBox(
-                    height: 100,
-                    width: 150,
+                    height: 120,
+                    width: 180,
                     child: Image.asset(
                       isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           Icons.local_hospital,
-                          size: 40,
+                          size: 60,
                           color: AppColors.getPrimaryTextColor(isDarkMode),
                         );
                       },
@@ -434,7 +434,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Sexe',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.getSecondaryTextColor(isDarkMode),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -442,20 +443,24 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: AppColors.getFieldBackgroundColor(isDarkMode),
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: DropdownButtonFormField<String>(
                                 value: _selectedGender,
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 12),
                                 ),
                                 style: TextStyle(
-                                  color: AppColors.getInputTextColor(isDarkMode),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
                                 dropdownColor:
-                                    AppColors.getSecondaryBackgroundColor(isDarkMode),
+                                    AppColors.getSecondaryBackgroundColor(
+                                        isDarkMode),
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'male',
