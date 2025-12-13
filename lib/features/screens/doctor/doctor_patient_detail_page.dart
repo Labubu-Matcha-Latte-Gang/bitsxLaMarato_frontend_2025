@@ -457,9 +457,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          _buildPatientInfo(patient),
-          const SizedBox(height: 12),
-          _buildStatsGrid(),
+          _buildPatientAndStatsLayout(patient),
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
@@ -527,6 +525,41 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       return '${remaining}s';
     }
     return '${minutes}m ${remaining.toString().padLeft(2, '0')}s';
+  }
+
+  Widget _buildPatientAndStatsLayout(UserProfile patient) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        // On screens >= 820px wide, place side-by-side; otherwise stack vertically.
+        final bool isSideBySide = width >= 820;
+
+        if (isSideBySide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _buildPatientInfo(patient),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 1,
+                child: _buildStatsGrid(),
+              ),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              _buildPatientInfo(patient),
+              const SizedBox(height: 12),
+              _buildStatsGrid(),
+            ],
+          );
+        }
+      },
+    );
   }
 
   Widget _buildPatientInfo(UserProfile patient) {
