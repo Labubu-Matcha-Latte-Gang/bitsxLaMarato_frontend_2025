@@ -512,6 +512,21 @@ class _DiaryPageState extends State<DiaryPage> {
       return const SizedBox.shrink();
     }
 
+    // Si hi ha transcripció, mostrar resposta d'àudio
+    if (_showAudioResponse && _transcriptionText != null) {
+      return _buildAudioResponseDisplay();
+    }
+
+    // Si estem gravant, mostrar la interfície de gravació
+    if (_isRecording) {
+      return _buildRecordingInterface();
+    }
+
+    // Interfície normal de resposta
+    return _buildNormalResponseInterface();
+  }
+
+  Widget _buildNormalResponseInterface() {
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.all(24),
@@ -588,9 +603,78 @@ class _DiaryPageState extends State<DiaryPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 32),
+
+            // Tabs: Text response or Audio response
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.getBackgroundColor(isDarkMode)
+                    .withAlpha((0.3 * 255).round()),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() => _showAudioResponse = false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_showAudioResponse
+                              ? AppColors.getPrimaryButtonColor(isDarkMode)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Text',
+                            style: TextStyle(
+                              color: !_showAudioResponse
+                                  ? Colors.white
+                                  : AppColors.getSecondaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() => _showAudioResponse = true);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _showAudioResponse
+                              ? AppColors.getPrimaryButtonColor(isDarkMode)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Àudio',
+                            style: TextStyle(
+                              color: _showAudioResponse
+                                  ? Colors.white
+                                  : AppColors.getSecondaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
-            // Answer input (placeholder)
+            // Text response section
             Text(
               'La teva resposta',
               style: TextStyle(
@@ -654,7 +738,336 @@ class _DiaryPageState extends State<DiaryPage> {
               onPressed: _submitAnswer,
               icon: const Icon(Icons.send),
               label: const Text(
-                'Enviar Resposta',
+                'Enviar Resposta (Text)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Audio response button
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(180),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              onPressed: _startRecording,
+              icon: const Icon(Icons.mic),
+              label: const Text(
+                'Gravar Resposta (Àudio)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            // Audio option hint
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha((0.08 * 255).round()),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pots gravar una resposta d\'àudio en lloc de text.',
+                      style: TextStyle(
+                        color: AppColors.getSecondaryTextColor(isDarkMode),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordingInterface() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.containerShadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Recording indicator
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.red.withAlpha((0.15 * 255).round()),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Gravant...',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Timer
+          Center(
+            child: Text(
+              _formatDuration(_recordDuration),
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'Durada',
+              style: TextStyle(
+                color: AppColors.getSecondaryTextColor(isDarkMode),
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Question text (mini)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.getBackgroundColor(isDarkMode)
+                  .withAlpha((0.5 * 255).round()),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha((0.2 * 255).round()),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              _diaryQuestion!.text,
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Stop button
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            onPressed: _isUploading ? null : _stopRecording,
+            icon: const Icon(Icons.stop),
+            label: Text(
+              _isUploading ? 'Enviant...' : 'Aturar Gravació',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          // Minimum duration warning
+          if (!_hasReachedMinimumDuration)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withAlpha((0.15 * 255).round()),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Necessites gravar almenys $_minRecordingSeconds segons',
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAudioResponseDisplay() {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.containerShadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Success indicator
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: (_hasUploadError ? Colors.orange : Colors.green)
+                      .withAlpha((0.15 * 255).round()),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _hasUploadError ? Icons.warning_amber : Icons.check_circle,
+                  color: _hasUploadError ? Colors.orange : Colors.green,
+                  size: 48,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Center(
+              child: Text(
+                _hasUploadError
+                    ? 'Resposta gravada (amb avís)'
+                    : 'Resposta gravada amb èxit',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Transcription text
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.getBackgroundColor(isDarkMode)
+                    .withAlpha((0.5 * 255).round()),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha((0.2 * 255).round()),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Transcripció:',
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _transcriptionText ?? 'Sin transcripción',
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Back button
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              onPressed: () {
+                setState(() => _showAudioResponse = false);
+              },
+              icon: const Icon(Icons.arrow_back),
+              label: const Text(
+                'Tornar',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
