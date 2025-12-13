@@ -114,53 +114,16 @@ class _InitialPageState extends State<InitialPage> {
                           ),
                         ),
 
+                        // Spacer para dejar espacio para el logo fijo
+                        SizedBox(
+                            height: (logoHeight * 0.85).clamp(180.0, 240.0)
+                                as double),
+
                         // Contenido principal centrado con tamaño adaptable
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40.0),
                           child: Column(
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 40),
-                                child: SizedBox(
-                                  height: logoHeight,
-                                  width: double.infinity,
-                                  child: Image.asset(
-                                    isDarkMode
-                                        ? TImages.lightLogoText
-                                        : TImages.darkLogoText,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // Fallback en caso de que la imagen no se encuentre
-                                      return Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.local_hospital,
-                                            size: 80,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                    isDarkMode),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'LMLG',
-                                            style: TextStyle(
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.bold,
-                                              color:
-                                                  AppColors.getPrimaryTextColor(
-                                                      isDarkMode),
-                                              letterSpacing: 4,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
+                            children: [],
                           ),
                         ),
 
@@ -296,6 +259,30 @@ class _InitialPageState extends State<InitialPage> {
                   ),
                 );
               },
+            ),
+          ),
+
+          // Logo fijo (no se mueve)
+          Positioned(
+            top: 80,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SizedBox(
+                height: 120,
+                width: 180,
+                child: Image.asset(
+                  isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.local_hospital,
+                      size: 60,
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ],

@@ -791,35 +791,42 @@ class _RegisterPacientState extends State<RegisterPacient> {
                   ),
                 ),
 
-                // Logo pequeño en la parte superior
-                Container(
-                  margin: const EdgeInsets.only(bottom: 30),
-                  child: SizedBox(
-                    height: 120,
-                    width: 180,
-                    child: Image.asset(
-                      isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.local_hospital,
-                          size: 60,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
                 // Spacer para empujar el contenido hacia arriba
                 const Spacer(),
               ],
             ),
           ),
 
+          // Logo fijo en la parte superior
+          Positioned(
+            top: 80,
+            left: 0,
+            right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  width: 180,
+                  child: Image.asset(
+                    isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_hospital,
+                        size: 60,
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // Recuadro de formulario posicionado desde arriba
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
+            top: MediaQuery.of(context).size.height * 0.30,
             left: MediaQuery.of(context).size.width >= 800
                 ? MediaQuery.of(context).size.width * 0.25
                 : 0,
