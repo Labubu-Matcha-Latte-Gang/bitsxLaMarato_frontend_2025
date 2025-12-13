@@ -158,8 +158,12 @@ class _RegisterLobbyState extends State<RegisterLobby> {
           // Recuadro inferior posicionado a 1/6 desde el final
           Positioned(
             bottom: MediaQuery.of(context).size.height / 6,
-            left: 0,
-            right: 0,
+            left: MediaQuery.of(context).size.width >= 600
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
+            right: MediaQuery.of(context).size.width >= 600
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
