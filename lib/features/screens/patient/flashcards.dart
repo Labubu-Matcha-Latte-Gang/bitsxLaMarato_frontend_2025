@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
+import '../../../services/api_service.dart';
 
 class Flashcards extends StatefulWidget {
   final bool initialDarkMode;
@@ -25,6 +26,9 @@ class _Flashcards extends State<Flashcards> with SingleTickerProviderStateMixin 
   bool _flipped = false;
   late final AnimationController _flipController;
   late final Animation<double> _flipAnimation;
+
+  ApiService apiService = ApiService();
+  String
 
   // Example texts — replace with dynamic data as needed
   final String _frontText = 'Quins àrees cognitives treballa aquesta activitat?';
@@ -49,6 +53,8 @@ class _Flashcards extends State<Flashcards> with SingleTickerProviderStateMixin 
     _flipController.dispose();
     super.dispose();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
