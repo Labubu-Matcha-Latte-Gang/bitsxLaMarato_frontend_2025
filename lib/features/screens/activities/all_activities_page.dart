@@ -19,7 +19,7 @@ class AllActivitiesPage extends StatefulWidget {
 
   const AllActivitiesPage({
     super.key,
-    this.initialDarkMode = false,
+    this.initialDarkMode = true,
   });
 
   @override
