@@ -793,17 +793,17 @@ class _RegisterPacientState extends State<RegisterPacient> {
 
                 // Logo pequeño en la parte superior
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 30),
                   child: SizedBox(
-                    height: 100,
-                    width: 150,
+                    height: 120,
+                    width: 180,
                     child: Image.asset(
                       isDarkMode ? TImages.lightLogo : TImages.darkLogo,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           Icons.local_hospital,
-                          size: 40,
+                          size: 60,
                           color: AppColors.getPrimaryTextColor(isDarkMode),
                         );
                       },
