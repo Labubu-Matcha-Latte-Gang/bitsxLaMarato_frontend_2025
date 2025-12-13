@@ -457,6 +457,33 @@ class ApiService {
     }
   }
 
+  static Future<Question> getDiaryQuestion() async {
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/question/diary'),
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Question.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut recuperar la pregunta del diari.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
   static Future<DoctorRegistrationResponse> registerDoctor(
     DoctorRegistrationRequest request,
   ) async {

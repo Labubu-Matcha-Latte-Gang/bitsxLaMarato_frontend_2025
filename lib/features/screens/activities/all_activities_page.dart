@@ -7,7 +7,8 @@ import '../../../services/activities_api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
-import 'games/memory.dart';
+import 'games/memory_animals.dart';
+import 'games/memory_monuments.dart';
 import 'games/sorting.dart';
 import 'games/sudoku.dart';
 import 'games/wordle_easy.dart';
@@ -102,8 +103,12 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         difficultyMax: difficultyMax,
         title: titleText.isEmpty ? null : titleText,
       );
+      // Filtrar activitats que comencen amb "TEST - "
+      final filteredResults = results.where((activity) {
+        return !activity.title.startsWith('TEST - ');
+      }).toList();
       setState(() {
-        _activities = results;
+        _activities = filteredResults;
       });
     } catch (_) {
       setState(() {
@@ -720,14 +725,37 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     }
 
     if (lowerType.contains('memory') || lowerTitle.contains('memory')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => MemoryGame(
-            isDarkMode: isDarkMode,
-            activityId: activity.id,
+      // Route to specific memory game based on title
+      if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              isDarkMode: isDarkMode,
+              activityId: activity.id,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (lowerTitle.contains('monuments') ||
+          lowerTitle.contains('monument')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameMonuments(
+              isDarkMode: isDarkMode,
+              activityId: activity.id,
+            ),
+          ),
+        );
+      } else {
+        // Default to animals if no specific match
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              isDarkMode: isDarkMode,
+              activityId: activity.id,
+            ),
+          ),
+        );
+      }
       return;
     }
 

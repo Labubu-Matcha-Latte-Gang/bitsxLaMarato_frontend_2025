@@ -8,7 +8,8 @@ import '../../../utils/effects/particle_system.dart';
 import 'games/sorting.dart';
 import 'games/sudoku.dart';
 import 'games/wordle_easy.dart';
-import 'games/memory.dart';
+import 'games/memory_animals.dart';
+import 'games/memory_monuments.dart';
 
 class RecommendedActivitiesPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -46,8 +47,13 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       print('DEBUG - Fetching recommended activity from API...');
       final results = await _api.fetchRecommendedActivities();
 
-      if (results.isNotEmpty) {
-        final activity = results.first;
+      // Filtrar activitats que comencen amb "TEST - "
+      final filteredResults = results.where((activity) {
+        return !activity.title.startsWith('TEST - ');
+      }).toList();
+
+      if (filteredResults.isNotEmpty) {
+        final activity = filteredResults.first;
         print('DEBUG - ✓ Recommended activity loaded successfully');
         print('DEBUG - Activity ID: ${activity.id}');
         print('DEBUG - Activity Title: ${activity.title}');
@@ -59,7 +65,8 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       }
 
       setState(() {
-        _recommendedActivity = results.isNotEmpty ? results.first : null;
+        _recommendedActivity =
+            filteredResults.isNotEmpty ? filteredResults.first : null;
       });
     } catch (e) {
       print('DEBUG - ✗ Error loading recommended activity: $e');
@@ -109,14 +116,37 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
         lowerTitle.contains('memory') ||
         lowerTitle.contains('memoritzar') ||
         lowerType.contains('concentration')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => MemoryGame(
-            activityId: activity.id,
-            isDarkMode: isDarkMode,
+      // Route to specific memory game based on title
+      if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (lowerTitle.contains('monuments') ||
+          lowerTitle.contains('monument')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameMonuments(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        );
+      } else {
+        // Default to animals if no specific match
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MemoryGameAnimals(
+              activityId: activity.id,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+        );
+      }
       return;
     }
 
