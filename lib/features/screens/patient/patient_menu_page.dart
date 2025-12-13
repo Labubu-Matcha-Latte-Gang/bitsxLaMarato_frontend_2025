@@ -5,6 +5,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
+import '../activities/all_test_page.dart' as test_page;
 import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
@@ -393,6 +394,27 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) => QRGeneratePage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Tots els tests',
+                                  description:
+                                      'Accedeix al catàleg complet de tests disponibles.',
+                                  icon: Icons.assignment_turned_in_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            test_page.AllActivitiesPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),
