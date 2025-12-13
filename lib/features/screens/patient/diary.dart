@@ -861,8 +861,8 @@ class _DiaryPageState extends State<DiaryPage>
                       ),
                       IconButton(
                         icon: Icon(
-                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                          color: AppColors.getPrimaryButtonColor(isDarkMode),
+                          isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
                         ),
                         onPressed: () {
                           setState(() => isDarkMode = !isDarkMode);
