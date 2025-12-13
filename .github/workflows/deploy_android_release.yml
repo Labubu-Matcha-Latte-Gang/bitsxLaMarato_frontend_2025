@@ -1,0 +1,59 @@
+name: Auto-Deploy to Releases APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: 'stable'
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      # Compilamos inyectando el número de ejecución de GitHub como versión
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi=false --build-number=${{ github.run_number }}
+
+      # Usamos una acción que crea la Release automáticamente
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v1
+        with:
+          # Nombre del tag automático (ej: v1.0.42-dev)
+          # Usamos 'run_number' para que siempre sea único
+          tag_name: v1.0.${{ github.run_number }}-dev
+          
+          # Título bonito que se verá en la web
+          name: "Dev Build v1.0.${{ github.run_number }}"
+          
+          # Mensaje del cuerpo (opcional)
+          body: |
+            Build automático desde la rama main.
+            - Commit: ${{ github.sha }}
+            - Build Number: ${{ github.run_number }}
+          
+          # Marcamos como "Pre-release" para que se sepa que no es final
+          prerelease: true
+          
+          # Archivos a subir
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
