@@ -25,7 +25,7 @@ class PatientMenuPage extends StatefulWidget {
 }
 
 class _PatientMenuPageState extends State<PatientMenuPage> {
-  late bool isDarkMode;
+  late bool isDarkMode = true;
   bool _isLoggingOut = false;
 
   @override

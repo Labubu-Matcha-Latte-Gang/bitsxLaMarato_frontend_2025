@@ -16,7 +16,7 @@ class RecommendedActivitiesPage extends StatefulWidget {
 
   const RecommendedActivitiesPage({
     super.key,
-    this.initialDarkMode = false,
+    this.initialDarkMode = true,
   });
 
   @override
@@ -26,7 +26,7 @@ class RecommendedActivitiesPage extends StatefulWidget {
 
 class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
   final ActivitiesApiService _api = const ActivitiesApiService();
-  bool isDarkMode = false;
+  bool isDarkMode = true;
   bool _isLoading = true;
   String? _errorMessage;
   Activity? _recommendedActivity;

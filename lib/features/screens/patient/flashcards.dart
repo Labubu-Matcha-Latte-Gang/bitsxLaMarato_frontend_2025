@@ -10,7 +10,7 @@ class Flashcards extends StatefulWidget {
 
   const Flashcards({
     super.key,
-    this.initialDarkMode = false,
+    this.initialDarkMode = true,
   });
 
   @override
@@ -18,7 +18,7 @@ class Flashcards extends StatefulWidget {
 }
 
 class _Flashcards extends State<Flashcards>{
-  late bool isDarkMode;
+  late bool isDarkMode = true;
 
   @override
   void initState() {
