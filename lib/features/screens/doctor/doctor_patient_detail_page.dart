@@ -610,49 +610,36 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
+        const double spacing = 12;
+        final double idealWidth =
+            (width - spacing * (cards.length - 1)) / cards.length;
+        final double cardWidth = idealWidth.clamp(140, 220);
 
-        // Narrow phones: single column.
-        if (width < 360) {
-          return GridView.count(
-            crossAxisCount: 1,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.6,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            children: cards,
-          );
-        }
+        // On very narrow screens, allow horizontal scroll but keep one row.
+        final bool needsScroll =
+            width < (cardWidth * cards.length + spacing * (cards.length - 1));
 
-        // Phones and small tablets: two columns.
-        if (width < 960) {
-          return GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.25,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            children: cards,
-          );
-        }
-
-        // Wide desktop: responsive max-extent grid to add columns gracefully.
-        final double maxExtent = width >= 1400 ? 260 : 300;
-        final double aspectRatio = width >= 1400 ? 2.3 : 2.5;
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: maxExtent,
-            childAspectRatio: aspectRatio,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: cards.length,
-          itemBuilder: (context, index) => cards[index],
+        final row = Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (int i = 0; i < cards.length; i++) ...[
+              SizedBox(width: cardWidth, child: cards[i]),
+              if (i != cards.length - 1) const SizedBox(width: spacing),
+            ],
+          ],
         );
+
+        if (needsScroll) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: row,
+            ),
+          );
+        }
+
+        return row;
       },
     );
   }
@@ -1341,31 +1328,32 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: DoctorColors.border(isDarkMode)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: DoctorColors.primary(isDarkMode)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: DoctorColors.textSecondary(isDarkMode),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: DoctorColors.textPrimary(isDarkMode),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+          Icon(
+            icon,
+            color: DoctorColors.primary(isDarkMode),
+            size: 22,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: DoctorColors.textSecondary(isDarkMode),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
         ],
