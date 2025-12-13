@@ -843,13 +843,27 @@ class _DiaryPageState extends State<DiaryPage>
           SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.getPrimaryButtonColor(isDarkMode)
+                            .withAlpha((0.2 * 255).round()),
+                        width: 1,
+                      ),
+                    ),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       Text(
@@ -858,11 +872,14 @@ class _DiaryPageState extends State<DiaryPage>
                           color: AppColors.getPrimaryTextColor(isDarkMode),
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       IconButton(
                         icon: Icon(
-                            isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          color: AppColors.getPrimaryButtonColor(isDarkMode),
+                        ),
                         onPressed: () {
                           setState(() => isDarkMode = !isDarkMode);
                         },
@@ -872,12 +889,22 @@ class _DiaryPageState extends State<DiaryPage>
                 ),
                 Expanded(
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.getPrimaryButtonColor(isDarkMode),
+                            ),
+                          ),
+                        )
                       : _errorMessage != null
                           ? Center(
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(color: Colors.red),
+                                style: TextStyle(
+                                  color: Color(0xFFEF476F),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             )
                           : _isRecording
