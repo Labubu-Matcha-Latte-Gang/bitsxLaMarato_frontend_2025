@@ -171,7 +171,7 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
       _score = 100;
     } else {
       final ratio = optimalMoves / _moves;
-      final double score10 = 10 * pow(ratio, k);
+      final double score10 = (10 * pow(ratio, k)).toDouble();
       final double clamped = score10.clamp(0.0, 10.0);
       _score = (clamped * 10).round();
     }
@@ -249,13 +249,21 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const AlertDialog(
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Enviant resultats...'),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(_getAccentColor()),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enviant resultats...',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                ),
+              ),
             ],
           ),
         ),
@@ -267,7 +275,7 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
         secondsToFinish: _elapsedSeconds.toDouble(),
       );
 
-      await ApiService.completeActivity(request);
+      final response = await ApiService.completeActivity(request);
 
       if (!mounted) return;
       Navigator.pop(context);
@@ -284,8 +292,51 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: const Text(
-            'Els resultats s\'han registrat correctament.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Els resultats s\'han registrat correctament.',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Resposta de l\'API:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Activitat: ${response.activity.title}',
+                style: TextStyle(
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                ),
+              ),
+              Text(
+                'Puntuació: ${response.score.toStringAsFixed(1)}/10',
+                style: TextStyle(
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                ),
+              ),
+              Text(
+                'Temps: ${(response.secondsToFinish / 60).floor()}:${(response.secondsToFinish % 60).round().toString().padLeft(2, '0')}',
+                style: TextStyle(
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                ),
+              ),
+              if (response.completedAt != null)
+                Text(
+                  'Completat: ${response.completedAt!.day}/${response.completedAt!.month}/${response.completedAt!.year} ${response.completedAt!.hour}:${response.completedAt!.minute.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    color: AppColors.getSecondaryTextColor(isDarkMode),
+                  ),
+                ),
+            ],
           ),
           actions: [
             ElevatedButton(
@@ -308,11 +359,26 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('No s\'ha pogut enviar els resultats: $e'),
+          backgroundColor: AppColors.getBlurContainerColor(isDarkMode),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'No s\'ha pogut enviar els resultats: $e',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: _getAccentColor(),
+              ),
               child: const Text('Acceptar'),
             ),
           ],
