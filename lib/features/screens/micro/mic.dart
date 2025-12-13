@@ -1492,16 +1492,16 @@ class _MicScreenState extends State<MicScreen>
                           // Temporitzador
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 10),
+                                horizontal: 26, vertical: 14),
                             decoration: BoxDecoration(
                               color: AppColors.getSecondaryBackgroundColor(
                                   isDarkMode),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color:
                                     AppColors.getPrimaryButtonColor(isDarkMode)
-                                        .withAlpha((0.3 * 255).round()),
-                                width: 1.5,
+                                        .withAlpha((0.35 * 255).round()),
+                                width: 2,
                               ),
                             ),
                             child: Text(
@@ -1509,13 +1509,13 @@ class _MicScreenState extends State<MicScreen>
                               style: TextStyle(
                                 color:
                                     AppColors.getPrimaryTextColor(isDarkMode),
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.4,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6.0),
+                          const SizedBox(height: 8.0),
                           if (showMinDurationWarning)
                             Padding(
                               padding: const EdgeInsets.only(top: 4.0),
