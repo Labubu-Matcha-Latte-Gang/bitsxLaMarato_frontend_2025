@@ -529,28 +529,39 @@ class _DiaryPageState extends State<DiaryPage>
     return AnimatedBuilder(
       animation: _waveController,
       builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_waveBarCount, (index) {
-            final height = 20 +
-                50 *
-                    (sin((_waveController.value * 2 * pi) +
-                            (index / _waveBarCount) * 2 * pi) +
-                        1) /
-                    2 +
-                ((_waveRandom.nextDouble() - 0.5) * 10);
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Container(
-                width: 3,
-                height: height,
-                decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  borderRadius: BorderRadius.circular(2),
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_waveBarCount, (index) {
+              final height = 20 +
+                  50 *
+                      (sin((_waveController.value * 2 * pi) +
+                              (index / _waveBarCount) * 2 * pi) +
+                          1) /
+                      2 +
+                  ((_waveRandom.nextDouble() - 0.5) * 10);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                child: Container(
+                  width: 4,
+                  height: height.clamp(10, 120),
+                  decoration: BoxDecoration(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.getPrimaryButtonColor(isDarkMode)
+                            .withAlpha(100),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         );
       },
     );
@@ -564,7 +575,13 @@ class _DiaryPageState extends State<DiaryPage>
 
   Widget _buildPreRecordingUI() {
     if (_diaryQuestion == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(
+            AppColors.getPrimaryButtonColor(isDarkMode),
+          ),
+        ),
+      );
     }
 
     return Column(
@@ -572,16 +589,23 @@ class _DiaryPageState extends State<DiaryPage>
       children: [
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.getBackgroundColor(isDarkMode)
-                .withAlpha((0.5 * 255).round()),
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: AppColors.getPrimaryButtonColor(isDarkMode)
-                  .withAlpha((0.3 * 255).round()),
+                  .withAlpha((0.4 * 255).round()),
               width: 2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(50),
+                blurRadius: 12,
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Text(
             _diaryQuestion!.text,
@@ -590,38 +614,38 @@ class _DiaryPageState extends State<DiaryPage>
               color: AppColors.getPrimaryTextColor(isDarkMode),
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              height: 1.5,
+              height: 1.6,
             ),
           ),
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 56),
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
                 color:
-                    AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(100),
-                blurRadius: 20,
-                spreadRadius: 2,
+                    AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(150),
+                blurRadius: 24,
+                spreadRadius: 4,
               ),
             ],
           ),
           child: FloatingActionButton(
             onPressed: _hasMicPermission ? _startRecording : null,
             backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.getPrimaryButtonTextColor(isDarkMode),
+            elevation: 8,
             child: const Icon(Icons.mic, size: 32),
           ),
         ),
-        const SizedBox(height: 16),
-        Center(
-          child: Text(
-            'Pressiona el botó per gravar',
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 14,
-            ),
+        const SizedBox(height: 20),
+        Text(
+          'Pressiona el botó per gravar',
+          style: TextStyle(
+            color: AppColors.getSecondaryTextColor(isDarkMode),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -632,41 +656,50 @@ class _DiaryPageState extends State<DiaryPage>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: _buildWaveform(),
-        ),
-        const SizedBox(height: 40),
-        Text(
-          _formatDuration(_recordDuration),
-          style: TextStyle(
-            color: AppColors.getPrimaryTextColor(isDarkMode),
-            fontSize: 60,
-            fontWeight: FontWeight.bold,
+        _buildWaveform(),
+        const SizedBox(height: 32),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha((0.3 * 255).round()),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            _formatDuration(_recordDuration),
+            style: TextStyle(
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
+              fontSize: 56,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.getBackgroundColor(isDarkMode)
-                .withAlpha((0.5 * 255).round()),
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppColors.getPrimaryButtonColor(isDarkMode)
                   .withAlpha((0.2 * 255).round()),
-              width: 1.5,
+              width: 1,
             ),
           ),
           child: Text(
             _diaryQuestion?.text ?? '',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
+              color: AppColors.getTertiaryTextColor(isDarkMode),
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
             ),
           ),
         ),
@@ -676,20 +709,21 @@ class _DiaryPageState extends State<DiaryPage>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withAlpha(100),
-                blurRadius: 20,
-                spreadRadius: 2,
+                color: Color(0xFFEF476F).withAlpha(180),
+                blurRadius: 24,
+                spreadRadius: 4,
               ),
             ],
           ),
           child: FloatingActionButton(
             onPressed: _hasReachedMinimumDuration ? _stopRecording : null,
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFEF476F),
             foregroundColor: Colors.white,
+            elevation: 8,
             child: const Icon(Icons.stop, size: 32),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         if (!_hasReachedMinimumDuration)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -697,8 +731,9 @@ class _DiaryPageState extends State<DiaryPage>
               'Necessites gravar almenys $_minRecordingSeconds segons',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.amber[600],
+                color: Color(0xFFEF476F),
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -709,52 +744,87 @@ class _DiaryPageState extends State<DiaryPage>
   Widget _buildCompletionOverlay() {
     return Dialog(
       backgroundColor: AppColors.getBackgroundColor(isDarkMode),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 16,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              _hasUploadError ? Icons.error : Icons.check_circle,
-              size: 64,
-              color: _hasUploadError ? Colors.red : Colors.green,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _hasUploadError
+                    ? Color(0xFFEF476F).withAlpha(30)
+                    : Color(0xFF06A77D).withAlpha(30),
+              ),
+              child: Icon(
+                _hasUploadError ? Icons.error_outline : Icons.check_circle,
+                size: 64,
+                color: _hasUploadError ? Color(0xFFEF476F) : Color(0xFF06A77D),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               _hasUploadError ? 'Error en la gravació' : 'Gravació completada!',
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             if (_transcriptionText != null && _transcriptionText!.isNotEmpty)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.getBackgroundColor(isDarkMode)
-                      .withAlpha((0.7 * 255).round()),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha((0.2 * 255).round()),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
-                  _transcriptionText!.length > 150
-                      ? '${_transcriptionText!.substring(0, 150)}...'
+                  _transcriptionText!.length > 200
+                      ? '${_transcriptionText!.substring(0, 200)}...'
                       : _transcriptionText!,
                   style: TextStyle(
-                    color: AppColors.getSecondaryTextColor(isDarkMode),
-                    fontSize: 12,
+                    color: AppColors.getTertiaryTextColor(isDarkMode),
+                    fontSize: 13,
+                    height: 1.6,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Tancar'),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                  foregroundColor:
+                      AppColors.getPrimaryButtonTextColor(isDarkMode),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                ),
+                child: const Text(
+                  'Tancar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
