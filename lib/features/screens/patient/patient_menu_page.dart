@@ -385,15 +385,16 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
-                                  title: 'QR per Informe Mèdic',
+                                  title: 'Tots els tests',
                                   description:
-                                      'Genera un codi QR per accedir als teus informes mèdics.',
-                                  icon: Icons.qr_code_2,
+                                      'Accedeix al catàleg complet de tests disponibles.',
+                                  icon: Icons.assignment_turned_in_outlined,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => QRGeneratePage(
+                                        builder: (_) =>
+                                            test_page.AllActivitiesPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),
@@ -405,16 +406,15 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
-                                  title: 'Tots els tests',
+                                  title: 'QR per Informe Mèdic',
                                   description:
-                                      'Accedeix al catàleg complet de tests disponibles.',
-                                  icon: Icons.assignment_turned_in_outlined,
+                                      'Genera un codi QR per accedir als teus informes mèdics.',
+                                  icon: Icons.qr_code_2,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            test_page.AllActivitiesPage(
+                                        builder: (_) => QRGeneratePage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),

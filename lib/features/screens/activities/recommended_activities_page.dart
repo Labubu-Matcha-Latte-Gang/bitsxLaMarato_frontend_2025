@@ -90,6 +90,13 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
     });
   }
 
+  String _displayTitle(String title) {
+    const prefix = 'ACTIVITAT - ';
+    return title.startsWith(prefix)
+        ? title.substring(prefix.length).trim()
+        : title;
+  }
+
   void _openActivity(Activity activity) {
     final lowerType = activity.activityType.toLowerCase();
     final lowerTitle = activity.title.toLowerCase();
@@ -166,7 +173,7 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(activity.title,
+        title: Text(_displayTitle(activity.title),
             style: TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode))),
         content: Text(activity.description,
             style:
@@ -456,7 +463,9 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                                                   ),
                                                   const SizedBox(height: 6),
                                                   Text(
-                                                    _recommendedActivity!.title,
+                                                    _displayTitle(
+                                                        _recommendedActivity!
+                                                            .title),
                                                     style: TextStyle(
                                                       color: AppColors
                                                           .getPrimaryTextColor(
