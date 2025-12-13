@@ -175,7 +175,51 @@ class _DiaryPageState extends State<DiaryPage>
     _nextChunkIndex = 0;
     _pendingChunkUploads.clear();
 
-    // Initialize mobile recording
+    // --- WEB: use WebAudioRecorder ---
+    if (kIsWeb) {
+      _webRecorder ??= WebAudioRecorder(
+        chunkMillis: (_maxChunkSeconds + 1) * 1000,
+      );
+
+      setState(() {
+        _isRecording = true;
+        _recordDuration = Duration.zero;
+      });
+      _waveController.repeat();
+
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(() {
+            _recordDuration += const Duration(seconds: 1);
+          });
+        }
+      });
+
+      try {
+        await _webRecorder!.start((Uint8List bytes) async {
+          if (_currentSessionId == null) return;
+
+          final Future<void> f = _sendWebChunk(bytes);
+          _pendingChunkUploads.add(f);
+          try {
+            await f;
+          } finally {
+            _pendingChunkUploads.remove(f);
+          }
+        });
+      } catch (e) {
+        _showError("No s'ha pogut accedir al micròfon.");
+        setState(() {
+          _isRecording = false;
+          _recordDuration = Duration.zero;
+        });
+      }
+
+      return;
+    }
+
+    // --- MOBILE: use Record plugin ---
     try {
       await _startNewMobileRecording();
     } catch (e) {
@@ -199,7 +243,6 @@ class _DiaryPageState extends State<DiaryPage>
       }
     });
 
-    // Chunk timer - send chunks every 5 seconds
     _chunkTimer?.cancel();
     _chunkTimer = Timer.periodic(
       const Duration(seconds: _maxChunkSeconds),
