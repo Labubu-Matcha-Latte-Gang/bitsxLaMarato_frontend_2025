@@ -161,19 +161,6 @@ class _RegisterPacientState extends State<RegisterPacient> {
         doctors: const [],
       );
 
-      print('DEBUG - Form data being sent:');
-      print('  Name: ${formData.name}');
-      print('  Surname: ${formData.surname}');
-      print('  Email: ${formData.email}');
-      print('  Password: ${formData.password}');
-      print('  Ailments: ${formData.ailments}');
-      print('  Gender: ${formData.gender}');
-      print('  Age: ${formData.age}');
-      print('  Treatments: ${formData.treatments}');
-      print('  Height: ${formData.heightCm}');
-      print('  Weight: ${formData.weightKg}');
-      print('  Doctors: ${formData.doctors}');
-
       final result = await _registrationService.register(formData);
 
       if (result is PatientRegistrationSuccess) {
