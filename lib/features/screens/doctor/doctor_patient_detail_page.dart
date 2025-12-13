@@ -461,8 +461,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
-          _buildQrSection(),
-          const SizedBox(height: 16),
           _buildScoresSection(),
           const SizedBox(height: 12),
           _buildQuestionsSection(),
@@ -470,6 +468,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             const SizedBox(height: 12),
             _buildGraphsSection(),
           ],
+          const SizedBox(height: 16),
+          _buildQrSection(),
         ],
       ),
     );
