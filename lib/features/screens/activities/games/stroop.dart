@@ -294,8 +294,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
                 child: LinearProgressIndicator(
                   value: _phaseProgress / _itemsPerPhase,
                   minHeight: 6,
-                  backgroundColor:
-                      AppColors.getSecondaryTextColor(isDarkMode).withOpacity(0.2),
+                  backgroundColor: AppColors.getSecondaryTextColor(isDarkMode)
+                      .withOpacity(0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppColors.getPrimaryButtonColor(isDarkMode),
                   ),
@@ -323,10 +323,10 @@ class _SroopTestPageState extends State<SroopTestPage> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: DoctorColors.surface(isDarkMode),
+                    color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: DoctorColors.border(isDarkMode),
+                      color: AppColors.getSecondaryBackgroundColor(isDarkMode),
                     ),
                   ),
                   child: Text(
