@@ -117,6 +117,225 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
+  Future<bool> _requestMicPermission() async {
+    try {
+      final granted = await _recorder.hasPermission();
+      if (mounted) {
+        setState(() => _hasMicPermission = granted);
+      }
+      return granted;
+    } catch (e) {
+      _showError('No s\'ha pogut accedir al micròfon.');
+      return false;
+    }
+  }
+
+  Future<void> _startRecording() async {
+    // Verificar permiso
+    final hasPermission = await _requestMicPermission();
+    if (!hasPermission) {
+      _showError('Necessites permís per accedir al micròfon.');
+      return;
+    }
+
+    // Crear sessió de transcripció
+    _currentSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    _nextChunkIndex = 0;
+
+    try {
+      await _startNewMobileRecording();
+    } catch (e) {
+      _showError("No s'ha pogut iniciar la gravació.");
+      return;
+    }
+
+    setState(() {
+      _isRecording = true;
+      _recordDuration = Duration.zero;
+      _transcriptionText = null;
+      _hasUploadError = false;
+      _showAudioResponse = false;
+    });
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _recordDuration += const Duration(seconds: 1);
+        });
+      }
+    });
+  }
+
+  Future<void> _startNewMobileRecording() async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final filePath =
+          '${dir.path}/diary_chunk_${DateTime.now().millisecondsSinceEpoch}.webm';
+      _currentChunkPath = filePath;
+
+      await _recorder.start(
+        path: filePath,
+        encoder: AudioEncoder.opus,
+        bitRate: 128000,
+        samplingRate: 48000,
+      );
+
+      print('DEBUG - Diary recording started: $filePath');
+    } catch (e) {
+      print('ERROR - Failed to start diary recording: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    if (!_isRecording) return;
+
+    if (!_hasReachedMinimumDuration) {
+      _showError(
+        'Necessites gravar almenys $_minRecordingSeconds segons abans de poder aturar-te.',
+      );
+      return;
+    }
+
+    _timer?.cancel();
+    _timer = null;
+
+    try {
+      final Future<void> f = _sendCurrentMobileChunk(restart: false);
+      _pendingChunkUploads.add(f);
+      await f;
+      _pendingChunkUploads.remove(f);
+    } catch (e) {
+      print('ERROR stopping recording: $e');
+    }
+
+    setState(() {
+      _isRecording = false;
+      _recordDuration = Duration.zero;
+    });
+
+    // Wait for pending uploads
+    try {
+      if (_pendingChunkUploads.isNotEmpty) {
+        await Future.wait(List<Future<void>>.from(_pendingChunkUploads));
+      }
+    } catch (_) {}
+
+    // Complete transcription
+    await _completeDiaryTranscription();
+  }
+
+  Future<void> _sendCurrentMobileChunk({bool restart = true}) async {
+    if (_currentSessionId == null || _isUploading) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final String? path = await _recorder.stop();
+      final String? filePath = path ?? _currentChunkPath;
+
+      if (filePath != null) {
+        final file = File(filePath);
+
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+
+          if (bytes.isNotEmpty && bytes.length > 1000) {
+            await _sendChunkDirect(bytes, 'webm', 'audio/webm');
+          }
+        }
+      }
+
+      if (restart && _isRecording) {
+        await _startNewMobileRecording();
+      }
+    } catch (e) {
+      print('ERROR sending chunk: $e');
+      _hasUploadError = true;
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _sendChunkDirect(
+      List<int> bytes, String format, String contentType) async {
+    setState(() => _isUploading = true);
+
+    try {
+      final chunkRequest = TranscriptionChunkRequest(
+        sessionId: _currentSessionId!,
+        chunkIndex: _nextChunkIndex,
+        audioBytes: bytes,
+        filename: 'diary_chunk_${_nextChunkIndex}.$format',
+        contentType: contentType,
+      );
+
+      await ApiService.uploadTranscriptionChunk(chunkRequest);
+      _nextChunkIndex += 1;
+      print(
+          'DEBUG - Diary chunk sent successfully (index ${_nextChunkIndex - 1})');
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _completeDiaryTranscription() async {
+    final String? sessionId = _currentSessionId;
+    final questionId = _diaryQuestion?.id;
+
+    if (sessionId == null || questionId == null || questionId.isEmpty) {
+      _showError('Error: No es pot completar la transcripció.');
+      return;
+    }
+
+    bool success = false;
+    String? extracted;
+
+    try {
+      setState(() => _isUploading = true);
+
+      final response = await ApiService.completeTranscriptionSession(
+        TranscriptionCompleteRequest(
+          sessionId: sessionId,
+          questionId: questionId,
+        ),
+      );
+
+      extracted = response.transcription ?? response.partialText ?? '';
+      setState(() {
+        _transcriptionText = extracted;
+        _showAudioResponse = true;
+      });
+      success = true;
+    } catch (e) {
+      _hasUploadError = true;
+      _showError('No s\'ha pogut completar la transcripció.');
+    } finally {
+      setState(() {
+        _isUploading = false;
+        _currentSessionId = null;
+        _nextChunkIndex = 0;
+      });
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
