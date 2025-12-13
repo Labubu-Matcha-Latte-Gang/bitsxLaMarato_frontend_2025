@@ -54,7 +54,9 @@ class ActivityCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      activity.title,
+                      activity.title.startsWith('ACTIVITAT - ')
+                          ? activity.title.substring(12)
+                          : activity.title,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

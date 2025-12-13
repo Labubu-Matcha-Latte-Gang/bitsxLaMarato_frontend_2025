@@ -103,8 +103,12 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         difficultyMax: difficultyMax,
         title: titleText.isEmpty ? null : titleText,
       );
+      // Filtrar activitats que comencen amb "TEST - "
+      final filteredResults = results.where((activity) {
+        return !activity.title.startsWith('TEST - ');
+      }).toList();
       setState(() {
-        _activities = results;
+        _activities = filteredResults;
       });
     } catch (_) {
       setState(() {

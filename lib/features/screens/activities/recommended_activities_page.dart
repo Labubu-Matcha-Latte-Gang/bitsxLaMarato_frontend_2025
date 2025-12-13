@@ -47,8 +47,13 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       print('DEBUG - Fetching recommended activity from API...');
       final results = await _api.fetchRecommendedActivities();
 
-      if (results.isNotEmpty) {
-        final activity = results.first;
+      // Filtrar activitats que comencen amb "TEST - "
+      final filteredResults = results.where((activity) {
+        return !activity.title.startsWith('TEST - ');
+      }).toList();
+
+      if (filteredResults.isNotEmpty) {
+        final activity = filteredResults.first;
         print('DEBUG - ✓ Recommended activity loaded successfully');
         print('DEBUG - Activity ID: ${activity.id}');
         print('DEBUG - Activity Title: ${activity.title}');
@@ -60,7 +65,8 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       }
 
       setState(() {
-        _recommendedActivity = results.isNotEmpty ? results.first : null;
+        _recommendedActivity =
+            filteredResults.isNotEmpty ? filteredResults.first : null;
       });
     } catch (e) {
       print('DEBUG - ✗ Error loading recommended activity: $e');
