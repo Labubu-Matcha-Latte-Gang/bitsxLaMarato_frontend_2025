@@ -8,6 +8,7 @@ import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
+import 'diary.dart';
 
 class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -344,6 +345,26 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) => AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Diari Personal',
+                                  description:
+                                      'Respon les preguntes del teu diari per fer seguiment del teu progrés.',
+                                  icon: Icons.book,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => DiaryPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),

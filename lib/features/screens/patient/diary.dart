@@ -64,11 +64,12 @@ class _DiaryPageState extends State<DiaryPage> {
   void _submitAnswer() {
     // Placeholder per la funcionalitat d'enviar la resposta
     final answer = _answerController.text.trim();
-    
+
     if (answer.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Si us plau, escriu una resposta abans de continuar.'),
+          content:
+              const Text('Si us plau, escriu una resposta abans de continuar.'),
           backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
         ),
       );
