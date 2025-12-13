@@ -192,25 +192,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
   void _nextPhase() {
     _timer.cancel();
 
-    // Save phase time
-    switch (_currentPhase) {
-      case _SroopPhase.words:
-        _wordsTime = _phaseDuration - _timeRemaining;
-        setState(() => _currentPhase = _SroopPhase.colors);
-        break;
-      case _SroopPhase.colors:
-        _colorsTime = _phaseDuration - _timeRemaining;
-        setState(() => _currentPhase = _SroopPhase.interference);
-        break;
-      case _SroopPhase.interference:
-        _interferenceTime = _phaseDuration - _timeRemaining;
-        setState(() => _currentPhase = _SroopPhase.results);
-        return;
-      case _SroopPhase.results:
-        return;
-    }
-
-    _initializePhase();
+    // Only one phase (interference), go directly to results
+    setState(() => _currentPhase = _SroopPhase.results);
   }
 
   double _calculateScore() {
@@ -689,15 +672,6 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   String _getPhaseName() {
-    switch (_currentPhase) {
-      case _SroopPhase.words:
-        return 'Fase 1: Paraules';
-      case _SroopPhase.colors:
-        return 'Fase 2: Colors';
-      case _SroopPhase.interference:
-        return 'Fase 3: Interferència';
-      case _SroopPhase.results:
-        return 'Resultats';
-    }
+    return 'Test de Stroop - Fase d\'Interferència';
   }
 }
