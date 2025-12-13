@@ -3,7 +3,8 @@ import 'dart:io' show File;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:open_filex/open_filex.dart';
@@ -138,6 +139,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       _qrFullscreen = !_qrFullscreen;
     });
   }
+
   Future<void> _downloadReport() async {
     setState(() {
       _downloadingPdf = true;
@@ -147,8 +149,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       final bytes = await ApiService.downloadPatientReport(widget.patientEmail);
       if (!mounted) return;
 
-      final filename =
-          'informe_.pdf';
+      final filename = 'informe_.pdf';
       if (kIsWeb) {
         final blob = html.Blob([bytes], 'application/pdf');
         final url = html.Url.createObjectUrlFromBlob(blob);
@@ -298,7 +299,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   double _calculateLuminance(Color color) {
     double channelToLinear(int channel) {
       final double c = channel / 255.0;
-      return c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
+      return c <= 0.03928
+          ? c / 12.92
+          : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
     }
 
     final double r = channelToLinear(color.red);
@@ -313,6 +316,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${hex.substring(2)}';
   }
+
   @override
   Widget build(BuildContext context) {
     final bg = DoctorColors.background(isDarkMode);
@@ -465,21 +469,23 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     return parts.join(' ');
   }
 
-  String _formatMeasurement(num? value, String unit,
-      {int fractionDigits = 0}) {
+  String _formatMeasurement(num? value, String unit, {int fractionDigits = 0}) {
     if (value == null) return '—';
     final double numericValue = value.toDouble();
     final bool hasDecimals =
-        numericValue - numericValue.truncateToDouble() != 0 || fractionDigits > 0;
+        numericValue - numericValue.truncateToDouble() != 0 ||
+            fractionDigits > 0;
     final int digits = hasDecimals ? math.max(1, fractionDigits) : 0;
-    final String formatted =
-        digits > 0 ? numericValue.toStringAsFixed(digits) : numericValue.toStringAsFixed(0);
+    final String formatted = digits > 0
+        ? numericValue.toStringAsFixed(digits)
+        : numericValue.toStringAsFixed(0);
     return '$formatted $unit';
   }
 
   String _formatScore(double? score) {
     if (score == null) return '—';
-    final value = score >= 10 ? score.toStringAsFixed(0) : score.toStringAsFixed(1);
+    final value =
+        score >= 10 ? score.toStringAsFixed(0) : score.toStringAsFixed(1);
     return value;
   }
 
@@ -613,41 +619,65 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   }
 
   Widget _buildActionsRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _downloadingPdf ? null : _downloadReport,
-            icon: _downloadingPdf
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.picture_as_pdf_outlined),
-            label: Text(
-              _downloadingPdf ? 'Descarregant...' : 'Descarregar informe',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DoctorColors.primary(isDarkMode),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= 620;
+        final double maxRowWidth = isWide ? 640 : constraints.maxWidth;
+        final double primaryButtonWidth = isWide ? 360 : double.infinity;
+
+        return Align(
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxRowWidth),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: primaryButtonWidth,
+                  child: ElevatedButton.icon(
+                    onPressed: _downloadingPdf ? null : _downloadReport,
+                    icon: _downloadingPdf
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.picture_as_pdf_outlined),
+                    label: Text(
+                      _downloadingPdf
+                          ? 'Descarregant...'
+                          : 'Descarregar informe',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DoctorColors.primary(isDarkMode),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 52,
+                  height: 48,
+                  child: IconButton.filledTonal(
+                    onPressed: _loadPatientData,
+                    icon: const Icon(Icons.refresh),
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          DoctorColors.secondary(isDarkMode).withOpacity(0.2),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        IconButton.filledTonal(
-          onPressed: _loadPatientData,
-          icon: const Icon(Icons.refresh),
-          style: IconButton.styleFrom(
-            backgroundColor:
-                DoctorColors.secondary(isDarkMode).withOpacity(0.2),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -752,6 +782,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       ),
     );
   }
+
   Widget _buildQrFrame(double dimension, Widget child) {
     return Container(
       width: dimension,
@@ -781,7 +812,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     try {
       final commaIndex = _qrDataUri!.indexOf(',');
-      final bool isDataUri = _qrDataUri!.startsWith('data:') && commaIndex != -1;
+      final bool isDataUri =
+          _qrDataUri!.startsWith('data:') && commaIndex != -1;
       if (isDataUri) {
         final String header = _qrDataUri!.substring(5, commaIndex);
         final String dataPart = _qrDataUri!.substring(commaIndex + 1);
@@ -1180,31 +1212,30 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           ),
           const SizedBox(height: 10),
           ...questions.take(4).map(
-                (q) {
-                  final analysisChips = q.analysis.entries
-                      .map((entry) =>
-                          '${entry.key}: ${entry.value.toStringAsFixed(2)}')
-                      .toList();
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: _HistoryTile(
-                      icon: Icons.question_answer_outlined,
-                      iconColor: DoctorColors.secondary(isDarkMode),
-                      title: q.question.text.isNotEmpty
-                          ? q.question.text
-                          : 'Pregunta',
-                      subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
-                      metadata: [
-                        if (q.question.questionType.isNotEmpty)
-                          'Tipus: ${q.question.questionType}',
-                        'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
-                        ...analysisChips,
-                      ],
-                      isDarkMode: isDarkMode,
-                    ),
-                  );
-                },
-              ),
+            (q) {
+              final analysisChips = q.analysis.entries
+                  .map((entry) =>
+                      '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+                  .toList();
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: _HistoryTile(
+                  icon: Icons.question_answer_outlined,
+                  iconColor: DoctorColors.secondary(isDarkMode),
+                  title:
+                      q.question.text.isNotEmpty ? q.question.text : 'Pregunta',
+                  subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
+                  metadata: [
+                    if (q.question.questionType.isNotEmpty)
+                      'Tipus: ${q.question.questionType}',
+                    'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
+                    ...analysisChips,
+                  ],
+                  isDarkMode: isDarkMode,
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -1248,6 +1279,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     );
   }
 }
+
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -1408,7 +1440,8 @@ class _HistoryTile extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                      color:
+                          DoctorColors.secondary(isDarkMode).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1776,12 +1809,10 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
     final Color secondaryTextColor =
         DoctorColors.textSecondary(widget.isDarkMode);
 
-    final Color backgroundColor = widget.role == _QRColorRole.back
-        ? _currentColor
-        : widget.pairedColor;
-    final Color foregroundColor = widget.role == _QRColorRole.fill
-        ? _currentColor
-        : widget.pairedColor;
+    final Color backgroundColor =
+        widget.role == _QRColorRole.back ? _currentColor : widget.pairedColor;
+    final Color foregroundColor =
+        widget.role == _QRColorRole.fill ? _currentColor : widget.pairedColor;
 
     final EdgeInsets viewInsets = MediaQuery.of(context).viewInsets;
 
