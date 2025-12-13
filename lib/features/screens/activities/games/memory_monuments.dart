@@ -7,46 +7,46 @@ import '../../../../utils/effects/particle_system.dart';
 import '../../../../services/api_service.dart';
 import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
-/// Memory Animals: identical UI/logic as Memory, fixed to Animals set.
-class MemoryGameAnimals extends StatefulWidget {
+/// Memory Monuments: identical UI/logic as Memory, fixed to Monuments set.
+class MemoryGameMonuments extends StatefulWidget {
   final bool isDarkMode;
   final String? activityId;
 
-  const MemoryGameAnimals({
+  const MemoryGameMonuments({
     super.key,
     this.isDarkMode = false,
     this.activityId,
   });
 
   @override
-  State<MemoryGameAnimals> createState() => _MemoryGameAnimalsState();
+  State<MemoryGameMonuments> createState() => _MemoryGameMonumentsState();
 }
 
-class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
+class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
   late bool isDarkMode;
 
-  static const List<String> _animalsImages = [
-    'lib/features/screens/activities/cardsMemory/animales/aguila.png',
-    'lib/features/screens/activities/cardsMemory/animales/ballena.png',
-    'lib/features/screens/activities/cardsMemory/animales/cerdo.png',
-    'lib/features/screens/activities/cardsMemory/animales/cuervo.png',
-    'lib/features/screens/activities/cardsMemory/animales/elefante.png',
-    'lib/features/screens/activities/cardsMemory/animales/gallina.png',
-    'lib/features/screens/activities/cardsMemory/animales/iguana.png',
-    'lib/features/screens/activities/cardsMemory/animales/jirafa.png',
-    'lib/features/screens/activities/cardsMemory/animales/leon.png',
-    'lib/features/screens/activities/cardsMemory/animales/loro.png',
-    'lib/features/screens/activities/cardsMemory/animales/panda.png',
-    'lib/features/screens/activities/cardsMemory/animales/pantera.png',
-    'lib/features/screens/activities/cardsMemory/animales/rinoceronte.png',
-    'lib/features/screens/activities/cardsMemory/animales/tiburon.png',
-    'lib/features/screens/activities/cardsMemory/animales/vaca.png',
+  static const List<String> _monumentsImages = [
+    'lib/features/screens/activities/cardsMemory/historic/angkor-wat.png',
+    'lib/features/screens/activities/cardsMemory/historic/atenas.png',
+    'lib/features/screens/activities/cardsMemory/historic/aztecas.png',
+    'lib/features/screens/activities/cardsMemory/historic/coliseo.png',
+    'lib/features/screens/activities/cardsMemory/historic/eiffel.png',
+    'lib/features/screens/activities/cardsMemory/historic/esfinge.png',
+    'lib/features/screens/activities/cardsMemory/historic/estatua.libertad.png',
+    'lib/features/screens/activities/cardsMemory/historic/jesucristo-brazil.png',
+    'lib/features/screens/activities/cardsMemory/historic/meca.png',
+    'lib/features/screens/activities/cardsMemory/historic/moai.png',
+    'lib/features/screens/activities/cardsMemory/historic/muralla-china.png',
+    'lib/features/screens/activities/cardsMemory/historic/piramides.png',
+    'lib/features/screens/activities/cardsMemory/historic/sagrada-familia.png',
+    'lib/features/screens/activities/cardsMemory/historic/stonehenge.png',
+    'lib/features/screens/activities/cardsMemory/historic/taj-mahal.png',
   ];
 
   static const String _cardBack =
-      'lib/features/screens/activities/cardsMemory/animales/reverso-animales.png';
+      'lib/features/screens/activities/cardsMemory/historic/reverso.png';
 
-  List<String> get _currentImages => _animalsImages;
+  List<String> get _currentImages => _monumentsImages;
   String get _currentCardBack => _cardBack;
 
   late List<_MemoryCard> _cards;
@@ -322,7 +322,7 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
   }
 
   Color _getAccentColor() {
-    return isDarkMode ? const Color(0xFF80CBC4) : const Color(0xFF00796B);
+    return isDarkMode ? const Color(0xFF90CAF9) : const Color(0xFF1565C0);
   }
 
   @override
@@ -375,7 +375,7 @@ class _MemoryGameAnimalsState extends State<MemoryGameAnimals> {
                         ),
                       ),
                       Text(
-                        'Memory (Animals)',
+                        'Memory (Monuments)',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
