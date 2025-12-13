@@ -137,23 +137,11 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                                 return Icon(
                                   Icons.local_hospital,
                                   size: 60,
-                                  color: AppColors.getPrimaryTextColor(
-                                      isDarkMode),
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode),
                                 );
                               },
                             ),
-                          ),
-                        ),
-                                                    isDarkMode),
-                                            letterSpacing: 3,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],
