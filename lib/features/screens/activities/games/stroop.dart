@@ -607,7 +607,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
       decoration: BoxDecoration(
         color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
+        border: Border.all(
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,7 +627,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.15),
+                  color: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -643,7 +645,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
           Text(
             description,
             style: TextStyle(
-              color: DoctorColors.textSecondary(isDarkMode),
+              color: AppColors.getSecondaryTextColor(isDarkMode),
               fontSize: 13,
             ),
           ),
