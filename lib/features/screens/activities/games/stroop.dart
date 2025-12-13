@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../utils/doctor_colors.dart';
+import '../../../utils/app_colors.dart';
 
 class SroopTestPage extends StatefulWidget {
   final bool isDarkMode;
