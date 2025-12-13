@@ -1296,15 +1296,38 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          ...graphs.map(
-            (graph) => Padding(
+          ...graphs.asMap().entries.map((entry) {
+            final int idx = entry.key;
+            final graph = entry.value;
+            // Custom titles and descriptions for the first four graphs.
+            const titles = <String>[
+              'Progressió de puntuacions',
+              'Puntuació mitjana per àmbit',
+              'Evolució de velocitat',
+              'Progressió global',
+            ];
+            const descriptions = <String>[
+              'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
+              'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
+              'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
+              'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
+            ];
+
+            final String? customTitle =
+                idx < titles.length ? titles[idx] : null;
+            final String? customDesc =
+                idx < descriptions.length ? descriptions[idx] : null;
+
+            return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _GraphCard(
                 graph: graph,
                 isDarkMode: isDarkMode,
+                titleOverride: customTitle,
+                description: customDesc,
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -1525,15 +1548,20 @@ class _ScoreBadge extends StatelessWidget {
 class _GraphCard extends StatelessWidget {
   final GraphFile graph;
   final bool isDarkMode;
+  final String? titleOverride;
+  final String? description;
 
   const _GraphCard({
     required this.graph,
     required this.isDarkMode,
+    this.titleOverride,
+    this.description,
   });
 
   @override
   Widget build(BuildContext context) {
-    final title = graph.filename.isNotEmpty ? graph.filename : 'Gràfic';
+    final title = titleOverride ??
+        (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1552,13 +1580,22 @@ class _GraphCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            graph.contentType,
-            style: TextStyle(
-              color: DoctorColors.textSecondary(isDarkMode),
-              fontSize: 12,
+          if ((description ?? '').isNotEmpty)
+            Text(
+              description!,
+              style: TextStyle(
+                color: DoctorColors.textSecondary(isDarkMode),
+                fontSize: 12,
+              ),
+            )
+          else
+            Text(
+              graph.contentType,
+              style: TextStyle(
+                color: DoctorColors.textSecondary(isDarkMode),
+                fontSize: 12,
+              ),
             ),
-          ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -1613,7 +1650,7 @@ class _GraphContentRenderer extends StatelessWidget {
       return LayoutBuilder(
         builder: (context, constraints) {
           final double w = constraints.maxWidth;
-          final double h = (w / (16 / 9)).clamp(220.0, 420.0);
+          final double h = (w / (16 / 9)).clamp(200.0, 480.0);
           return SizedBox(
             height: h,
             child: _HtmlGraphView(
@@ -1723,6 +1760,22 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant _HtmlGraphView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final bool themeChanged = oldWidget.isDarkMode != widget.isDarkMode;
+    final bool contentChanged = oldWidget.graph.content != widget.graph.content;
+    if (themeChanged || contentChanged) {
+      _htmlContent = _decodeHtmlContent(widget.graph.content);
+      if (_htmlContent == null) return;
+      if (kIsWeb && _iframeElement != null) {
+        _iframeElement!.srcdoc = _htmlContent!;
+      } else if (_supportsNativeWebView && _webViewController != null) {
+        _webViewController!.loadHtmlString(_htmlContent!);
+      }
+    }
+  }
+
   String? _decodeHtmlContent(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return null;
@@ -1779,33 +1832,56 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
     html, body {
       margin: 0; padding: 0; background: transparent; color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+      height: 100%;
+      line-height: 1.35;
+      -webkit-text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+      color-scheme: ${dark ? 'dark' : 'light'};
     }
-    /* Container to constrain content width and add padding */
+    /* Universal box sizing */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* Responsive container that fills the iframe/webview */
     .graph-container {
-      box-sizing: border-box;
+      display: flex; align-items: stretch; justify-content: center;
       width: 100%; height: 100%;
-      padding: 8px;
-      background: transparent;
+      padding: 8px; background: transparent; overflow: hidden;
     }
-    /* Make images and SVGs scale to container width */
-    img, svg, canvas {
-      max-width: 100%; height: auto; display: block;
+    .graph-inner {
+      flex: 1 1 auto; min-width: 0; min-height: 0;
+      width: 100%; height: 100%;
     }
-    /* Tables/charts common resets */
+
+    /* Make visual elements scale nicely */
+    img, svg, canvas, iframe { display: block; max-width: 100% !important; }
+    img, svg, canvas { width: 100% !important; height: auto !important; }
+    svg[height], canvas[height] { height: auto !important; }
+
+    /* Common chart library containers */
+    .plotly, .js-plotly-plot, .chartjs-render-monitor, .chart-container,
+    .echarts, [data-echarts] {
+      width: 100% !important; height: 100% !important;
+    }
+
+    /* Tables inside graphs */
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid var(--border); padding: 6px; }
-    /* If chart libs inject fixed sizes, allow them to shrink in flex */
-    .responsive { width: 100% !important; height: auto !important; }
-    /* Text */
-    h1 { font-size: 1.25rem; margin: 0 0 8px; }
-    h2 { font-size: 1.1rem; margin: 0 0 6px; }
+
+    /* Typography scales */
+    body { font-size: clamp(12px, 1.5vw, 16px); }
+    h1 { font-size: clamp(16px, 2vw, 20px); margin: 0 0 8px; }
+    h2 { font-size: clamp(14px, 1.8vw, 18px); margin: 0 0 6px; }
     p { margin: 0 0 6px; }
+
+    /* Small screens tweaks */
+    @media (max-width: 420px) {
+      .graph-container { padding: 6px; }
+      th, td { padding: 5px; }
+    }
   </style>
 </head>
 <body>
-  <div class="graph-container">
-    $body
-  </div>
+  <div class="graph-container"><div class="graph-inner">$body</div></div>
 </body>
 </html>
 ''';
