@@ -309,6 +309,8 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                               color: AppColors.getTertiaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
+                              decorationColor:
+                                  AppColors.getTertiaryTextColor(isDarkMode),
                             ),
                           ),
                         ),

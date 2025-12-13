@@ -390,28 +390,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 15),
 
-                        // Link "T'has oblidat de la contrasenya?"
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: Implementar recuperación de contraseña
-                              },
-                              child: Text(
-                                'T\'has oblidat de la contrasenya?',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.getTertiaryTextColor(
-                                      isDarkMode),
-                                  fontWeight: FontWeight.w400,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
                         const SizedBox(height: 25),
 
                         // Botón LOGIN
@@ -469,11 +447,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Nou a LMLG? Registra\'t',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTertiaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
                               decorationColor:
-                                  AppColors.getPrimaryTextColor(isDarkMode),
+                                  AppColors.getTertiaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
