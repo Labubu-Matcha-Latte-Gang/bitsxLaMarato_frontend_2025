@@ -333,10 +333,10 @@ class ApiService {
     }
   }
 
-  static Future<Activity> getActivity(String name) async {
+  static Future<Activity> getActivity(String id) async {
     try {
-      final uri = Uri.parse('$_baseUrl/activity')
-          .replace(queryParameters: {'title': name});
+      final uri =
+          Uri.parse('$_baseUrl/activity').replace(queryParameters: {'id': id});
 
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(

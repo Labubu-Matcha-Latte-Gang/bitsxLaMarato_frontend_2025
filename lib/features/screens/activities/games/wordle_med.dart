@@ -1,16 +1,20 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
 import '../recommended_activities_page.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
   final bool isDarkMode;
-  const WordleScreen({Key? key, this.isDarkMode = true}) : super(key: key);
+  final String? activityId;
+  const WordleScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -45,6 +49,9 @@ class _WordleScreenState extends State<WordleScreen>
 
   DateTime? _gameStartTime;
   Duration _totalTime = Duration.zero;
+  int _elapsedSeconds = 0;
+  bool _isRunning = false;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -145,6 +152,15 @@ class _WordleScreenState extends State<WordleScreen>
     for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
       keyStates[String.fromCharCode(c)] = LetterState.initial;
     setState(() {});
+
+    // Start timing
+    _gameStartTime = DateTime.now();
+    _elapsedSeconds = 0;
+    _isRunning = true;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_isRunning) _elapsedSeconds++;
+    });
   }
 
   // Show dialog
@@ -183,6 +199,7 @@ class _WordleScreenState extends State<WordleScreen>
   @override
   void dispose() {
     _shakeController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -283,10 +300,12 @@ class _WordleScreenState extends State<WordleScreen>
 
     if (guess == secretWord) {
       _recordGameTime();
+      _isRunning = false;
       _calculateScore();
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
       _recordGameTime();
+      _isRunning = false;
       _calculateScore();
       _showResultDialog(won: false);
     }
@@ -394,6 +413,31 @@ class _WordleScreenState extends State<WordleScreen>
         );
       },
     );
+  }
+
+  Future<bool> _submitActivityResult(double score) async {
+    if (!mounted) return true;
+    if (widget.activityId == null) return true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        content: SizedBox(height: 64, child: Center(child: CircularProgressIndicator())),
+      ),
+    );
+    try {
+      final request = ActivityCompleteRequest(
+        id: widget.activityId!,
+        score: score,
+        secondsToFinish: _elapsedSeconds.toDouble(),
+      );
+      await ApiService.completeActivity(request);
+      if (mounted) Navigator.of(context).pop();
+      return true;
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+      return false;
+    }
   }
 
   @override

@@ -1,16 +1,20 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 import '../recommended_activities_page.dart';
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
   final bool isDarkMode;
-  const WordleScreen({Key? key, this.isDarkMode = true}) : super(key: key);
+  final String? activityId;
+  const WordleScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -45,6 +49,9 @@ class _WordleScreenState extends State<WordleScreen>
 
   DateTime? _gameStartTime;
   Duration _totalTime = Duration.zero;
+  int _elapsedSeconds = 0;
+  bool _isRunning = false;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -145,6 +152,15 @@ class _WordleScreenState extends State<WordleScreen>
     for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
       keyStates[String.fromCharCode(c)] = LetterState.initial;
     setState(() {});
+
+    // Start timing
+    _gameStartTime = DateTime.now();
+    _elapsedSeconds = 0;
+    _isRunning = true;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_isRunning) _elapsedSeconds++;
+    });
   }
 
   // Show dialog
@@ -183,6 +199,7 @@ class _WordleScreenState extends State<WordleScreen>
   @override
   void dispose() {
     _shakeController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -283,10 +300,12 @@ class _WordleScreenState extends State<WordleScreen>
 
     if (guess == secretWord) {
       _recordGameTime();
+      _isRunning = false;
       _calculateScore();
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
       _recordGameTime();
+      _isRunning = false;
       _calculateScore();
       _showResultDialog(won: false);
     }
@@ -383,10 +402,12 @@ class _WordleScreenState extends State<WordleScreen>
           backgroundColor: AppColors.getSecondaryBackgroundColor(isDark),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // close dialog
-                // Navigate back to Recommended Activities page
-                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RecommendedActivitiesPage(initialDarkMode: isDark)));
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final score = _computeScore();
+                final success = await _submitActivityResult(score);
+                if (!mounted) return;
+                if (success) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RecommendedActivitiesPage(initialDarkMode: isDark)));
               },
               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
             ),
@@ -394,6 +415,49 @@ class _WordleScreenState extends State<WordleScreen>
         );
       },
     );
+  }
+
+  double _computeScore() {
+    try {
+      return _computeScoreDetailed(won: true);
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  Future<bool> _submitActivityResult(double score) async {
+    if (!mounted) return true;
+    if (widget.activityId == null) return true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Enviant resultats...')],
+        ),
+      ),
+    );
+    try {
+      final request = ActivityCompleteRequest(id: widget.activityId!, score: score, secondsToFinish: _elapsedSeconds.toDouble());
+      await ApiService.completeActivity(request);
+      if (!mounted) return true;
+      Navigator.of(context).pop();
+      return true;
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('No s\'ha pogut enviar el resultat: $e'),
+            actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Acceptar'))],
+          ),
+        );
+      }
+      return false;
+    }
   }
 
   @override
