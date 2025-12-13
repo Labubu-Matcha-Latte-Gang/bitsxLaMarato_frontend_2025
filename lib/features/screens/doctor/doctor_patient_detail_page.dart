@@ -1323,10 +1323,17 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
               'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
             ];
 
-            final String? customTitle =
-                idx < titles.length ? titles[idx] : null;
-            final String? customDesc =
-                idx < descriptions.length ? descriptions[idx] : null;
+            // Overrides for last HTML graph take precedence.
+            String? customTitle;
+            String? customDesc;
+            if (idx == lastHtmlIndex) {
+              customTitle = 'Evolució de mètriques de preguntes';
+              customDesc =
+                  'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
+            } else {
+              customTitle = idx < titles.length ? titles[idx] : null;
+              customDesc = idx < descriptions.length ? descriptions[idx] : null;
+            }
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
