@@ -1524,12 +1524,6 @@ class _MicScreenState extends State<MicScreen>
                               ),
                             ),
 
-                          // Ones simulades durant la gravaci?
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 24.0),
-                            child: _buildWaveform(),
-                          ),
                           const SizedBox(height: 12.0),
 
                           // Indicador de c\xe0rrega i preview
@@ -1612,12 +1606,16 @@ class _MicScreenState extends State<MicScreen>
                           const SizedBox(height: 16.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.lock_outline,
-                                size: 18,
-                                color:
-                                    AppColors.getSecondaryTextColor(isDarkMode),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Icon(
+                                  Icons.lock_outline,
+                                  size: 18,
+                                  color: AppColors.getSecondaryTextColor(
+                                      isDarkMode),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Flexible(
