@@ -661,23 +661,23 @@ class _SroopTestPageState extends State<SroopTestPage> {
         Text(
           label,
           style: TextStyle(
-            color: DoctorColors.textSecondary(isDarkMode),
+            color: AppColors.getSecondaryTextColor(isDarkMode),
           ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: errorCount > 0
-                ? DoctorColors.critical(isDarkMode).withOpacity(0.15)
-                : DoctorColors.primary(isDarkMode).withOpacity(0.15),
+                ? AppColors.getErrorColor(isDarkMode).withOpacity(0.15)
+                : AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.15),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
             '$errorCount',
             style: TextStyle(
               color: errorCount > 0
-                  ? DoctorColors.critical(isDarkMode)
-                  : DoctorColors.primary(isDarkMode),
+                  ? AppColors.getErrorColor(isDarkMode)
+                  : AppColors.getPrimaryButtonColor(isDarkMode),
               fontWeight: FontWeight.w700,
             ),
           ),
