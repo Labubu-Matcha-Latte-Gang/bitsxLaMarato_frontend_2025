@@ -11,18 +11,18 @@ import '../../../../services/api_service.dart';
 import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 // Wordle game screen: 8 tries, 5-letter words.
-class WordleScreen extends StatefulWidget {
+class WordleMedScreen extends StatefulWidget {
   final bool isDarkMode;
   final String? activityId;
-  const WordleScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
+  const WordleMedScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
 
   @override
-  State<WordleScreen> createState() => _WordleScreenState();
+  State<WordleMedScreen> createState() => _WordleMedScreenState();
 }
 
 enum LetterState { initial, correct, present, absent }
 
-class _WordleScreenState extends State<WordleScreen>
+class _WordleMedScreenState extends State<WordleMedScreen>
     with SingleTickerProviderStateMixin {
   static const int rows = 6; // changed to 6 guesses x 5 columns (classic Wordle)
   static const int cols = 5;
