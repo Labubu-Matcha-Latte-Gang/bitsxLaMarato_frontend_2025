@@ -250,30 +250,30 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
         // Responsive font sizes
         final headerFontSize = isMobile
-            ? 36.0
+            ? 27.0
             : isTablet
-                ? 44.0
-                : 56.0;
+                ? 33.0
+                : 42.0;
         final itemFontSize = isMobile
-            ? 96.0
+            ? 72.0
             : isTablet
-                ? 128.0
-                : 192.0;
+                ? 96.0
+                : 144.0;
         final buttonFontSize = isMobile
-            ? 32.0
+            ? 24.0
             : isTablet
-                ? 36.0
-                : 44.0;
+                ? 27.0
+                : 33.0;
         final buttonWidth = isMobile
-            ? 180.0
+            ? 135.0
             : isTablet
-                ? 220.0
-                : 280.0;
+                ? 165.0
+                : 210.0;
         final buttonPadding = isMobile
-            ? const EdgeInsets.symmetric(vertical: 28)
+            ? const EdgeInsets.symmetric(vertical: 21)
             : isTablet
-                ? const EdgeInsets.symmetric(vertical: 32)
-                : const EdgeInsets.symmetric(vertical: 40);
+                ? const EdgeInsets.symmetric(vertical: 24)
+                : const EdgeInsets.symmetric(vertical: 30);
         final itemPadding = isMobile
             ? 20.0
             : isTablet
