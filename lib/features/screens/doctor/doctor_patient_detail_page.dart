@@ -1278,6 +1278,16 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       return const SizedBox.shrink();
     }
 
+    // Find the last HTML graph to label it specifically as requested.
+    int lastHtmlIndex = -1;
+    for (int i = graphs.length - 1; i >= 0; i--) {
+      final t = graphs[i].contentType.toLowerCase();
+      if (t.contains('html') || t.contains('htm')) {
+        lastHtmlIndex = i;
+        break;
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
