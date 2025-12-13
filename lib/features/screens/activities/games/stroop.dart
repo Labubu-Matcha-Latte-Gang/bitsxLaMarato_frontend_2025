@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../utils/app_colors.dart';
+import '../../../../utils/app_colors.dart';
 
 class SroopTestPage extends StatefulWidget {
   final bool isDarkMode;
@@ -280,7 +280,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
                     '$_timeRemaining s',
                     style: TextStyle(
                       color: _timeRemaining < 10
-                          ? AppColors.getErrorColor(isDarkMode)
+                          ? Colors.red
                           : AppColors.getPrimaryButtonColor(isDarkMode),
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -418,7 +418,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
             child: Text(
               'Resultats del Test de Stroop',
               style: TextStyle(
-                color: DoctorColors.textPrimary(isDarkMode),
+                color: AppColors.getPrimaryTextColor(isDarkMode),
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -431,11 +431,12 @@ class _SroopTestPageState extends State<SroopTestPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: DoctorColors.primary(isDarkMode),
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: DoctorColors.primary(isDarkMode).withOpacity(0.3),
+                  color: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -468,7 +469,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
           Text(
             'Temps per fase',
             style: TextStyle(
-              color: DoctorColors.textPrimary(isDarkMode),
+              color: AppColors.getPrimaryTextColor(isDarkMode),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -485,7 +486,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
           Text(
             'Desglose de la puntuació',
             style: TextStyle(
-              color: DoctorColors.textPrimary(isDarkMode),
+              color: AppColors.getPrimaryTextColor(isDarkMode),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -517,9 +518,10 @@ class _SroopTestPageState extends State<SroopTestPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: DoctorColors.surface(isDarkMode),
+              color: AppColors.getSecondaryBackgroundColor(isDarkMode),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: DoctorColors.border(isDarkMode)),
+              border: Border.all(
+                  color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,7 +529,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
                 Text(
                   'Resum d\'errors',
                   style: TextStyle(
-                    color: DoctorColors.textPrimary(isDarkMode),
+                    color: AppColors.getPrimaryTextColor(isDarkMode),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -668,7 +670,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: errorCount > 0
-                ? AppColors.getErrorColor(isDarkMode).withOpacity(0.15)
+                ? Colors.red.withOpacity(0.15)
                 : AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.15),
             borderRadius: BorderRadius.circular(6),
           ),
@@ -676,7 +678,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
             '$errorCount',
             style: TextStyle(
               color: errorCount > 0
-                  ? AppColors.getErrorColor(isDarkMode)
+                  ? Colors.red
                   : AppColors.getPrimaryButtonColor(isDarkMode),
               fontWeight: FontWeight.w700,
             ),
