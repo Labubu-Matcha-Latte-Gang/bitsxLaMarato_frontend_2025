@@ -1,0 +1,26 @@
+# DockerfileDev
+FROM ghcr.io/cirruslabs/flutter:3.27.1
+
+WORKDIR /app
+
+# Instalar git y configurar directorio seguro
+RUN sudo apt-get update && sudo apt-get install -y git
+RUN git config --global --add safe.directory /app
+
+# Copiar dependencias e instalar paquetes
+COPY pubspec.yaml pubspec.lock ./
+RUN flutter pub get
+
+RUN flutter precache --web --no-android --no-ios
+
+# Copiar el resto
+COPY . .
+
+# Exponemos el puerto
+EXPOSE 8080
+
+# Definir la variable de entorno para la URL de la API (placeholder) ERNEST NO LO ROMPAS
+ENV API_URL=http://localhost:5000
+
+# Comando de arranque
+CMD flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0 --dart-define=API_URL=$API_URL
