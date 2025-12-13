@@ -29,7 +29,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
   late bool isDarkMode;
 
-  _SroopPhase _currentPhase = _SroopPhase.words;
+  _SroopPhase _currentPhase = _SroopPhase.interference;
   int _phaseProgress = 0; // 0 to _itemsPerPhase
   int _timeRemaining = _phaseDuration;
   late Timer _timer;
@@ -126,7 +126,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   List<_ColorItem> _generateInterferencePhase() {
-    final words = ['VERMELL', 'BLAU', 'VERD', 'GROC', 'NEGRE', 'BLANC'];
+    final words = ['VERMELL', 'BLAU', 'VERD', 'GROC', 'MORAT', 'CIAN'];
     final colors = [
       Colors.red,
       Colors.blue,
