@@ -550,7 +550,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
               icon: const Icon(Icons.check),
               label: const Text('Finalitzar'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: DoctorColors.primary(isDarkMode),
+                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -568,9 +568,9 @@ class _SroopTestPageState extends State<SroopTestPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
+        color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
+        border: Border.all(color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -578,14 +578,14 @@ class _SroopTestPageState extends State<SroopTestPage> {
           Text(
             phaseName,
             style: TextStyle(
-              color: DoctorColors.textPrimary(isDarkMode),
+              color: AppColors.getPrimaryTextColor(isDarkMode),
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
             '$timeInSeconds s',
             style: TextStyle(
-              color: DoctorColors.primary(isDarkMode),
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
