@@ -570,7 +570,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
       decoration: BoxDecoration(
         color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
+        border: Border.all(
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -604,9 +605,9 @@ class _SroopTestPageState extends State<SroopTestPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
+        color: AppColors.getSecondaryBackgroundColor(isDarkMode),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
+        border: Border.all(color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,7 +618,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
               Text(
                 title,
                 style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -625,13 +626,13 @@ class _SroopTestPageState extends State<SroopTestPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: DoctorColors.primary(isDarkMode).withOpacity(0.15),
+                  color: AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   subtitle,
                   style: TextStyle(
-                    color: DoctorColors.primary(isDarkMode),
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
