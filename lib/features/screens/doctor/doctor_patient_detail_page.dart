@@ -464,12 +464,12 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _buildScoresSection(),
           const SizedBox(height: 12),
           _buildQuestionsSection(),
-          if ((_data?.graphFiles ?? []).isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildGraphsSection(),
-          ],
           const SizedBox(height: 16),
           _buildQrSection(),
+          const SizedBox(height: 16),
+          if ((_data?.graphFiles ?? []).isNotEmpty) ...[
+            _buildGraphsSection(),
+          ],
         ],
       ),
     );
