@@ -28,7 +28,8 @@ class MicScreen extends StatefulWidget {
   State<MicScreen> createState() => _MicScreenState();
 }
 
-class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMixin {
+class _MicScreenState extends State<MicScreen>
+    with SingleTickerProviderStateMixin {
   bool isDarkMode = false;
 
   /// Grabador nativo (m\xf3vil / desktop)
@@ -564,7 +565,8 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
             await _startNewMobileRecording();
           }
         } else {
-          print('ERROR - No se obtuvo path del archivo, reiniciando grabaci\xf3n');
+          print(
+              'ERROR - No se obtuvo path del archivo, reiniciando grabaci\xf3n');
           await _startNewMobileRecording();
         }
       }
@@ -635,7 +637,8 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
   Future<void> _splitLongRecording() async {
     // Esta funci\xf3n se puede implementar en el futuro si es necesario
     // Por ahora, simplemente logueamos el evento
-    print('DEBUG - Grabaci\xf3n larga detectada: ${_recordDuration.inSeconds}s');
+    print(
+        'DEBUG - Grabaci\xf3n larga detectada: ${_recordDuration.inSeconds}s');
   }
 
   /// Env\xeda un fragmento grabado en Web con estrategia de buffering para WebM.
@@ -684,7 +687,8 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                 bytes[2] == 0x33)) {
           detectedFormat = 'mp3';
           contentType = 'audio/mpeg';
-          print('\U0001f3b5 DEBUG - MP3 format detected! Using direct upload strategy');
+          print(
+              '\U0001f3b5 DEBUG - MP3 format detected! Using direct upload strategy');
         }
         // Detectar MP4/M4A (header: ftyp)
         else if (bytes.length > 8 &&
@@ -705,7 +709,8 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
             bytes[3] == 0x53) {
           detectedFormat = 'ogg';
           contentType = 'audio/ogg';
-          print('\U0001f3b5 DEBUG - OGG format detected! Using direct upload strategy');
+          print(
+              '\U0001f3b5 DEBUG - OGG format detected! Using direct upload strategy');
         }
       }
 
@@ -1004,37 +1009,36 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
     return '$mm:$ss';
   }
 
-
   Widget _buildWaveform() {
-    final baseColor =
-        _isRecording ? Colors.redAccent : Colors.white.withOpacity(0.3);
-    final barColor = _isRecording
-        ? Colors.white
-        : AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.4);
+    final Color activeColor = _isRecording
+        ? const Color(0xFFEF476F)
+        : AppColors.getPrimaryButtonColor(isDarkMode);
 
     return SizedBox(
-      height: 96,
+      height: 168,
       child: AnimatedBuilder(
         animation: _waveController,
         builder: (context, _) {
           final progress = _waveController.value;
           final bars = List.generate(_waveBarCount, (index) {
             final phase = (progress * 2 * pi) + (index * 0.35);
-            final noise = _waveRandom.nextDouble() * (_isRecording ? 0.35 : 0.15);
+            final noise =
+                _waveRandom.nextDouble() * (_isRecording ? 0.35 : 0.15);
             final normalized = (sin(phase) + 1) / 2;
             final heightFactor = (normalized * 0.7) + noise;
-            final barHeight = 22 + heightFactor * 58;
+            final double barHeight =
+                (22 + heightFactor * 58).clamp(10.0, 120.0);
 
             return Container(
-              width: 5,
+              width: 4,
               height: barHeight,
               decoration: BoxDecoration(
-                color: barColor,
-                borderRadius: BorderRadius.circular(10),
+                color: activeColor,
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: baseColor.withOpacity(0.35),
-                    blurRadius: 8,
+                    color: activeColor.withAlpha(100),
+                    blurRadius: 10,
                     spreadRadius: 1,
                   ),
                 ],
@@ -1072,8 +1076,8 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               decoration: BoxDecoration(
-                color:
-                    AppColors.getBlurContainerColor(isDarkMode).withOpacity(0.95),
+                color: AppColors.getBlurContainerColor(isDarkMode)
+                    .withOpacity(0.95),
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
                   BoxShadow(
@@ -1171,8 +1175,9 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed:
-                          _canNavigateToActivities ? _navigateToActivities : null,
+                      onPressed: _canNavigateToActivities
+                          ? _navigateToActivities
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             AppColors.getPrimaryButtonColor(isDarkMode),
@@ -1214,10 +1219,9 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    final bool baseRecordEnabled =
-        _hasMicPermission &&
-            !_showCompletionOverlay &&
-            (_isRecording || !_isUploading);
+    final bool baseRecordEnabled = _hasMicPermission &&
+        !_showCompletionOverlay &&
+        (_isRecording || !_isUploading);
     final bool stopLocked = _isRecording && !_hasReachedMinimumDuration;
     final bool buttonEnabled = baseRecordEnabled && !stopLocked;
     final bool showMinDurationWarning = _isRecording && stopLocked;
@@ -1345,11 +1349,33 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 28.0, vertical: 8),
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 720),
-                                  child: child,
+                                    horizontal: 24.0, vertical: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        AppColors.getSecondaryBackgroundColor(
+                                            isDarkMode),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.getPrimaryButtonColor(
+                                              isDarkMode)
+                                          .withAlpha((0.4 * 255).round()),
+                                      width: 2,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x1A000000),
+                                        blurRadius: 12,
+                                        offset: Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 720),
+                                    child: child,
+                                  ),
                                 ),
                               );
                             },
@@ -1360,14 +1386,16 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                           if (!_hasMicPermission) ...[
                             Container(
                               padding: const EdgeInsets.all(14),
-                              margin: const EdgeInsets.symmetric(horizontal: 24),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 24),
                               decoration: BoxDecoration(
                                 color:
                                     AppColors.getBlurContainerColor(isDarkMode),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: AppColors.getPrimaryTextColor(isDarkMode)
-                                      .withOpacity(0.15),
+                                  color:
+                                      AppColors.getPrimaryTextColor(isDarkMode)
+                                          .withOpacity(0.15),
                                 ),
                               ),
                               child: Column(
@@ -1411,23 +1439,41 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                           ],
 
                           // Bot\xf3 de micr\xf2fon
-                          RawMaterialButton(
-                            onPressed: micButtonAction,
-                            fillColor: micButtonColor,
-                            shape: const CircleBorder(),
-                            elevation: buttonEnabled ? 4.0 : 0.0,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 96.0,
-                              height: 96.0,
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (_isRecording
+                                          ? const Color(0xFFEF476F)
+                                          : AppColors.getPrimaryButtonColor(
+                                              isDarkMode))
+                                      .withAlpha(150),
+                                  blurRadius: 24,
+                                  spreadRadius: 4,
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              _isRecording ? Icons.stop : Icons.mic,
-                              size: 48.0,
-                              color:
-                                  _isRecording ? Colors.white : Colors.black87,
+                            child: SizedBox(
+                              width: 96,
+                              height: 96,
+                              child: FloatingActionButton(
+                                onPressed: micButtonAction,
+                                shape: const CircleBorder(),
+                                backgroundColor: _isRecording
+                                    ? const Color(0xFFEF476F)
+                                    : AppColors.getPrimaryButtonColor(
+                                        isDarkMode),
+                                foregroundColor: Colors.white,
+                                elevation: buttonEnabled ? 10 : 4,
+                                child: Icon(
+                                  _isRecording ? Icons.stop : Icons.mic,
+                                  size: 40,
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 10.0),
+                          const SizedBox(height: 20.0),
                           Text(
                             _hasMicPermission
                                 ? (_isRecording
@@ -1435,41 +1481,55 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                                     : 'Prem per comen\xe7ar')
                                 : 'Autoritza el micr\xf2fon per gravar',
                             style: TextStyle(
-                              color: AppColors.getSecondaryTextColor(isDarkMode),
+                              color:
+                                  AppColors.getSecondaryTextColor(isDarkMode),
                               fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 12.0),
+                          const SizedBox(height: 20.0),
 
                           // Temporitzador
-                          Text(
-                            _formatDuration(_recordDuration),
-                            style: TextStyle(
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.w700,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 26, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSecondaryBackgroundColor(
+                                  isDarkMode),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color:
+                                    AppColors.getPrimaryButtonColor(isDarkMode)
+                                        .withAlpha((0.35 * 255).round()),
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              _formatDuration(_recordDuration),
+                              style: TextStyle(
+                                color:
+                                    AppColors.getPrimaryTextColor(isDarkMode),
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.4,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 6.0),
+                          const SizedBox(height: 8.0),
                           if (showMinDurationWarning)
                             Padding(
                               padding: const EdgeInsets.only(top: 4.0),
                               child: Text(
                                 'Necessites gravar almenys $_minRecordingSeconds segons abans de poder aturar la gravació.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.orange.shade200,
+                                style: const TextStyle(
+                                  color: Color(0xFFEF476F),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
 
-                          // Ones simulades durant la gravaci?
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            child: _buildWaveform(),
-                          ),
                           const SizedBox(height: 12.0),
 
                           // Indicador de c\xe0rrega i preview
@@ -1477,11 +1537,16 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const SizedBox(
+                                SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2.0),
+                                    strokeWidth: 2.0,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.getPrimaryButtonColor(
+                                          isDarkMode),
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -1489,6 +1554,7 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                                   style: TextStyle(
                                     color: AppColors.getPrimaryTextColor(
                                         isDarkMode),
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
@@ -1501,9 +1567,10 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                               child: Text(
                                 "Hi ha hagut un problema enviant l'\xe0udio. Pots tornar-ho a provar.",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.orange.shade200,
+                                style: const TextStyle(
+                                  color: Color(0xFFEF476F),
                                   fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -1530,22 +1597,31 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
                             child: LinearProgressIndicator(
                               value: (_recordDuration.inSeconds / 60)
                                   .clamp(0.0, 1.0),
-                              backgroundColor: Colors.white.withAlpha(8),
+                              backgroundColor:
+                                  AppColors.getSecondaryBackgroundColor(
+                                          isDarkMode)
+                                      .withOpacity(0.35),
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 _isRecording
-                                    ? Colors.redAccent
-                                    : AppColors.getPrimaryButtonColor(isDarkMode),
+                                    ? const Color(0xFFEF476F)
+                                    : AppColors.getPrimaryButtonColor(
+                                        isDarkMode),
                               ),
                             ),
                           ),
                           const SizedBox(height: 16.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.lock_outline,
-                                size: 18,
-                                color: AppColors.getSecondaryTextColor(isDarkMode),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Icon(
+                                  Icons.lock_outline,
+                                  size: 18,
+                                  color: AppColors.getSecondaryTextColor(
+                                      isDarkMode),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Flexible(
@@ -1575,5 +1651,4 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
       ),
     );
   }
-
 }
