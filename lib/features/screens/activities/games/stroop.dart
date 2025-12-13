@@ -241,105 +241,162 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   Widget _buildTestScreen() {
-    return Column(
-      children: [
-        // Header with phase info
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isMobile = screenWidth < 600;
+        final isTablet = screenWidth >= 600 && screenWidth < 1024;
+        final isDesktop = screenWidth >= 1024;
+
+        // Responsive font sizes
+        final headerFontSize = isMobile
+            ? 16.0
+            : isTablet
+                ? 18.0
+                : 22.0;
+        final itemFontSize = isMobile
+            ? 36.0
+            : isTablet
+                ? 48.0
+                : 72.0;
+        final buttonFontSize = isMobile
+            ? 11.0
+            : isTablet
+                ? 13.0
+                : 16.0;
+        final buttonWidth = isMobile
+            ? 70.0
+            : isTablet
+                ? 85.0
+                : 100.0;
+        final buttonPadding = isMobile
+            ? const EdgeInsets.symmetric(vertical: 10)
+            : isTablet
+                ? const EdgeInsets.symmetric(vertical: 12)
+                : const EdgeInsets.symmetric(vertical: 16);
+        final itemPadding = isMobile
+            ? 20.0
+            : isTablet
+                ? 32.0
+                : 48.0;
+        final spaceBetweenSections = isMobile
+            ? 24.0
+            : isTablet
+                ? 32.0
+                : 48.0;
+
+        return Column(
+          children: [
+            // Header with phase info
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 12 : 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _getPhaseName(),
-                    style: TextStyle(
-                      color: AppColors.getPrimaryTextColor(isDarkMode),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _getPhaseName(),
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontSize: headerFontSize,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '$_timeRemaining s',
+                        style: TextStyle(
+                          color: _timeRemaining < 10
+                              ? Colors.red
+                              : AppColors.getPrimaryButtonColor(isDarkMode),
+                          fontSize: headerFontSize,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: _phaseProgress / _itemsPerPhase,
+                      minHeight: 6,
+                      backgroundColor:
+                          AppColors.getSecondaryTextColor(isDarkMode)
+                              .withOpacity(0.2),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.getPrimaryButtonColor(isDarkMode),
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
-                    '$_timeRemaining s',
+                    '$_phaseProgress / $_itemsPerPhase',
                     style: TextStyle(
-                      color: _timeRemaining < 10
-                          ? Colors.red
-                          : AppColors.getPrimaryButtonColor(isDarkMode),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      color: AppColors.getSecondaryTextColor(isDarkMode),
+                      fontSize: isMobile ? 11.0 : 12.0,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: _phaseProgress / _itemsPerPhase,
-                  minHeight: 6,
-                  backgroundColor: AppColors.getSecondaryTextColor(isDarkMode)
-                      .withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.getPrimaryButtonColor(isDarkMode),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$_phaseProgress / $_itemsPerPhase',
-                style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(isDarkMode),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Main content
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Display current item
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-                    ),
-                  ),
-                  child: Text(
-                    _currentItem.label,
-                    style: TextStyle(
-                      color: _currentItem.color,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                // Color buttons for answer
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: _buildAnswerButtons(),
-                ),
-              ],
             ),
-          ),
-        ),
-      ],
+            // Main content
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Display current item
+                    Container(
+                      padding: EdgeInsets.all(itemPadding),
+                      decoration: BoxDecoration(
+                        color:
+                            AppColors.getSecondaryBackgroundColor(isDarkMode),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color:
+                              AppColors.getSecondaryBackgroundColor(isDarkMode),
+                        ),
+                      ),
+                      child: Text(
+                        _currentItem.label,
+                        style: TextStyle(
+                          color: _currentItem.color,
+                          fontSize: itemFontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: spaceBetweenSections),
+                    // Color buttons for answer
+                    Wrap(
+                      spacing: isMobile ? 8 : 12,
+                      runSpacing: isMobile ? 8 : 12,
+                      alignment: WrapAlignment.center,
+                      children: _buildAnswerButtons(
+                        buttonWidth: buttonWidth,
+                        buttonPadding: buttonPadding,
+                        buttonFontSize: buttonFontSize,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  List<Widget> _buildAnswerButtons() {
+  List<Widget> _buildAnswerButtons({
+    required double buttonWidth,
+    required EdgeInsets buttonPadding,
+    required double buttonFontSize,
+  }) {
     final colors = [
       ('VERMELL', Colors.red),
       ('BLAU', Colors.blue),
@@ -353,20 +410,23 @@ class _SroopTestPageState extends State<SroopTestPage> {
       final label = item.$1;
       final color = item.$2;
       return SizedBox(
-        width: 80,
+        width: buttonWidth,
         child: ElevatedButton(
           onPressed: () => _handleAnswer(label),
           style: ElevatedButton.styleFrom(
             backgroundColor: color.withOpacity(isDarkMode ? 0.7 : 1),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: buttonPadding,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: buttonFontSize,
+              fontWeight: FontWeight.w600,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
