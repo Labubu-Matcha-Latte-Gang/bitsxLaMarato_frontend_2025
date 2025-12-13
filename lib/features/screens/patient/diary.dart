@@ -36,7 +36,7 @@ class _DiaryPageState extends State<DiaryPage>
   String? _errorMessage;
 
   // Audio recording variables (matching mic.dart exactly)
-  final Record _recorder = AudioRecorder();
+  final AudiRecorder _recorder = Record();
   bool _isRecording = false;
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
