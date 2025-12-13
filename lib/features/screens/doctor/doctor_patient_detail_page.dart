@@ -607,14 +607,53 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 2.8,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      children: cards,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+
+        // Phones: single column with comfortable spacing.
+        if (width < 520) {
+          return GridView.count(
+            crossAxisCount: 1,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.9,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            children: cards,
+          );
+        }
+
+        // Tablets / small desktop: two columns.
+        if (width < 900) {
+          return GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.6,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            children: cards,
+          );
+        }
+
+        // Wide desktop: responsive max-extent grid to add columns gracefully.
+        final double maxExtent = width >= 1200 ? 260 : 300;
+        final double aspectRatio = width >= 1200 ? 2.3 : 2.5;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: maxExtent,
+            childAspectRatio: aspectRatio,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemCount: cards.length,
+          itemBuilder: (context, index) => cards[index],
+        );
+      },
     );
   }
 
