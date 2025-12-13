@@ -36,12 +36,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
   late Timer _timer;
   bool _isRunning = false;
 
-  int _wordsErrors = 0;
-  int _colorsErrors = 0;
   int _interferenceErrors = 0;
-
-  int _wordsTime = _phaseDuration;
-  int _colorsTime = _phaseDuration;
   int _interferenceTime = _phaseDuration;
 
   // Current item being displayed
@@ -60,21 +55,12 @@ class _SroopTestPageState extends State<SroopTestPage> {
     _timeRemaining = _phaseDuration;
     _isRunning = true;
 
-    switch (_currentPhase) {
-      case _SroopPhase.words:
-        _currentPhaseItems = _generateWordsPhase();
-        break;
-      case _SroopPhase.colors:
-        _currentPhaseItems = _generateColorsPhase();
-        break;
-      case _SroopPhase.interference:
-        _currentPhaseItems = _generateInterferencePhase();
-        break;
-      case _SroopPhase.results:
-        _isRunning = false;
-        return;
+    if (_currentPhase == _SroopPhase.results) {
+      _isRunning = false;
+      return;
     }
 
+    _currentPhaseItems = _generateInterferencePhase();
     _currentItem = _currentPhaseItems[_phaseProgress];
     _startTimer();
   }
@@ -90,40 +76,6 @@ class _SroopTestPageState extends State<SroopTestPage> {
         }
       });
     });
-  }
-
-  List<_ColorItem> _generateWordsPhase() {
-    final colors = [
-      _ColorItem('VERMELL', Colors.black),
-      _ColorItem('BLAU', Colors.black),
-      _ColorItem('VERD', Colors.black),
-      _ColorItem('GROC', Colors.black),
-      _ColorItem('NEGRE', Colors.black),
-      _ColorItem('BLANC', Colors.black),
-    ];
-
-    final items = <_ColorItem>[];
-    for (int i = 0; i < _itemsPerPhase; i++) {
-      items.add(colors[i % colors.length]);
-    }
-    return items;
-  }
-
-  List<_ColorItem> _generateColorsPhase() {
-    final colorOptions = [
-      _ColorItem('XXXX', Colors.red),
-      _ColorItem('XXXX', Colors.blue),
-      _ColorItem('XXXX', Colors.green),
-      _ColorItem('XXXX', Colors.amber),
-      _ColorItem('XXXX', Colors.purple),
-      _ColorItem('XXXX', Colors.cyan),
-    ];
-
-    final items = <_ColorItem>[];
-    for (int i = 0; i < _itemsPerPhase; i++) {
-      items.add(colorOptions[i % colorOptions.length]);
-    }
-    return items;
   }
 
   List<_ColorItem> _generateInterferencePhase() {
@@ -151,19 +103,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
     final correctColor = _getCorrectColorLabel(_currentItem.color);
 
     if (selectedLabel != correctColor) {
-      switch (_currentPhase) {
-        case _SroopPhase.words:
-          _wordsErrors++;
-          break;
-        case _SroopPhase.colors:
-          _colorsErrors++;
-          break;
-        case _SroopPhase.interference:
-          _interferenceErrors++;
-          break;
-        case _SroopPhase.results:
-          break;
-      }
+      _interferenceErrors++;
     }
 
     _nextItem();
@@ -198,26 +138,10 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   double _calculateScore() {
-    // Part A: Precision (max 5 points)
-    final double precisionScore = (5 - (_interferenceErrors * 0.5)).clamp(0, 5);
-
-    // Part B: Interference Resistance (max 5 points)
-    final int interferenceIndex = _interferenceTime - _colorsTime;
-    double resistanceScore = 5;
-
-    if (interferenceIndex < 2) {
-      resistanceScore = 5;
-    } else if (interferenceIndex < 5) {
-      resistanceScore = 4;
-    } else if (interferenceIndex < 10) {
-      resistanceScore = 3;
-    } else if (interferenceIndex < 15) {
-      resistanceScore = 2;
-    } else {
-      resistanceScore = 1;
-    }
-
-    return precisionScore + resistanceScore;
+    // Puntuación basada solo en precisión (max 10 points)
+    final double precisionScore =
+        (10 - (_interferenceErrors * 0.5)).clamp(0, 10);
+    return precisionScore;
   }
 
   @override
@@ -289,21 +213,25 @@ class _SroopTestPageState extends State<SroopTestPage> {
           children: [
             // Header with phase info
             Padding(
-              padding: EdgeInsets.all(isMobile ? 12 : 16),
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _getPhaseName(),
-                        style: TextStyle(
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                          fontSize: headerFontSize,
-                          fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: Text(
+                          _getPhaseName(),
+                          style: TextStyle(
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                            fontSize: headerFontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '$_timeRemaining s',
                         style: TextStyle(
@@ -436,21 +364,6 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
   Widget _buildResultsScreen() {
     final totalScore = _calculateScore();
-    final precisionScore = (5 - (_interferenceErrors * 0.5)).clamp(0, 5);
-    final interferenceIndex = _interferenceTime - _colorsTime;
-
-    double resistanceScore = 5;
-    if (interferenceIndex < 2) {
-      resistanceScore = 5;
-    } else if (interferenceIndex < 5) {
-      resistanceScore = 4;
-    } else if (interferenceIndex < 10) {
-      resistanceScore = 3;
-    } else if (interferenceIndex < 15) {
-      resistanceScore = 2;
-    } else {
-      resistanceScore = 1;
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -509,9 +422,9 @@ class _SroopTestPageState extends State<SroopTestPage> {
           ),
           const SizedBox(height: 24),
 
-          // Phase Times
+          // Phase Time
           Text(
-            'Temps per fase',
+            'Temps de la prova',
             style: TextStyle(
               color: AppColors.getPrimaryTextColor(isDarkMode),
               fontSize: 16,
@@ -519,16 +432,12 @@ class _SroopTestPageState extends State<SroopTestPage> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildPhaseTimeCard('Fase de Paraules (P)', _wordsTime),
-          const SizedBox(height: 8),
-          _buildPhaseTimeCard('Fase de Colors (C)', _colorsTime),
-          const SizedBox(height: 8),
-          _buildPhaseTimeCard('Fase d\'Interferència (PC)', _interferenceTime),
+          _buildPhaseTimeCard('Fase d\'Interferència', _interferenceTime),
           const SizedBox(height: 24),
 
           // Scoring Breakdown
           Text(
-            'Desglose de la puntuació',
+            'Detall de la puntuació',
             style: TextStyle(
               color: AppColors.getPrimaryTextColor(isDarkMode),
               fontSize: 16,
@@ -539,21 +448,11 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
           // Precision
           _buildScoreCard(
-            title: 'Part A: Precisió',
-            value: precisionScore.toStringAsFixed(1),
+            title: 'Precisió',
+            value: totalScore.toStringAsFixed(1),
             description:
-                'Errors en fase d\'interferència: $_interferenceErrors\nFórmula: 5 - (errores × 0,5)',
-            subtitle: '${precisionScore.toStringAsFixed(1)} / 5',
-          ),
-          const SizedBox(height: 8),
-
-          // Interference Resistance
-          _buildScoreCard(
-            title: 'Part B: Resistència a la Interferència',
-            value: resistanceScore.toStringAsFixed(1),
-            description:
-                'Diferència de temps: ${interferenceIndex}s\nFase 3 - Fase 2: $_interferenceTime - $_colorsTime',
-            subtitle: '${resistanceScore.toStringAsFixed(1)} / 5',
+                'Errors comesos: $_interferenceErrors\nFórmula: 10 - (errors × 0,5)',
+            subtitle: '${totalScore.toStringAsFixed(1)} / 10',
           ),
           const SizedBox(height: 24),
 
@@ -578,11 +477,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildErrorRow('Fase de Paraules', _wordsErrors),
-                const SizedBox(height: 8),
-                _buildErrorRow('Fase de Colors', _colorsErrors),
-                const SizedBox(height: 8),
-                _buildErrorRow('Fase d\'Interferència', _interferenceErrors),
+                _buildErrorRow('Errors totals', _interferenceErrors),
               ],
             ),
           ),
