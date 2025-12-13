@@ -267,36 +267,47 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
-                // Logo
-                Container(
-                  margin: const EdgeInsets.only(bottom: 30),
-                  child: SizedBox(
-                    height: 120,
-                    width: 180,
-                    child: Image.asset(
-                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.local_hospital,
-                          size: 60,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
                 const Spacer(),
               ],
             ),
           ),
 
-          // Formulario posicionado
+          // Logo fijo en la parte superior
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
+            top: 80,
             left: 0,
             right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  width: 180,
+                  child: Image.asset(
+                    isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_hospital,
+                        size: 60,
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Formulario posicionado
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.30,
+            left: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
+            right: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(

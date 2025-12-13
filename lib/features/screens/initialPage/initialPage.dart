@@ -114,172 +114,143 @@ class _InitialPageState extends State<InitialPage> {
                           ),
                         ),
 
+                        // Spacer para dejar espacio para el logo fijo
+                        SizedBox(
+                            height: (logoHeight * 0.85).clamp(180.0, 240.0)
+                                as double),
+
                         // Contenido principal centrado con tamaño adaptable
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40.0),
                           child: Column(
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 40),
-                                child: SizedBox(
-                                  height: logoHeight,
-                                  width: double.infinity,
-                                  child: Image.asset(
-                                    isDarkMode
-                                        ? TImages.lightLogoText
-                                        : TImages.darkLogoText,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // Fallback en caso de que la imagen no se encuentre
-                                      return Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.local_hospital,
-                                            size: 80,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                    isDarkMode),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'LMLG',
-                                            style: TextStyle(
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.bold,
-                                              color:
-                                                  AppColors.getPrimaryTextColor(
-                                                      isDarkMode),
-                                              letterSpacing: 4,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
+                            children: [],
                           ),
                         ),
 
                         // Recuadro inferior con botones (adaptable a pantallas pequeñas)
-                        Container(
-                          width: double.infinity,
-                          constraints: BoxConstraints(minHeight: footerHeight),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSecondaryBackgroundColor(
-                                isDarkMode),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(32)),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: MediaQuery.of(context).size.width >= 800
+                                ? MediaQuery.of(context).size.width * 0.25
+                                : 0,
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 40.0, vertical: 25.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                // Texto "Començem!" dentro del recuadro
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 10.0, bottom: 25.0),
-                                  child: Text(
-                                    'Començem!',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: AppColors.getSecondaryTextColor(
-                                          isDarkMode),
-                                      fontWeight: FontWeight.w500,
+                          child: Container(
+                            width: double.infinity,
+                            constraints:
+                                BoxConstraints(minHeight: footerHeight),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSecondaryBackgroundColor(
+                                  isDarkMode),
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(32)),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40.0, vertical: 25.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Texto "Començem!" dentro del recuadro
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 10.0, bottom: 25.0),
+                                    child: Text(
+                                      'Començem!',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: AppColors.getSecondaryTextColor(
+                                            isDarkMode),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
-                                ),
 
-                                // Columna con botones
-                                Column(
-                                  children: [
-                                    // Botón LOGIN
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 50,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isDarkMode
-                                              ? const Color(
-                                                  0xFF7289DA) // Nuevo color para modo oscuro
-                                              : const Color(
-                                                  0xFF0077B6), // Nuevo color para modo claro
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(32),
+                                  // Columna con botones
+                                  Column(
+                                    children: [
+                                      // Botón LOGIN
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 50,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isDarkMode
+                                                ? const Color(
+                                                    0xFF7289DA) // Nuevo color para modo oscuro
+                                                : const Color(
+                                                    0xFF0077B6), // Nuevo color para modo claro
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(32),
+                                            ),
+                                            elevation: 0,
                                           ),
-                                          elevation: 0,
-                                        ),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    LoginScreen(
-                                                        isDarkMode:
-                                                            isDarkMode)),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'ENTRAR',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 1,
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      LoginScreen(
+                                                          isDarkMode:
+                                                              isDarkMode)),
+                                            );
+                                          },
+                                          child: const Text(
+                                            'ENTRAR',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 1,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
 
-                                    const SizedBox(height: 16),
+                                      const SizedBox(height: 16),
 
-                                    // Botón REGISTER
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 50,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              AppColors.getPrimaryButtonColor(
-                                                  isDarkMode),
-                                          foregroundColor: AppColors
-                                              .getPrimaryButtonTextColor(
-                                                  isDarkMode),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(32),
+                                      // Botón REGISTER
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 50,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppColors.getPrimaryButtonColor(
+                                                    isDarkMode),
+                                            foregroundColor: AppColors
+                                                .getPrimaryButtonTextColor(
+                                                    isDarkMode),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(32),
+                                            ),
+                                            elevation: 0,
                                           ),
-                                          elevation: 0,
-                                        ),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    RegisterLobby(
-                                                        isDarkMode:
-                                                            isDarkMode)),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'REGISTRAR-SE',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 1,
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      RegisterLobby(
+                                                          isDarkMode:
+                                                              isDarkMode)),
+                                            );
+                                          },
+                                          child: const Text(
+                                            'REGISTRAR-SE',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 1,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -288,6 +259,30 @@ class _InitialPageState extends State<InitialPage> {
                   ),
                 );
               },
+            ),
+          ),
+
+          // Logo fijo (no se mueve)
+          Positioned(
+            top: 80,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SizedBox(
+                height: 120,
+                width: 180,
+                child: Image.asset(
+                  isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.local_hospital,
+                      size: 60,
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ],
