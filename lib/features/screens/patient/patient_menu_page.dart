@@ -59,6 +59,26 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
             final surfaceColor =
                 AppColors.getSecondaryBackgroundColor(isDarkMode)
                     .withAlpha((0.95 * 255).round());
+                                  title: 'Tots els tests',
+                                  description:
+                                      'Accedeix al catàleg complet de tests disponibles.',
+                                  icon: Icons.assignment_turned_in_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => test_page.AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
             final borderColor = AppColors.getPrimaryButtonColor(isDarkMode)
                 .withAlpha((0.25 * 255).round());
             final iconBg = AppColors.getPrimaryButtonColor(isDarkMode)
@@ -75,26 +95,6 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.containerShadow
-                          .withAlpha((0.35 * 255).round()),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: iconBg,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.logout,
                             color: AppColors.getPrimaryButtonColor(isDarkMode),
                             size: 24,
                           ),
