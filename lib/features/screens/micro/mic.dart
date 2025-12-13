@@ -1349,11 +1349,33 @@ class _MicScreenState extends State<MicScreen>
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 28.0, vertical: 8),
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 720),
-                                  child: child,
+                                    horizontal: 24.0, vertical: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        AppColors.getSecondaryBackgroundColor(
+                                            isDarkMode),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.getPrimaryButtonColor(
+                                              isDarkMode)
+                                          .withAlpha((0.4 * 255).round()),
+                                      width: 2,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x1A000000),
+                                        blurRadius: 12,
+                                        offset: Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 720),
+                                    child: child,
+                                  ),
                                 ),
                               );
                             },
@@ -1575,10 +1597,13 @@ class _MicScreenState extends State<MicScreen>
                             child: LinearProgressIndicator(
                               value: (_recordDuration.inSeconds / 60)
                                   .clamp(0.0, 1.0),
-                              backgroundColor: Colors.white.withAlpha(8),
+                              backgroundColor:
+                                  AppColors.getSecondaryBackgroundColor(
+                                          isDarkMode)
+                                      .withOpacity(0.35),
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 _isRecording
-                                    ? Colors.redAccent
+                                    ? const Color(0xFFEF476F)
                                     : AppColors.getPrimaryButtonColor(
                                         isDarkMode),
                               ),
