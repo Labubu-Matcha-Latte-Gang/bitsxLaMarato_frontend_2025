@@ -697,47 +697,59 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Widget _buildActionsRow() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isWide = constraints.maxWidth >= 620;
-        final double maxRowWidth = isWide ? 640 : constraints.maxWidth;
-        final double primaryButtonWidth = isWide ? 360 : double.infinity;
+        final double width = constraints.maxWidth;
+        final bool isNarrow = width < 320;
 
-        return Align(
-          alignment: Alignment.center,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxRowWidth),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(
-                  width: primaryButtonWidth,
-                  child: ElevatedButton.icon(
-                    onPressed: _downloadingPdf ? null : _downloadReport,
-                    icon: _downloadingPdf
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.picture_as_pdf_outlined),
-                    label: Text(
-                      _downloadingPdf
-                          ? 'Descarregant...'
-                          : 'Descarregar informe',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DoctorColors.primary(isDarkMode),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+        // Button takes full available width with small side margins
+        final double buttonWidth = width - 16;
+
+        // Responsive padding and font size
+        final EdgeInsets buttonPadding = width >= 700
+            ? const EdgeInsets.symmetric(horizontal: 28, vertical: 16)
+            : width >= 480
+                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+
+        final double buttonFontSize = width >= 700
+            ? 17
+            : width >= 480
+                ? 14
+                : isNarrow
+                    ? 12
+                    : 13;
+
+        final double iconSize = width >= 700
+            ? 22
+            : isNarrow
+                ? 18
+                : 20;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: ElevatedButton.icon(
+            onPressed: _downloadingPdf ? null : _downloadReport,
+            icon: _downloadingPdf
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    Icons.picture_as_pdf_outlined,
+                    size: iconSize,
                   ),
-                ),
-              ],
+            label: Text(
+              _downloadingPdf ? 'Descarregant...' : 'Descarregar informe',
+              style: TextStyle(fontSize: buttonFontSize),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DoctorColors.primary(isDarkMode),
+              foregroundColor: Colors.white,
+              padding: buttonPadding,
+              minimumSize: Size(buttonWidth, 0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         );
