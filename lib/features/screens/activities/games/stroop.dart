@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../utils/app_colors.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart';
 
 class SroopTestPage extends StatefulWidget {
   final bool isDarkMode;
@@ -36,6 +38,8 @@ class _SroopTestPageState extends State<SroopTestPage> {
   int _timeRemaining = _phaseDuration;
   late Timer _timer;
   bool _isRunning = false;
+  bool _timeExpired = false;
+  DateTime? _startTime;
 
   int _interferenceErrors = 0;
   int _interferenceTime = _phaseDuration;
@@ -53,6 +57,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
   void _startTest() {
     setState(() {
       _showInstructions = false;
+      _startTime = DateTime.now();
     });
     _initializePhase();
   }
@@ -78,6 +83,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
         if (_timeRemaining > 0) {
           _timeRemaining--;
         } else {
+          _timeExpired = true;
           _nextPhase();
           timer.cancel();
         }
@@ -142,9 +148,36 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
     // Only one phase (interference), go directly to results
     setState(() => _currentPhase = _SroopPhase.results);
+    _submitResults();
+  }
+
+  Future<void> _submitResults() async {
+    if (_startTime == null) return;
+
+    final score = _calculateScore();
+    final secondsToFinish =
+        DateTime.now().difference(_startTime!).inSeconds.toDouble();
+
+    try {
+      final request = ActivityCompleteRequest(
+        id: 'dacad4aa-fedd-420a-b381-b1f78877f22e', // Stroop test ID
+        score: score,
+        secondsToFinish: secondsToFinish,
+      );
+
+      await ApiService.completeActivity(request);
+    } catch (e) {
+      // Error silencioso - el usuario ya ve sus resultados
+      debugPrint('Error al enviar resultados del test: $e');
+    }
   }
 
   double _calculateScore() {
+    // Si se acabó el tiempo, puntuación = 0
+    if (_timeExpired) {
+      return 0;
+    }
+
     // Puntuación basada solo en precisión (max 10 points)
     final double precisionScore =
         (10 - (_interferenceErrors * 0.5)).clamp(0, 10);
