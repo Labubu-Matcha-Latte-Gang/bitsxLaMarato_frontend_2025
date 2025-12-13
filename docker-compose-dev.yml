@@ -1,0 +1,19 @@
+services:
+  web_client:
+    build:
+      context: .
+      dockerfile: DockerfileDev
+    container_name: flutter_hot_reload    
+    stdin_open: true 
+    tty: true
+
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - /app/build
+      - /app/.dart_tool
+      - /app/.git
+    
+    env_file:
+      - .env
