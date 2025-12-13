@@ -611,23 +611,10 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
 
-        // Phones: single column with comfortable spacing.
-        if (width < 520) {
+        // Narrow phones: single column.
+        if (width < 360) {
           return GridView.count(
             crossAxisCount: 1,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.9,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            children: cards,
-          );
-        }
-
-        // Tablets / small desktop: two columns.
-        if (width < 900) {
-          return GridView.count(
-            crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 2.6,
@@ -637,9 +624,22 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           );
         }
 
+        // Phones and small tablets: two columns.
+        if (width < 960) {
+          return GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.25,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            children: cards,
+          );
+        }
+
         // Wide desktop: responsive max-extent grid to add columns gracefully.
-        final double maxExtent = width >= 1200 ? 260 : 300;
-        final double aspectRatio = width >= 1200 ? 2.3 : 2.5;
+        final double maxExtent = width >= 1400 ? 260 : 300;
+        final double aspectRatio = width >= 1400 ? 2.3 : 2.5;
 
         return GridView.builder(
           shrinkWrap: true,
