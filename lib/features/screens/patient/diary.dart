@@ -300,19 +300,11 @@ class _DiaryPageState extends State<DiaryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pregunta del Diari',
+                        'El meu Diari',
                         style: TextStyle(
                           color: AppColors.getPrimaryTextColor(isDarkMode),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tipus: ${_diaryQuestion!.questionType} • Dificultat: ${_diaryQuestion!.difficulty.toStringAsFixed(1)}',
-                        style: TextStyle(
-                          color: AppColors.getSecondaryTextColor(isDarkMode),
-                          fontSize: 13,
                         ),
                       ),
                     ],
