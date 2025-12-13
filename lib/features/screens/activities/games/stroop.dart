@@ -585,267 +585,74 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   Widget _buildResultsScreen() {
-    final totalScore = _calculateScore();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isMobile = screenWidth < 600;
+        final titleFontSize = isMobile ? 32.0 : 42.0;
+        final messageFontSize = isMobile ? 18.0 : 22.0;
+        final buttonFontSize = isMobile ? 18.0 : 22.0;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Center(
-            child: Text(
-              'Resultats del Test de Stroop',
-              style: TextStyle(
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Total Score Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.getPrimaryButtonColor(isDarkMode),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+        return Center(
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 24 : 32),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Puntuació Total',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
+                Icon(
+                  Icons.check_circle_outline,
+                  size: isMobile ? 100 : 120,
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 32),
                 Text(
-                  '${totalScore.toStringAsFixed(1)} / 10',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Phase Time
-          Text(
-            'Temps de la prova',
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildPhaseTimeCard('Fase d\'Interferència', _interferenceTime),
-          const SizedBox(height: 24),
-
-          // Scoring Breakdown
-          Text(
-            'Detall de la puntuació',
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Precision
-          _buildScoreCard(
-            title: 'Precisió',
-            value: totalScore.toStringAsFixed(1),
-            description:
-                'Errors comesos: $_interferenceErrors\nFórmula: 10 - (errors × 0,5)',
-            subtitle: '${totalScore.toStringAsFixed(1)} / 10',
-          ),
-          const SizedBox(height: 24),
-
-          // Error Summary
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resum d\'errors',
+                  'Test completat!',
                   style: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
+                    fontSize: titleFontSize,
                     fontWeight: FontWeight.w700,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
-                _buildErrorRow('Errors totals', _interferenceErrors),
+                const SizedBox(height: 16),
+                Text(
+                  'Has completat el Test de Stroop',
+                  style: TextStyle(
+                    color: AppColors.getSecondaryTextColor(isDarkMode),
+                    fontSize: messageFontSize,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: isMobile ? double.infinity : 300,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: Text(
+                      'Tornar al menú',
+                      style: TextStyle(fontSize: buttonFontSize),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          AppColors.getPrimaryButtonColor(isDarkMode),
+                      foregroundColor:
+                          AppColors.getPrimaryButtonTextColor(isDarkMode),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile ? 18 : 22,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Exit Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.check),
-              label: const Text('Finalitzar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhaseTimeCard(String phaseName, int timeInSeconds) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            phaseName,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            '$timeInSeconds s',
-            style: TextStyle(
-              color: AppColors.getPrimaryButtonColor(isDarkMode),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScoreCard({
-    required String title,
-    required String value,
-    required String description,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.getSecondaryBackgroundColor(isDarkMode)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorRow(String label, int errorCount) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.getSecondaryTextColor(isDarkMode),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: errorCount > 0
-                ? Colors.red.withOpacity(0.15)
-                : AppColors.getPrimaryButtonColor(isDarkMode).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            '$errorCount',
-            style: TextStyle(
-              color: errorCount > 0
-                  ? Colors.red
-                  : AppColors.getPrimaryButtonColor(isDarkMode),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
