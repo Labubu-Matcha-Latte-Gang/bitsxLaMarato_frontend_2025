@@ -59,6 +59,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Color? _backSuggestion;
   _QRColorRole _lastEditedColor = _QRColorRole.fill;
   String? _qrDataUri;
+  VoidCallback? _dialogRebuild;
+  bool _dialogOpen = false;
 
   @override
   void initState() {
@@ -138,6 +140,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     setState(() {
       _qrFullscreen = !_qrFullscreen;
     });
+    _dialogRebuild?.call();
   }
 
   Future<void> _downloadReport() async {
@@ -186,6 +189,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         'Cal més contrast entre colors abans de generar el QR.',
         isError: true,
       );
+      _dialogRebuild?.call();
       return;
     }
 
@@ -209,6 +213,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _qrPreviewReady = _qrDataUri != null;
         });
         _showSnack('QR generat correctament.');
+        _dialogRebuild?.call();
       } else {
         setState(() {
           _qrPreviewReady = false;
@@ -217,6 +222,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           'No s\'ha pogut generar el QR.',
           isError: true,
         );
+        _dialogRebuild?.call();
       }
     } catch (e) {
       setState(() {
@@ -226,11 +232,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         'Error en generar el QR: ',
         isError: true,
       );
+      _dialogRebuild?.call();
     } finally {
       if (mounted) {
         setState(() {
           _generatingQr = false;
         });
+        _dialogRebuild?.call();
       }
     }
   }
@@ -257,6 +265,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       _lastEditedColor = role;
       _updateContrastFeedback(role);
     });
+    _dialogRebuild?.call();
   }
 
   void _updateContrastFeedback(_QRColorRole updatedRole) {
@@ -382,6 +391,16 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                             ),
                           ),
                           const SizedBox(width: 6),
+                          IconButton.filledTonal(
+                            onPressed: _openQrDialog,
+                            icon: const Icon(Icons.qr_code_2),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  DoctorColors.secondary(isDarkMode)
+                                      .withOpacity(0.2),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           IconButton(
                             icon: Icon(
                               isDarkMode
@@ -461,17 +480,98 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
-          _buildScoresSection(),
-          const SizedBox(height: 12),
-          _buildQuestionsSection(),
-          const SizedBox(height: 16),
-          _buildQrSection(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              // On tablet screens (>= 600px) place side-by-side; otherwise stack vertically.
+              final bool isTabletOrLarger = width >= 600;
+
+              if (isTabletOrLarger) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: _buildScoresSection(),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _buildQuestionsSection(),
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    _buildScoresSection(),
+                    const SizedBox(height: 12),
+                    _buildQuestionsSection(),
+                  ],
+                );
+              }
+            },
+          ),
           const SizedBox(height: 16),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
             _buildGraphsSection(),
           ],
         ],
       ),
+    );
+  }
+
+  void _openQrDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, localSetState) {
+            _dialogRebuild = () => localSetState(() {});
+            _dialogOpen = true;
+            return Dialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              backgroundColor: DoctorColors.surface(isDarkMode),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Codi QR personalitzat',
+                          style: TextStyle(
+                            color: DoctorColors.textPrimary(isDarkMode),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _dialogRebuild = null;
+                            _dialogOpen = false;
+                            Navigator.of(context).pop();
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: DoctorColors.textSecondary(isDarkMode),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildQrSection(showTitle: false),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -757,7 +857,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     );
   }
 
-  Widget _buildQrSection() {
+  Widget _buildQrSection({bool showTitle = true}) {
     final double qrDimension =
         (MediaQuery.of(context).size.width * 0.55).clamp(220.0, 320.0);
     return Container(
@@ -770,24 +870,25 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Codi QR personalitzat',
-                style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
-                  fontWeight: FontWeight.w700,
+          if (showTitle)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Codi QR personalitzat',
+                  style: TextStyle(
+                    color: DoctorColors.textPrimary(isDarkMode),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              if (_generatingQr)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
+                if (_generatingQr)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
           const SizedBox(height: 10),
           Center(
             child: GestureDetector(
@@ -1101,7 +1202,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final ratioLabel = Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        'Contrast actual: :1',
+        'Contrast actual: ${_contrastRatio.toStringAsFixed(2)}:1',
         style: TextStyle(
           color: DoctorColors.textSecondary(isDarkMode),
           fontSize: 13,
@@ -1333,7 +1434,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       }
     }
 
-    return Container(
+    final graphsContent = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: DoctorColors.surface(isDarkMode),
@@ -1392,6 +1493,12 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           }),
         ],
       ),
+    );
+
+    // Prevent graphs from interacting when the dialog is open (e.g. WebView/iframe).
+    return AbsorbPointer(
+      absorbing: _dialogOpen,
+      child: graphsContent,
     );
   }
 }
