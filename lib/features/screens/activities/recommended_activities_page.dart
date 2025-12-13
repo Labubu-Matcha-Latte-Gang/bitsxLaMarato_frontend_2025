@@ -64,7 +64,6 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
             filteredResults.isNotEmpty ? filteredResults.first : null;
       });
     } catch (e) {
-      print('DEBUG - ✗ Error loading recommended activity: $e');
       setState(() {
         _errorMessage =
             'No s\'ha pogut carregar l\'activitat recomanada. Torna-ho a provar.';
