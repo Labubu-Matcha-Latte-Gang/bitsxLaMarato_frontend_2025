@@ -4,6 +4,7 @@ import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
+import '../doctor/doctor_home_page.dart';
 import '../login/login.dart';
 
 class RegisterDoctor extends StatefulWidget {
@@ -21,6 +22,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
   final _surnameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _selectedGender;
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -46,6 +48,13 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
     });
   }
 
+  void _navigateToHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const DoctorHomePage()),
+      (_) => false,
+    );
+  }
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -54,11 +63,16 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
       try {
         // Crear el request para la API
+        if (_selectedGender == null || _selectedGender!.isEmpty) {
+          _showErrorDialog('Si us plau, selecciona el sexe');
+          return;
+        }
         final request = DoctorRegistrationRequest(
           name: _nameController.text.trim(),
           surname: _surnameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          gender: _selectedGender!.trim(),
           patients: [], // Por defecto sin pacientes asignados
         );
 
@@ -67,15 +81,22 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         print('  Surname: ${request.surname}');
         print('  Email: ${request.email}');
         print('  Password: ${request.password}');
+        print('  Gender: ${request.gender}');
         print('  Patients: ${request.patients}');
 
         // Llamar a la API
         final response = await ApiService.registerDoctor(request);
 
-        // Si llega aquí, el registro fue exitoso
+        if (!mounted) return;
+
+        final welcomeName = [
+          response.name,
+          response.surname,
+        ].where((part) => part.trim().isNotEmpty).join(' ');
+
         _showSuccessDialog(
-          'Metge registrat amb èxit!',
-          'Benvingut/da Dr. ${response.name} ${response.surname}',
+          'Compte creat i sessió iniciada!',
+          'Benvingut/da Dr. $welcomeName',
         );
       } catch (e) {
         String errorMessage = 'Error en registrar el metge';
@@ -86,6 +107,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
         }
         _showErrorDialog(errorMessage);
       } finally {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
@@ -149,12 +171,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
-                // Navegar a la pantalla de login
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => LoginScreen(isDarkMode: isDarkMode),
-                  ),
-                );
+                _navigateToHome();
               },
               child: Text(
                 'D\'acord',
@@ -409,6 +426,64 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
 
                         const SizedBox(height: 15),
 
+                        // Campo Sexe
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sexe',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.getSecondaryTextColor(isDarkMode),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: AppColors.getFieldBackgroundColor(isDarkMode),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedGender,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                                ),
+                                style: TextStyle(
+                                  color: AppColors.getInputTextColor(isDarkMode),
+                                ),
+                                dropdownColor:
+                                    AppColors.getSecondaryBackgroundColor(isDarkMode),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'male',
+                                    child: Text('Home'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'female',
+                                    child: Text('Dona'),
+                                  ),
+                                ],
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedGender = value;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Si us plau, selecciona el sexe';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
                         // Campo Email
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +545,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Password',
+                              'Contrasenya',
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
@@ -555,7 +630,7 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                                         color: Colors.white, strokeWidth: 2),
                                   )
                                 : const Text(
-                                    'REGISTER',
+                                    'REGISTRA\'T',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -570,10 +645,15 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                         // Link "Ja tens un compte? Login"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    LoginScreen(isDarkMode: isDarkMode),
+                              ),
+                            );
                           },
                           child: Text(
-                            'Ja tens un compte? Login',
+                            'Ja tens un compte? Inicia sessió',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getPrimaryTextColor(isDarkMode),

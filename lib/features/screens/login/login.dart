@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../utils/app_colors.dart';
+import '../micro/mic.dart';
+import '../patient/patient_menu_page.dart';
+import '../doctor/doctor_home_page.dart';
 import '../../../services/api_service.dart';
 import '../../../models/patient_models.dart';
+import '../register/registerLobby.dart';
 import '../../../services/session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode;
+    _loadThemePreference();
   }
 
   @override
@@ -40,54 +45,58 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    SessionManager.saveThemeMode(isDarkMode);
+  }
+
+  Future<void> _loadThemePreference() async {
+    final saved = await SessionManager.getThemeMode();
+    if (saved != null && mounted) {
+      setState(() {
+        isDarkMode = saved;
+      });
+    }
   }
 
   void _submitLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        // Crear el request para la API
-        final request = LoginRequest(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+    setState(() => _isLoading = true);
+
+    try {
+      final request = LoginRequest(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final response = await ApiService.loginUser(request);
+      final userData = await SessionManager.getUserData();
+      final userType = (userData?['user_type'] as String?) ?? 'unknown';
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+      if (userType == 'doctor') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => DoctorHomePage(initialDarkMode: isDarkMode),
+          ),
         );
-
-        print('DEBUG - Login Form data being sent:');
-        print('  Email: ${request.email}');
-        print('  Password: ${request.password}');
-
-        // Llamar a la API
-        final response = await ApiService.loginUser(request);
-
-        // Guardar el token en sesión
-        bool tokenSaved = await SessionManager.saveToken(response.accessToken);
-
-        if (tokenSaved) {
-          // Mostrar mensaje de éxito y navegar
-          final userName = response.user?.name ?? 'Usuario';
-          final userSurname = response.user?.surname ?? '';
-          _showSuccessDialog(
-            'Sessió iniciada amb èxit!',
-            'Benvingut/da $userName $userSurname'.trim(),
-          );
-        } else {
-          _showErrorDialog('Error guardant la sessió');
-        }
-      } catch (e) {
-        String errorMessage = 'Error en iniciar sessió';
-        if (e is ApiException) {
-          errorMessage = e.message;
-        } else {
-          errorMessage = 'Error de connexió: ${e.toString()}';
-        }
-        _showErrorDialog(errorMessage);
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => response.alreadyRespondedToday
+                ? PatientMenuPage(initialDarkMode: isDarkMode)
+                : const MicScreen(),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      _showErrorDialog(e.message);
+    } catch (e) {
+      _showErrorDialog('Error de connexió: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -113,46 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'D\'acord',
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSuccessDialog(String title, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            title,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
-          ),
-          content: Text(
-            message,
-            style: TextStyle(
-              color: AppColors.getSecondaryTextColor(isDarkMode),
-            ),
-          ),
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-                // TODO: Navegar a la pantalla principal de la app
-                // Por ahora solo cerramos el diálogo
-                print(
-                    'Usuario logueado exitosamente - navegar a pantalla principal');
-              },
               child: Text(
                 'D\'acord',
                 style: TextStyle(
@@ -360,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Password',
+                              'Contrasenya',
                               style: TextStyle(
                                 fontSize: 14,
                                 color:
@@ -453,10 +422,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: _isLoading ? null : _submitLogin,
                             child: _isLoading
                                 ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 22,
+                                    height: 22,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2),
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
                                   )
                                 : const Text(
                                     'INICIA SESSIÓ',
@@ -474,8 +447,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Link "Nou a LMLG? Registra't"
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(
-                                context); // Volver atrás para registrarse
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterLobby(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Nou a LMLG? Registra\'t',
