@@ -8,6 +8,7 @@ import '../activities/all_activities_page.dart';
 import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
+import 'diary.dart';
 
 class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -311,6 +312,34 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                           constraints: const BoxConstraints(maxWidth: 700),
                           child: Column(
                             children: [
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
+                                  title: 'Diari Personal',
+                                  description:
+                                      'Explica els teus problemes i experiéncies al diari',
+                                  icon: Icons.book,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () async {
+                                    final result =
+                                        await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => DiaryPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                    if (result != null &&
+                                        result is bool &&
+                                        mounted) {
+                                      setState(() {
+                                        isDarkMode = result;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
