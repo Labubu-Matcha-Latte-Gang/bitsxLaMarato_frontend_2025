@@ -96,7 +96,15 @@ class _DiaryPageState extends State<DiaryPage>
   void dispose() {
     _timer?.cancel();
     _chunkTimer?.cancel();
-    _recorder.dispose();
+    if (!kIsWeb) {
+      try {
+        _recorder.dispose();
+      } catch (_) {}
+    } else {
+      try {
+        _webRecorder?.dispose();
+      } catch (_) {}
+    }
     _waveController.dispose();
     super.dispose();
   }
