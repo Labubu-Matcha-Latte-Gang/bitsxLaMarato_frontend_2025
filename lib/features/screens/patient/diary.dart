@@ -1,5 +1,13 @@
+import 'dart:async';
+import 'dart:io' show File;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+
 import '../../../models/question_models.dart';
+import '../../../models/transcription_models.dart';
 import '../../../services/api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/effects/particle_system.dart';
@@ -23,6 +31,28 @@ class _DiaryPageState extends State<DiaryPage> {
   String? _errorMessage;
   final TextEditingController _answerController = TextEditingController();
 
+  // Audio recording variables
+  final Record _recorder = Record();
+  bool _isRecording = false;
+  Duration _recordDuration = Duration.zero;
+  Timer? _timer;
+  String? _currentSessionId;
+  int _nextChunkIndex = 0;
+  String? _currentChunkPath;
+  bool _isUploading = false;
+  String? _transcriptionText;
+  bool _hasUploadError = false;
+  bool _showAudioResponse = false;
+  bool _hasMicPermission = false;
+
+  static const int _maxChunkSeconds = 5;
+  static const int _minRecordingSeconds = 10;
+
+  bool get _hasReachedMinimumDuration =>
+      _recordDuration.inSeconds >= _minRecordingSeconds;
+
+  final List<Future<void>> _pendingChunkUploads = [];
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +63,8 @@ class _DiaryPageState extends State<DiaryPage> {
   @override
   void dispose() {
     _answerController.dispose();
+    _timer?.cancel();
+    _recorder.dispose();
     super.dispose();
   }
 
