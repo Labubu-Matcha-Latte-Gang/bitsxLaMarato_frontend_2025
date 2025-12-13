@@ -994,7 +994,7 @@ class ApiService {
     }
   }
 
-  static Future<Flashcard> getRecommendedTasks() async {
+  static Future<Flashcard> getRecommendedTask() async {
     try {
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(

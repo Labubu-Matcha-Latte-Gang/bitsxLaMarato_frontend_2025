@@ -36,6 +36,9 @@ class Flashcard {
   /// List of cognitive areas (expected to contain 4 entries according to backend)
   final List<CognitiveArea> cognitiveAreas;
 
+  /// Short description of the activity
+  final String description;
+
   /// Short text with a concrete recommendation or how to perform the activity
   final String recommendation;
 
@@ -47,6 +50,7 @@ class Flashcard {
 
   Flashcard({
     this.cognitiveAreas = const [],
+    this.description = '',
     this.recommendation = '',
     this.reason = '',
     this.raw = const {},
@@ -64,6 +68,7 @@ class Flashcard {
 
     return Flashcard(
       cognitiveAreas: areas,
+      description: description,
       recommendation: recommendation,
       reason: reason,
       raw: Map<String, dynamic>.from(json),
@@ -73,9 +78,9 @@ class Flashcard {
   Map<String, dynamic> toJson() {
     return {
       'cognitive_areas': cognitiveAreas.map((a) => a.toJson()).toList(),
+      'description': description,
       'recommendation': recommendation,
       'reason': reason,
     }..removeWhere((k, v) => v == null);
   }
 }
-
