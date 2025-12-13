@@ -168,7 +168,6 @@ class _SroopTestPageState extends State<SroopTestPage> {
       await ApiService.completeActivity(request);
     } catch (e) {
       // Error silencioso - el usuario ya ve sus resultados
-      debugPrint('Error al enviar resultados del test: $e');
     }
   }
 

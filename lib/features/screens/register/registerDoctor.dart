@@ -76,14 +76,6 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           patients: [], // Por defecto sin pacientes asignados
         );
 
-        print('DEBUG - Doctor Form data being sent:');
-        print('  Name: ${request.name}');
-        print('  Surname: ${request.surname}');
-        print('  Email: ${request.email}');
-        print('  Password: ${request.password}');
-        print('  Gender: ${request.gender}');
-        print('  Patients: ${request.patients}');
-
         // Llamar a la API
         final response = await ApiService.registerDoctor(request);
 

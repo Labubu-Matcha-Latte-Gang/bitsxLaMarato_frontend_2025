@@ -668,7 +668,6 @@ class _MicScreenState extends State<MicScreen>
           // E
           detectedFormat = 'wav';
           contentType = 'audio/wav';
-          print('\U0001f3b5 DEBUG - WAV format detected');
         }
         // Detectar WebM/Matroska (EBML header 1A 45 DF A3)
         else if (bytes[0] == 0x1A &&
@@ -677,7 +676,6 @@ class _MicScreenState extends State<MicScreen>
             bytes[3] == 0xA3) {
           detectedFormat = 'webm';
           contentType = 'audio/webm';
-          print('\U0001f3b5 DEBUG - WEBM format detected');
         }
         // Detectar MP3 (headers: 0xFF 0xFB, 0xFF 0xFA, o "ID3")
         else if ((bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0) ||
@@ -742,7 +740,6 @@ class _MicScreenState extends State<MicScreen>
 
   /// Handle WebM chunks with buffering strategy
   Future<void> _handleWebMChunk(Uint8List bytes) async {
-    print('DEBUG - _handleWebMChunk called with ${bytes.length} bytes');
 
     // Add to buffer
     _webmChunkBuffer.add(bytes);
@@ -812,7 +809,6 @@ class _MicScreenState extends State<MicScreen>
   /// Handle MP4/MP3 chunks with accumulation for minimum duration requirement
   Future<void> _handleMp4Chunk(
       Uint8List bytes, String format, String contentType) async {
-    print('DEBUG - _handleMp4Chunk called with ${bytes.length} bytes');
 
     // Add to MP4 buffer
     _mp4ChunkBuffer.add(bytes);
@@ -850,10 +846,7 @@ class _MicScreenState extends State<MicScreen>
           _flushMp4Buffer(format, contentType);
         } else {
           // Not enough yet, re-arm timer to check again
-          print(
-              'DEBUG - MP4 buffer timer: not enough data yet (buffer: ${_mp4ChunkBuffer.length}, combinedSize: $combinedSize). Re-arming.');
           _mp4BufferFlushTimer = Timer(_mp4BufferFlushInterval, () {
-            print('DEBUG - MP4 buffer timer re-triggered');
             int combinedSize2 =
                 _mp4ChunkBuffer.fold(0, (sum, chunk) => sum + chunk.length);
             bool canFlush2 = _mp4ChunkBuffer.length >= 2 ||
@@ -862,11 +855,8 @@ class _MicScreenState extends State<MicScreen>
             if (canFlush2) {
               _flushMp4Buffer(format, contentType);
             } else {
-              print(
-                  'DEBUG - MP4 buffer timer: still not enough (buffer: ${_mp4ChunkBuffer.length}, combinedSize: $combinedSize2). Re-arming again.');
               // Re-arm again until we have enough data
               _mp4BufferFlushTimer = Timer(_mp4BufferFlushInterval, () {
-                print('DEBUG - MP4 buffer timer final re-trigger');
                 _flushMp4Buffer(format, contentType);
               });
             }

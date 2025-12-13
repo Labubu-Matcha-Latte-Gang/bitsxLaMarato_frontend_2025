@@ -232,7 +232,6 @@ class _DiaryPageState extends State<DiaryPage>
       await _startNewMobileRecording();
     } catch (e) {
       _showError("No s'ha pogut iniciar la gravació.");
-      print('ERROR - Failed to start diary recording: $e');
       return;
     }
 
@@ -276,10 +275,7 @@ class _DiaryPageState extends State<DiaryPage>
         bitRate: 128000,
         samplingRate: 48000,
       );
-
-      print('DEBUG - Diary recording started: $filePath');
     } catch (e) {
-      print('ERROR - Failed to start diary recording: $e');
       rethrow;
     }
   }

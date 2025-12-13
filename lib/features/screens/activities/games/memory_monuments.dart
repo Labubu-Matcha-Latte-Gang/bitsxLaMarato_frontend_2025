@@ -290,8 +290,7 @@ class _MemoryGameMonumentsState extends State<MemoryGameMonuments> {
 
       final response = await ApiService.completeActivity(request);
 
-      // DEBUG: Mostrar respuesta API en consola
-      print('DEBUG - Activity Complete Response:');
+      // Activity completed
       print('  Activity Title: ${response.activity.title}');
       print('  Score: ${response.score}/10');
       print('  Seconds to Finish: ${response.secondsToFinish}');
