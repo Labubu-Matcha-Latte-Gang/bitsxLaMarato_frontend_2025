@@ -361,14 +361,22 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                       'Respon les preguntes del teu diari per fer seguiment del teu progrés.',
                                   icon: Icons.book,
                                   isDarkMode: isDarkMode,
-                                  onTap: () {
-                                    Navigator.of(context).push(
+                                  onTap: () async {
+                                    final result =
+                                        await Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) => DiaryPage(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),
                                     );
+                                    if (result != null &&
+                                        result is bool &&
+                                        mounted) {
+                                      setState(() {
+                                        isDarkMode = result;
+                                      });
+                                    }
                                   },
                                 ),
                               ),
