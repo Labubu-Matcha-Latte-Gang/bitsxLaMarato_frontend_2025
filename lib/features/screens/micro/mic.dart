@@ -33,7 +33,7 @@ class _MicScreenState extends State<MicScreen>
   bool isDarkMode = false;
 
   /// Grabador nativo (m\xf3vil / desktop)
-  final Record _recorder = Record();
+  final Record _recorder = AudioRecorder();
 
   /// Grabador espec\xedfico para Web (chunks .webm/MP3 comprimidos)
   WebAudioRecorder? _webRecorder;
