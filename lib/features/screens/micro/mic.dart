@@ -1454,16 +1454,22 @@ class _MicScreenState extends State<MicScreen>
                                 ),
                               ],
                             ),
-                            child: FloatingActionButton(
-                              onPressed: micButtonAction,
-                              backgroundColor: _isRecording
-                                  ? const Color(0xFFEF476F)
-                                  : AppColors.getPrimaryButtonColor(isDarkMode),
-                              foregroundColor: Colors.white,
-                              elevation: buttonEnabled ? 8 : 2,
-                              child: Icon(
-                                _isRecording ? Icons.stop : Icons.mic,
-                                size: 32,
+                            child: SizedBox(
+                              width: 96,
+                              height: 96,
+                              child: FloatingActionButton(
+                                onPressed: micButtonAction,
+                                shape: const CircleBorder(),
+                                backgroundColor: _isRecording
+                                    ? const Color(0xFFEF476F)
+                                    : AppColors.getPrimaryButtonColor(
+                                        isDarkMode),
+                                foregroundColor: Colors.white,
+                                elevation: buttonEnabled ? 10 : 4,
+                                child: Icon(
+                                  _isRecording ? Icons.stop : Icons.mic,
+                                  size: 40,
+                                ),
                               ),
                             ),
                           ),
