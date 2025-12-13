@@ -295,10 +295,10 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           // Formulario posicionado
           Positioned(
             top: MediaQuery.of(context).size.height * 0.25,
-            left: MediaQuery.of(context).size.width >= 600
+            left: MediaQuery.of(context).size.width >= 800
                 ? MediaQuery.of(context).size.width * 0.25
                 : 0,
-            right: MediaQuery.of(context).size.width >= 600
+            right: MediaQuery.of(context).size.width >= 800
                 ? MediaQuery.of(context).size.width * 0.25
                 : 0,
             child: Container(
