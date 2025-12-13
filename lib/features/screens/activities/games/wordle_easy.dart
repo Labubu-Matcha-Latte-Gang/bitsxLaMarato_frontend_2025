@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
 import '../recommended_activities_page.dart';
+import '../../../../services/api_service.dart';
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
@@ -37,11 +38,14 @@ class _WordleScreenState extends State<WordleScreen>
   Set<String>? _dictionarySet;
   List<String>? _easyWords;
 
-  // Gameplay stats (previously removed) — keep them here so other parts of the file compile
+  ApiService apiService = ApiService();
+
     int invalidWordCount = 0;
     int incorrectGuessCount = 0;
 
     double difficulty = 1.5;
+
+    double score = 0.0;
 
     // Timing: track when the current game started, duration of the last finished
     // game, and cumulative total time spent playing Wordle in this app session.
@@ -247,9 +251,13 @@ class _WordleScreenState extends State<WordleScreen>
     });
   }
 
+  void _sendCompleted() {
+    //First use the get method to obtain the identifier of the current activity
+    //Secondly use the identifier to send the data to the backend
+  }
+
   void _calculateScore() {
     // Placeholder for score calculation logic if needed
-    double score = 0.0;
     double guessScore = max(0, (10*(6-incorrectGuessCount)/5));
     double invalidScore = max(5, 0.7*invalidWordCount);
     double difficultyScore = (difficulty - 1.5) * 0.25;

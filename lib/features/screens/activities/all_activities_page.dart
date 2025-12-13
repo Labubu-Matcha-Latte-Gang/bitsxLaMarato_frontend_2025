@@ -10,7 +10,7 @@ import '../../../utils/effects/particle_system.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 import 'games/sorting.dart';
-import 'games/sudoku.dart';
+import 'games/sudoku_easy.dart';
 import 'games/wordle_easy.dart';
 import 'widgets/activity_card.dart';
 
