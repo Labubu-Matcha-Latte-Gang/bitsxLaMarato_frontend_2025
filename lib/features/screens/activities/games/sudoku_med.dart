@@ -59,11 +59,43 @@ class _SudokuPageState extends State<SudokuPage> {
 
   double difficulty = 3.0;
 
+  // Resolved activity id if not provided
+  String? _resolvedActivityId;
+
   @override
   void initState() {
     super.initState();
     _isDarkModeLocal = widget.isDarkMode;
     _resetBoard();
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
+  }
+
+  Future<String?> _ensureActivityId(String title) async {
+    if (widget.activityId != null && widget.activityId!.isNotEmpty) return widget.activityId;
+    if (_resolvedActivityId != null && _resolvedActivityId!.isNotEmpty) return _resolvedActivityId;
+    try {
+      final activity = await ApiService.getActivity(title);
+      if (!mounted) return null;
+      setState(() { _resolvedActivityId = activity.id; });
+      return activity.id;
+    } catch (e) {
+      debugPrint('Failed to resolve activity id for $title: $e');
+      return null;
+    }
+  }
+
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      final activity = await ApiService.getActivity('Sudoku (mitjà)');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      debugPrint('Failed to resolve Sudoku Medium activity id: $e');
+    }
   }
 
   void _resetBoard() {
@@ -117,15 +149,115 @@ class _SudokuPageState extends State<SudokuPage> {
     }
     _recordGameTime();
     _calculateScore();
-    _sendCompleted();
     return true;
   }
 
-  void _sendCompleted() {
-    if (widget.activityId == null) return;
-    final seconds = _totalTime.inSeconds.toDouble();
-    final req = ActivityCompleteRequest(id: widget.activityId!, score: score, secondsToFinish: seconds);
-    ApiService.completeActivity(req);
+  Future<void> _submitScore(String activityId) async {
+    try {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enviant resultats...',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final request = ActivityCompleteRequest(
+        id: activityId,
+        score: score,
+        secondsToFinish: _totalTime.inSeconds.toDouble(),
+      );
+
+      await ApiService.completeActivity(request);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          title: Text(
+            'Resultats Enviats',
+            style: TextStyle(
+              color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Els resultats s\'han registrat correctament.',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          content: Text(
+            'No s\'ha pogut enviar els resultats: $e',
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _recordGameTime() {
@@ -164,7 +296,15 @@ class _SudokuPageState extends State<SudokuPage> {
           backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final id = await _ensureActivityId('Sudoku (mitjà)');
+                if (id != null) {
+                  await _submitScore(id);
+                } else {
+                  if (mounted) Navigator.pop(context);
+                }
+              },
               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
             )
           ],

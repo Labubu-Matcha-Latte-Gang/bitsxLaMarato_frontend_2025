@@ -43,6 +43,8 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _easyWords;
 
   ApiService apiService = ApiService();
+  // Local resolved activity id if not provided by caller
+  String? _resolvedActivityId;
 
     int invalidWordCount = 0;
     int incorrectGuessCount = 0;
@@ -66,6 +68,10 @@ class _WordleScreenState extends State<WordleScreen>
     super.initState();
     isDark = widget.isDarkMode;
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    // Attempt to resolve activity id from backend if not provided
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
     // Load dictionaries first, then start the game so we can prefer easy words
     _loadDictionary().whenComplete(() {
       // After the first frame, show difficulty selector before starting
@@ -135,6 +141,46 @@ class _WordleScreenState extends State<WordleScreen>
     }
   }
 
+  // Fallback: resolve activity id from API by known title
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      // Adjust the title if your backend uses a different one
+      final activity = await ApiService.getActivity('Wordle Fàcil');
+      print('Resolved Wordle Easy activity id: ${activity.id}');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      // If resolution fails, keep _resolvedActivityId null; submission will skip
+      debugPrint('Failed to resolve Wordle Easy activity id: $e');
+    }
+  }
+
+  // Helper that ensures we have an activity id. Returns the id or null if not found.
+  Future<String?> _ensureActivityId(String title) async {
+    // Prefer explicit id passed via widget
+    if (widget.activityId != null && widget.activityId!.isNotEmpty) {
+      return widget.activityId;
+    }
+
+    if (_resolvedActivityId != null && _resolvedActivityId!.isNotEmpty) {
+      return _resolvedActivityId;
+    }
+
+    try {
+      final activity = await ApiService.getActivity(title);
+      if (!mounted) return null;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+      return activity.id;
+    } catch (e) {
+      debugPrint('Could not resolve activity id for "$title": $e');
+      return null;
+    }
+  }
+
     void _startNewGame() {
     // If a game was running (user pressed New game while playing), record its time
     _recordGameTime();
@@ -189,6 +235,8 @@ class _WordleScreenState extends State<WordleScreen>
         _elapsedSeconds++;
       });
     });
+
+    print('New secret word: $secretWord');
 
     setState(() {});
     }
@@ -304,27 +352,27 @@ class _WordleScreenState extends State<WordleScreen>
     // print('Score calculated: $score');
   }
 
-  Future<void> _submitActivityResult(double score) async {
-    // Prefer explicit activityId (like MemoryGame); fallback to resolving by name
-    final seconds = _elapsedSeconds.toDouble();
+  Future<void> _submitActivityScore(String activityId, double score) async {
+     // Prefer explicit activityId (like MemoryGame); fallback to resolving by name
+     final seconds = _elapsedSeconds.toDouble();
 
-    try {
-      if (!mounted) return;
+     try {
+       if (!mounted) return;
 
-      // Show loading dialog immediately so the progress indicator is visible.
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => const AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Enviant resultats...')],
-          ),
-        ),
-      );
+       // Show loading dialog immediately so the progress indicator is visible.
+       showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (ctx) => const AlertDialog(
+           content: Column(
+             mainAxisSize: MainAxisSize.min,
+             children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Enviant resultats...')],
+           ),
+         ),
+       );
 
       final request = ActivityCompleteRequest(
-        id: widget.activityId!,
+        id: activityId,
         score: score,
         secondsToFinish: seconds,
       );
@@ -332,51 +380,56 @@ class _WordleScreenState extends State<WordleScreen>
       // Await the API call
       await ApiService.completeActivity(request);
 
-      if (!mounted) return;
-      // Close loading dialog; do not pop the screen here
-      Navigator.of(context).pop();
+       if (!mounted) return;
 
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Resultats Enviats'),
-          content: Text(
-            'La puntuació de ${score.toStringAsFixed(1)} ha estat registrada correctament.',
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Cerrar diálogo de éxito
-                Navigator.pop(context); // Volver a pantalla anterior
-              },
-              child: const Text('Acceptar'),
-            ),
-          ],
-        ),
-      );
+       // Close the loading dialog before showing success
+       Navigator.of(context).pop();
 
-    } catch (e) {
-      // Close loading if still shown
-      if (mounted) Navigator.of(context).pop();
+       showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (context) => AlertDialog(
+           title: const Text('Resultats Enviats'),
+           content: Text(
+             'La puntuació de ${score.toStringAsFixed(1)} ha estat registrada correctament.',
+           ),
+           actions: [
+             ElevatedButton(
+               onPressed: () {
+                 Navigator.pop(context); // Close success dialog
+                 Navigator.pop(context); // Go back to activities page
+               },
+               style: ElevatedButton.styleFrom(
+                 backgroundColor: AppColors.getPrimaryButtonColor(isDark),
+                 foregroundColor: Colors.white,
+               ),
+               child: const Text('Acceptar'),
+             ),
+           ],
+         ),
+       );
 
-      // Show error dialog so user can see the failure and await until they dismiss it
-      if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('No s\'ha pogut enviar el resultat: $e'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Acceptar')),
-            ],
-          ),
-        );
-      }
+     } catch (e) {
+       // Close loading if still shown
+       if (mounted) Navigator.of(context).pop();
 
-      return false;
-    }
-  }
+       // Show error dialog so user can see the failure and await until they dismiss it
+       if (mounted) {
+         await showDialog(
+           context: context,
+           builder: (ctx) => AlertDialog(
+             title: const Text('Error'),
+             content: Text('No s\'ha pogut enviar el resultat: $e'),
+             actions: [
+               TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Acceptar')),
+             ],
+           ),
+         );
+       }
+
+       return;
+     }
+   }
 
   // Centered results dialog showing statistics and an Accept button that returns
   // the user to the Recommended Activities page.
@@ -402,24 +455,24 @@ class _WordleScreenState extends State<WordleScreen>
           actions: [
             TextButton(
               onPressed: () async {
-                // Compute the score and await sending it to backend.
+                // Pop result dialog first, then resolve id and submit
+                Navigator.pop(context);
                 final score = _computeScore(won: won);
-
-                if (widget.activityId != null) {
-                  _submitActivityScore(score);
+                // Ensure we have an id (prefer explicit, then resolved, else fetch)
+                final id = await _ensureActivityId('Wordle Fàcil');
+                if (id != null) {
+                  await _submitActivityScore(id, score);
                 } else {
-                  Navigator.pop(context);
+                  // Couldn't resolve id -> just go back to activities list
+                  if (mounted) Navigator.pop(context);
                 }
-
-                // After submission finishes (success), pop the Wordle screen
-                if (!mounted) return;
               },
-              child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
-            ),
-          ],
-        );
-      },
-    );
+               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
+             ),
+           ],
+         );
+       },
+     );
   }
 
   void _submitGuess() {
