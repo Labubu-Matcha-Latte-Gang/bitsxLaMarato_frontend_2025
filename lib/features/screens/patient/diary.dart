@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io' show File;
+import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -24,12 +24,12 @@ class DiaryPage extends StatefulWidget {
   State<DiaryPage> createState() => _DiaryPageState();
 }
 
-class _DiaryPageState extends State<DiaryPage> {
+class _DiaryPageState extends State<DiaryPage>
+    with SingleTickerProviderStateMixin {
   late bool isDarkMode;
   bool _isLoading = true;
   Question? _diaryQuestion;
   String? _errorMessage;
-  final TextEditingController _answerController = TextEditingController();
 
   // Audio recording variables
   final Record _recorder = Record();
@@ -42,7 +42,7 @@ class _DiaryPageState extends State<DiaryPage> {
   bool _isUploading = false;
   String? _transcriptionText;
   bool _hasUploadError = false;
-  bool _showAudioResponse = false;
+  bool _showCompletionOverlay = false;
   bool _hasMicPermission = false;
 
   static const int _maxChunkSeconds = 5;
@@ -53,18 +53,39 @@ class _DiaryPageState extends State<DiaryPage> {
 
   final List<Future<void>> _pendingChunkUploads = [];
 
+  // Waveform animation
+  late final AnimationController _waveController;
+  final Random _waveRandom = Random();
+  static const int _waveBarCount = 22;
+
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.initialDarkMode;
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _loadDiaryQuestion();
+    _prefetchMobilePermission();
+  }
+
+  void _prefetchMobilePermission() async {
+    try {
+      final granted = await _recorder.hasPermission();
+      if (mounted) {
+        setState(() => _hasMicPermission = granted);
+      }
+    } catch (_) {
+      // Ignorar errors silenciosament
+    }
   }
 
   @override
   void dispose() {
-    _answerController.dispose();
     _timer?.cancel();
     _recorder.dispose();
+    _waveController.dispose();
     super.dispose();
   }
 
