@@ -1006,48 +1006,53 @@ class _MicScreenState extends State<MicScreen> with SingleTickerProviderStateMix
 
 
   Widget _buildWaveform() {
-    final baseColor =
-        _isRecording ? Colors.redAccent : Colors.white.withOpacity(0.3);
-    final barColor = _isRecording
-        ? Colors.white
-        : AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.4);
-
     return SizedBox(
-      height: 96,
+      height: 168, // Altura fija para evitar vibración
       child: AnimatedBuilder(
         animation: _waveController,
         builder: (context, _) {
-          final progress = _waveController.value;
-          final bars = List.generate(_waveBarCount, (index) {
-            final phase = (progress * 2 * pi) + (index * 0.35);
-            final noise = _waveRandom.nextDouble() * (_isRecording ? 0.35 : 0.15);
-            final normalized = (sin(phase) + 1) / 2;
-            final heightFactor = (normalized * 0.7) + noise;
-            final barHeight = 22 + heightFactor * 58;
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_waveBarCount, (index) {
+                final progress = _waveController.value;
+                final phase = (progress * 2 * pi) + (index * 0.35);
+                final noise = _waveRandom.nextDouble() * (_isRecording ? 0.35 : 0.15);
+                final normalized = (sin(phase) + 1) / 2;
+                final heightFactor = (normalized * 0.7) + noise;
+                final barHeight = (22 + heightFactor * 58).clamp(10, 120);
 
-            return Container(
-              width: 5,
-              height: barHeight,
-              decoration: BoxDecoration(
-                color: barColor,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: baseColor.withOpacity(0.35),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                  child: Container(
+                    width: 4,
+                    height: barHeight,
+                    decoration: BoxDecoration(
+                      color: _isRecording
+                          ? const Color(0xFFEF476F)
+                          : AppColors.getPrimaryButtonColor(isDarkMode),
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_isRecording
+                                  ? const Color(0xFFEF476F)
+                                  : AppColors.getPrimaryButtonColor(isDarkMode))
+                              .withAlpha(100),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            );
-          });
-
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: bars,
+                );
+              }),
+            ),
           );
         },
+      ),
+    );
+  }
       ),
     );
   }
