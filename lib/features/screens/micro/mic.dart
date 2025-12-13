@@ -1010,14 +1010,12 @@ class _MicScreenState extends State<MicScreen>
   }
 
   Widget _buildWaveform() {
-    final baseColor =
-        _isRecording ? Colors.redAccent : Colors.white.withOpacity(0.3);
-    final barColor = _isRecording
-        ? Colors.white
-        : AppColors.getPrimaryTextColor(isDarkMode).withOpacity(0.4);
+    final Color activeColor = _isRecording
+        ? const Color(0xFFEF476F)
+        : AppColors.getPrimaryButtonColor(isDarkMode);
 
     return SizedBox(
-      height: 96,
+      height: 168,
       child: AnimatedBuilder(
         animation: _waveController,
         builder: (context, _) {
@@ -1028,18 +1026,19 @@ class _MicScreenState extends State<MicScreen>
                 _waveRandom.nextDouble() * (_isRecording ? 0.35 : 0.15);
             final normalized = (sin(phase) + 1) / 2;
             final heightFactor = (normalized * 0.7) + noise;
-            final barHeight = 22 + heightFactor * 58;
+            final double barHeight =
+                (22 + heightFactor * 58).clamp(10.0, 120.0);
 
             return Container(
-              width: 5,
+              width: 4,
               height: barHeight,
               decoration: BoxDecoration(
-                color: barColor,
-                borderRadius: BorderRadius.circular(10),
+                color: activeColor,
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: baseColor.withOpacity(0.35),
-                    blurRadius: 8,
+                    color: activeColor.withAlpha(100),
+                    blurRadius: 10,
                     spreadRadius: 1,
                   ),
                 ],
