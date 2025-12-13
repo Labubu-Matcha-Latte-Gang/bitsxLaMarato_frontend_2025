@@ -87,3 +87,16 @@ windows/flutter/generated_plugin_registrant.h
 windows/flutter/generated_plugins.cmake
 
 api-docs/
+
+# Archivos varios de Flutter/Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Archivos de sistema y editores
+.DS_Store
+.idea/
+.vscode/
+*.swp
