@@ -30,6 +30,7 @@ class _SroopTestPageState extends State<SroopTestPage> {
 
   late bool isDarkMode;
 
+  bool _showInstructions = true;
   _SroopPhase _currentPhase = _SroopPhase.interference;
   int _phaseProgress = 0; // 0 to _itemsPerPhase
   int _timeRemaining = _phaseDuration;
@@ -47,6 +48,12 @@ class _SroopTestPageState extends State<SroopTestPage> {
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode;
+  }
+
+  void _startTest() {
+    setState(() {
+      _showInstructions = false;
+    });
     _initializePhase();
   }
 
@@ -157,10 +164,192 @@ class _SroopTestPageState extends State<SroopTestPage> {
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(isDarkMode),
       body: SafeArea(
-        child: _currentPhase == _SroopPhase.results
-            ? _buildResultsScreen()
-            : _buildTestScreen(),
+        child: _showInstructions
+            ? _buildInstructionsScreen()
+            : _currentPhase == _SroopPhase.results
+                ? _buildResultsScreen()
+                : _buildTestScreen(),
       ),
+    );
+  }
+
+  Widget _buildInstructionsScreen() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isMobile = screenWidth < 600;
+        final fontSize = isMobile ? 16.0 : 18.0;
+        final titleFontSize = isMobile ? 28.0 : 36.0;
+        final buttonFontSize = isMobile ? 18.0 : 22.0;
+
+        return Padding(
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                Icons.psychology,
+                size: isMobile ? 80 : 100,
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Test de Stroop',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: EdgeInsets.all(isMobile ? 20 : 24),
+                decoration: BoxDecoration(
+                  color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Com funciona:',
+                      style: TextStyle(
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                        fontSize: fontSize + 2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInstructionItem(
+                      '1',
+                      'Veuràs paraules de colors escrites en diferents colors',
+                      fontSize,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInstructionItem(
+                      '2',
+                      'Has de seleccionar el COLOR en què està escrita la paraula, NO el que diu la paraula',
+                      fontSize,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInstructionItem(
+                      '3',
+                      'Tens 45 segons per completar 20 ítems',
+                      fontSize,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInstructionItem(
+                      '4',
+                      'Respon el més ràpid i precís possible',
+                      fontSize,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: EdgeInsets.all(isMobile ? 16 : 20),
+                decoration: BoxDecoration(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: AppColors.getPrimaryButtonColor(isDarkMode),
+                      size: isMobile ? 24 : 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Exemple: Si veus "VERMELL" escrit en blau, has de seleccionar BLAU',
+                        style: TextStyle(
+                          color: AppColors.getPrimaryTextColor(isDarkMode),
+                          fontSize: fontSize - 1,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: _startTest,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                  foregroundColor:
+                      AppColors.getPrimaryButtonTextColor(isDarkMode),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 18 : 22,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Començar Test',
+                  style: TextStyle(
+                    fontSize: buttonFontSize,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInstructionItem(String number, String text, double fontSize) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.getPrimaryButtonColor(isDarkMode),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: AppColors.getSecondaryTextColor(isDarkMode),
+                fontSize: fontSize,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -628,6 +817,6 @@ class _SroopTestPageState extends State<SroopTestPage> {
   }
 
   String _getPhaseName() {
-    return 'Test de Stroop - Fase d\'Interferència';
+    return 'Test de Stroop';
   }
 }
