@@ -317,7 +317,7 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                 child: _ActionCard(
                                   title: 'Diari Personal',
                                   description:
-                                      'Respon les preguntes del teu diari per fer seguiment del teu progrés.',
+                                      'Explica els teus problemes i experiéncies al diari',
                                   icon: Icons.book,
                                   isDarkMode: isDarkMode,
                                   onTap: () async {
