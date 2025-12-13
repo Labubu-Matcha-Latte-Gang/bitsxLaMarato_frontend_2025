@@ -347,6 +347,37 @@ class _DiaryPageState extends State<DiaryPage>
     }
   }
 
+  Future<void> _sendWebChunk(Uint8List bytes) async {
+    if (_currentSessionId == null) return;
+
+    try {
+      final chunkRequest = TranscriptionChunkRequest(
+        sessionId: _currentSessionId!,
+        chunkIndex: _nextChunkIndex,
+        audioBytes: bytes,
+        filename: 'diary_chunk_$_nextChunkIndex.wav',
+        contentType: 'audio/wav',
+      );
+
+      print('DEBUG - Sending web diary chunk: index=$_nextChunkIndex, size=${bytes.length}');
+      await ApiService.uploadTranscriptionChunk(chunkRequest);
+      _consecutiveErrors = 0;
+      _nextChunkIndex += 1;
+    } catch (e) {
+      _consecutiveErrors++;
+      _hasUploadError = true;
+      _showError("Error enviant l'àudio. Torna-ho a provar.");
+      print('ERROR in _sendWebChunk ($_consecutiveErrors): $e');
+
+      if (_consecutiveErrors >= 3) {
+        print('CRITICAL - Too many consecutive errors, restarting session...');
+        _currentSessionId = const Uuid().v4();
+        _nextChunkIndex = 0;
+        _consecutiveErrors = 0;
+      }
+    }
+  }
+
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
 
@@ -361,13 +392,18 @@ class _DiaryPageState extends State<DiaryPage>
     _chunkTimer?.cancel();
     _chunkTimer = null;
 
-    try {
-      final Future<void> f = _sendCurrentMobileChunk(restart: false);
-      _pendingChunkUploads.add(f);
-      await f;
-      _pendingChunkUploads.remove(f);
-    } catch (e) {
-      print('ERROR stopping recording: $e');
+    if (kIsWeb) {
+      try {
+        await _webRecorder?.stop();
+      } catch (_) {}
+    } else {
+      try {
+        final Future<void> f = _sendCurrentMobileChunk(restart: false);
+        _pendingChunkUploads.add(f);
+        await f;
+        _pendingChunkUploads.remove(f);
+      } catch (e) {
+        print('ERROR stopping recording: $e');
     }
 
     setState(() {
