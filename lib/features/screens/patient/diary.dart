@@ -526,44 +526,48 @@ class _DiaryPageState extends State<DiaryPage>
   }
 
   Widget _buildWaveform() {
-    return AnimatedBuilder(
-      animation: _waveController,
-      builder: (context, child) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_waveBarCount, (index) {
-              final height = 20 +
-                  50 *
-                      (sin((_waveController.value * 2 * pi) +
-                              (index / _waveBarCount) * 2 * pi) +
-                          1) /
-                      2 +
-                  ((_waveRandom.nextDouble() - 0.5) * 10);
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.5),
-                child: Container(
-                  width: 4,
-                  height: height.clamp(10, 120),
-                  decoration: BoxDecoration(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode),
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.getPrimaryButtonColor(isDarkMode)
-                            .withAlpha(100),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ],
+    return SizedBox(
+      height:
+          168, // Altura fija: 24 (padding top) + 120 (max height) + 24 (padding bottom)
+      child: AnimatedBuilder(
+        animation: _waveController,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_waveBarCount, (index) {
+                final height = 20 +
+                    50 *
+                        (sin((_waveController.value * 2 * pi) +
+                                (index / _waveBarCount) * 2 * pi) +
+                            1) /
+                        2 +
+                    ((_waveRandom.nextDouble() - 0.5) * 10);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                  child: Container(
+                    width: 4,
+                    height: height.clamp(10, 120),
+                    decoration: BoxDecoration(
+                      color: AppColors.getPrimaryButtonColor(isDarkMode),
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.getPrimaryButtonColor(isDarkMode)
+                              .withAlpha(100),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }),
-          ),
-        );
-      },
+                );
+              }),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -775,31 +779,6 @@ class _DiaryPageState extends State<DiaryPage>
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            if (_transcriptionText != null && _transcriptionText!.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode)
-                        .withAlpha((0.2 * 255).round()),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  _transcriptionText!.length > 200
-                      ? '${_transcriptionText!.substring(0, 200)}...'
-                      : _transcriptionText!,
-                  style: TextStyle(
-                    color: AppColors.getTertiaryTextColor(isDarkMode),
-                    fontSize: 13,
-                    height: 1.6,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
