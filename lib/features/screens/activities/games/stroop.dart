@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../utils/app_colors.dart';
 
@@ -135,13 +136,13 @@ class _SroopTestPageState extends State<SroopTestPage> {
       Colors.purple,
       Colors.cyan
     ];
-    final colorLabels = ['VERMELL', 'BLAU', 'VERD', 'GROC', 'MORAT', 'CIAN'];
+    final random = Random();
 
     final items = <_ColorItem>[];
     for (int i = 0; i < _itemsPerPhase; i++) {
-      final wordIndex = i % words.length;
-      final colorIndex = (i + 2) % colors.length; // Offset to create conflicts
-      items.add(_ColorItem(words[wordIndex], colors[colorIndex]));
+      final randomWord = words[random.nextInt(words.length)];
+      final randomColor = colors[random.nextInt(colors.length)];
+      items.add(_ColorItem(randomWord, randomColor));
     }
     return items;
   }
