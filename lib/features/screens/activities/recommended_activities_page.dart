@@ -55,9 +55,8 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
         final activity = filteredResults.first;
         // Activity loaded successfully
         // Logs removed
-      } else {
-        print('DEBUG - ⚠ API returned empty results');
-      }
+      } else {}
+
 
       setState(() {
         _recommendedActivity =
