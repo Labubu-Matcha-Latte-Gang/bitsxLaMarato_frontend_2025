@@ -247,8 +247,8 @@ class _LoginScreenState extends State<LoginScreen> {
           // Recuadro de formulario posicionado desde arriba
           Positioned(
             top: MediaQuery.of(context).size.height * 0.35,
-            left: 0,
-            right: 0,
+            left: MediaQuery.of(context).size.width * 0.15,
+            right: MediaQuery.of(context).size.width * 0.15,
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(
