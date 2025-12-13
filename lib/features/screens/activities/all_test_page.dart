@@ -103,9 +103,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         difficultyMax: difficultyMax,
         title: titleText.isEmpty ? null : titleText,
       );
-      // Filtrar activitats que comencen amb "TEST - "
+      // Només mostrar activitats de test: títols que comencen per "TEST - "
       final filteredResults = results.where((activity) {
-        return !activity.title.startsWith('TEST - ');
+        return activity.title.startsWith('TEST - ');
       }).toList();
       setState(() {
         _activities = filteredResults;
@@ -194,7 +194,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Totes les activitats',
+                    'Tots els tests',
                     style: TextStyle(
                       color: AppColors.getPrimaryTextColor(isDarkMode),
                       fontSize: 24,
@@ -203,7 +203,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Cerca activitats…',
+                    'Cerca tests…',
                     style: TextStyle(
                       color: AppColors.getSecondaryTextColor(isDarkMode),
                     ),
@@ -239,7 +239,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               controller: _searchController,
               onChanged: (_) => _scheduleSearch(),
               decoration: InputDecoration(
-                hintText: 'Cerca activitats…',
+                hintText: 'Cerca tests…',
                 hintStyle: TextStyle(
                   color: AppColors.getPlaceholderTextColor(isDarkMode),
                 ),
