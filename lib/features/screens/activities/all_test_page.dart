@@ -429,7 +429,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           SizedBox(
             height: 68,
             child: DropdownButtonFormField<String>(
@@ -448,7 +448,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   fontSize: 13,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
               dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
@@ -529,6 +529,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),
@@ -547,6 +549,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),
