@@ -396,7 +396,7 @@ class _AreasPieChart extends StatelessWidget {
               children: areas.map((a) {
                 final idx = areas.indexOf(a) % colors.length;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
                   child: Row(
                     children: [
                       // Colored circle marker (no icon) to indicate the legend color
