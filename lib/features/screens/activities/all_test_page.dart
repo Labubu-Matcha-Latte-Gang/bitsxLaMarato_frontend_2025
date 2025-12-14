@@ -431,7 +431,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 68,
+            height: 74,
             child: DropdownButtonFormField<String>(
               value: _selectedType,
               isExpanded: true,
