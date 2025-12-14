@@ -770,7 +770,7 @@ class _DiaryPageState extends State<DiaryPage>
         elevation: 16,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
-          padding: const EdgeInsets.all(48),
+          padding: const EdgeInsets.all(64),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -780,7 +780,7 @@ class _DiaryPageState extends State<DiaryPage>
                 ),
                 strokeWidth: 3,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 40),
               Text(
                 'Processant resposta...',
                 style: TextStyle(
@@ -790,7 +790,7 @@ class _DiaryPageState extends State<DiaryPage>
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 'Si us plau espera',
                 style: TextStyle(
