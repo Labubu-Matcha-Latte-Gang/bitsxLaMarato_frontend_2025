@@ -102,4 +102,4 @@ Aquesta aplicació consumeix l'API del backend. Pots trobar la documentació int
 
 ## Llicència
 
-Distribuït sota la Llicència MIT. Consulta el fitxer `LICENSE` per a més informació.
+Distribuït sota la Llicència GPL-3.0. Consulta el fitxer `LICENSE` per a més informació.
