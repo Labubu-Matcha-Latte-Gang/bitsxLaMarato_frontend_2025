@@ -1,3 +1,4 @@
+import 'package:bitsxlamarato_frontend_2025/features/screens/patient/flashcards.dart';
 import 'package:flutter/material.dart';
 
 import '../../../utils/app_colors.dart';
@@ -10,13 +11,14 @@ import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
 import 'diary.dart';
+import 'flashcards.dart';
 
 class PatientMenuPage extends StatefulWidget {
   final bool initialDarkMode;
 
   const PatientMenuPage({
     super.key,
-    this.initialDarkMode = false,
+    this.initialDarkMode = true,
   });
 
   @override
@@ -24,7 +26,7 @@ class PatientMenuPage extends StatefulWidget {
 }
 
 class _PatientMenuPageState extends State<PatientMenuPage> {
-  late bool isDarkMode;
+  late bool isDarkMode = true;
   bool _isLoggingOut = false;
 
   @override
@@ -318,7 +320,7 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                 child: _ActionCard(
                                   title: 'Diari Personal',
                                   description:
-                                      'Explica els teus problemes i experiéncies al diari',
+                                      'Explica els teus problemes i experiències al diari',
                                   icon: Icons.book,
                                   isDarkMode: isDarkMode,
                                   onTap: () async {
@@ -385,18 +387,18 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
-                                  title: 'Tots els tests',
+                                  title: 'Supera\'t',
                                   description:
-                                      'Accedeix al catàleg complet de tests disponibles.',
-                                  icon: Icons.assignment_turned_in_outlined,
+                                  'Activitats en el món real per ajudar-te a superar els teus reptes.',
+                                  icon: Icons.auto_awesome,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) =>
-                                            test_page.AllActivitiesPage(
-                                          initialDarkMode: isDarkMode,
-                                        ),
+                                            Flashcards(
+                                              initialDarkMode: isDarkMode,
+                                            ),
                                       ),
                                     );
                                   },

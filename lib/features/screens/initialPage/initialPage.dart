@@ -9,14 +9,14 @@ import '../register/registerLobby.dart';
 class InitialPage extends StatefulWidget {
   final bool initialDarkMode;
 
-  const InitialPage({super.key, this.initialDarkMode = false});
+  const InitialPage({super.key, this.initialDarkMode = true});
 
   @override
   State<InitialPage> createState() => _InitialPageState();
 }
 
 class _InitialPageState extends State<InitialPage> {
-  bool isDarkMode = false;
+  bool isDarkMode = true;
 
   @override
   void initState() {
