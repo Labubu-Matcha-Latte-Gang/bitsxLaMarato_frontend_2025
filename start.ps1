@@ -33,7 +33,8 @@ while ($true) {
     Write-Host "4. Stop ALL Containers"
     Write-Host "5. Run Tests"
     Write-Host "6. Build Android APK (Release)" 
-    Write-Host "7. Exit"
+    Write-Host "7. Generate App Icons"
+    Write-Host "8. Exit"
     Write-Host "----------------------------------------"
     
     $selection = Read-Host "Select option"
@@ -155,14 +156,18 @@ while ($true) {
         } else {
             Write-Host "[ERROR] Build failed." -ForegroundColor Red
         }
-    }
+    } 
     elseif ($selection -eq "7") {
+        Write-Host "Generating App Icons..." -ForegroundColor Cyan
+        docker-compose -f $ComposeBuild run --rm builder bash -c "flutter pub get && dart run flutter_launcher_icons"
+        Write-Host "Done! Check android/app/src/main/res/ to verify." -ForegroundColor Green
+    }
+    elseif ($selection -eq "8") {
         Write-Host "Stopping and Exiting..."
         docker-compose -f $ComposeDev down 2>$null
         docker-compose -f $ComposeProd down 2>$null
         exit
-    }
-    else {
+    } else {
         Write-Host "Invalid option." -ForegroundColor Red
     }
 }
