@@ -8,8 +8,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,12 +26,12 @@ BoxDecoration _sectionDecoration(bool isDarkMode, {double radius = 14}) {
     color: DoctorColors.surface(isDarkMode),
     borderRadius: BorderRadius.circular(radius),
     border: Border.all(
-      color: DoctorColors.border(isDarkMode).withOpacity(0.18),
+      color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()),
       width: 1,
     ),
     boxShadow: [
       BoxShadow(
-        color: DoctorColors.cardShadow(isDarkMode).withOpacity(0.06),
+        color: DoctorColors.cardShadow(isDarkMode).withAlpha((255 * 0.06).round()),
         blurRadius: 8,
         offset: const Offset(0, 2),
       ),
@@ -81,7 +80,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   _QRColorRole _lastEditedColor = _QRColorRole.fill;
   String? _qrDataUri;
   VoidCallback? _dialogRebuild;
-  bool _dialogOpen = false;
 
   @override
   void initState() {
@@ -103,7 +101,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final greetingWord = isFemaleDoctor ? 'Benvinguda' : 'Benvingut';
     final honorific = isFemaleDoctor ? 'Dra.' : 'Dr.';
     final fullName = [_doctorName, _doctorSurname]
-        .where((part) => part != null && part!.trim().isNotEmpty)
+        .where((part) => part != null && part.trim().isNotEmpty)
         .map((part) => part!.trim())
         .join(' ');
     final nameSegment = fullName.isEmpty ? '' : ' $fullName';
@@ -117,7 +115,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Diary transcription',
-      barrierColor: Colors.black.withOpacity(0.25),
+      barrierColor: Colors.black.withAlpha((255 * 0.25).round()),
       transitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (context, animation, secondaryAnimation) {
         return SafeArea(
@@ -145,7 +143,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                         border: Border.all(color: DoctorColors.border(isDarkMode)),
                         boxShadow: [
                           BoxShadow(
-                            color: DoctorColors.cardShadow(isDarkMode).withOpacity(0.06),
+                            color: DoctorColors.cardShadow(isDarkMode).withAlpha((255 * 0.06).round()),
                             blurRadius: 20,
                             offset: const Offset(0, 6),
                           ),
@@ -197,7 +195,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                                   ),
                                   const SizedBox(height: 12),
                                   if (analysis != null && analysis.isNotEmpty) ...[
-                                    Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.12)),
+                                    Divider(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.12).round())),
                                     const SizedBox(height: 8),
                                     Text(
                                       'Anàlisi',
@@ -256,7 +254,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                                                 decoration: BoxDecoration(
                                                   color: swatch,
                                                   borderRadius: BorderRadius.circular(3),
-                                                  border: Border.all(color: DoctorColors.border(isDarkMode).withOpacity(0.12)),
+                                                  border: Border.all(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.12).round())),
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -369,17 +367,19 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       if (kIsWeb) {
         final blob = html.Blob([bytes], 'application/pdf');
         final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..download = filename
-          ..click();
+        html.window.open(url, '_blank');
         html.Url.revokeObjectUrl(url);
         _showSnack('Informe descarregat al navegador.');
       } else {
-        final dir = await getTemporaryDirectory();
-        final file = File('/');
-        await file.writeAsBytes(bytes, flush: true);
-        await OpenFilex.open(file.path);
-        _showSnack('Informe desat a ');
+        final uri = Uri.parse(filename);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          final file = File(filename);
+          if (await file.exists()) {
+          // Open file with default application
+          }
+        }
       }
     } catch (e) {
       _showSnack(
@@ -526,16 +526,16 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
     }
 
-    final double r = channelToLinear(color.red);
-    final double g = channelToLinear(color.green);
-    final double b = channelToLinear(color.blue);
+    final double r = channelToLinear((color.r * 255.0).round().clamp(0, 255));
+    final double g = channelToLinear((color.g * 255.0).round().clamp(0, 255));
+    final double b = channelToLinear((color.b * 255.0).round().clamp(0, 255));
 
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
   String _colorToHex(Color color) {
     final String hex =
-        color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
+        color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${hex.substring(2)}';
   }
 
@@ -601,7 +601,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                             style: IconButton.styleFrom(
                               backgroundColor:
                                   DoctorColors.secondary(isDarkMode)
-                                      .withOpacity(0.2),
+                                      .withAlpha((255 * 0.2).round()),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -611,7 +611,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                             style: IconButton.styleFrom(
                               backgroundColor:
                                   DoctorColors.secondary(isDarkMode)
-                                      .withOpacity(0.2),
+                                      .withAlpha((255 * 0.2).round()),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -643,7 +643,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 onTap: _toggleQrFullscreen,
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withAlpha((255 * 0.7).round()),
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(16),
                   child: _buildQrFrame(
@@ -748,7 +748,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         return StatefulBuilder(
           builder: (context, localSetState) {
             _dialogRebuild = () => localSetState(() {});
-            _dialogOpen = true;
             return Dialog(
               insetPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -772,7 +771,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                         IconButton(
                           onPressed: () {
                             _dialogRebuild = null;
-                            _dialogOpen = false;
                             Navigator.of(context).pop();
                           },
                           icon: Icon(
@@ -890,7 +888,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           CircleAvatar(
             radius: 26,
             backgroundColor:
-                DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                DoctorColors.secondary(isDarkMode).withAlpha((255 * 0.12).round()),
             child: Icon(
               Icons.person_outline,
               color: DoctorColors.primary(isDarkMode),
@@ -1395,7 +1393,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           color: primary,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: DoctorColors.border(isDarkMode).withOpacity(0.5),
+            color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.5).round()),
           ),
         ),
       ),
@@ -1434,10 +1432,10 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orangeAccent.withOpacity(isDarkMode ? 0.12 : 0.08),
+            color: Colors.orangeAccent.withAlpha((255 * (isDarkMode ? 0.12 : 0.08)).round()),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.orangeAccent.withOpacity(0.4),
+              color: Colors.orangeAccent.withAlpha((255 * 0.4).round()),
             ),
           ),
           child: Column(
@@ -1536,7 +1534,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
+          Divider(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()), height: 1),
           const SizedBox(height: 10),
           ...scores.take(5).map(
                 (s) => Padding(
@@ -1590,7 +1588,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
+          Divider(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()), height: 1),
           const SizedBox(height: 10),
           ...questions.take(4).map(
                 (q) {
@@ -1648,7 +1646,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
+          Divider(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()), height: 1),
           const SizedBox(height: 10),
           ...diaryAnswers.take(4).map(
                 (q) {
@@ -1703,7 +1701,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
+          Divider(
+              color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()),
+              height: 1),
           const SizedBox(height: 10),
           ...graphs.asMap().entries.map((entry) {
             final int idx = entry.key;
@@ -1741,56 +1741,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 isDarkMode: isDarkMode,
                 titleOverride: customTitle,
                 description: customDesc,
-              );
-
-              if (wide) {
-                return SizedBox(
-                  width: tileWidth,
-                  child: card,
-                );
-              } else {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: card,
-                );
-              }
-            }).toList();
-          }
-
-          final tiles = buildTile(isWide, constraints.maxWidth);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Gràfics generats',
-                style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
-                  fontWeight: FontWeight.w700,
-                ),
               ),
-              const SizedBox(height: 10),
-              if (isWide)
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: tiles,
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: tiles,
-                ),
-            ],
-          );
-        },
+            );
+          }).toList(),
+        ],
       ),
-    );
-
-    // Prevent graphs from interacting when the dialog is open (e.g. WebView/iframe).
-    return AbsorbPointer(
-      absorbing: _dialogOpen,
-      child: graphsContent,
     );
   }
 }
@@ -1836,7 +1791,7 @@ class _StatCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.12), height: 1),
+          Divider(color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.12).round()), height: 1),
           const SizedBox(height: 6),
           Text(
             value,
@@ -1931,7 +1886,7 @@ class _HistoryTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withAlpha((255 * 0.12).round()),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor),
@@ -1976,7 +1931,7 @@ class _HistoryTile extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color:
-                          DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                          DoctorColors.secondary(isDarkMode).withAlpha((255 * 0.12).round()),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
@@ -1989,7 +1944,7 @@ class _HistoryTile extends StatelessWidget {
                             color: _swatchColorFor(text),
                             borderRadius: BorderRadius.circular(3),
                             border: Border.all(
-                              color: DoctorColors.border(isDarkMode).withOpacity(0.12),
+                              color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.12).round()),
                             ),
                           ),
                         ),
@@ -2028,7 +1983,7 @@ class _ScoreBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: DoctorColors.primary(isDarkMode).withOpacity(0.15),
+        color: DoctorColors.primary(isDarkMode).withAlpha((255 * 0.15).round()),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -2107,58 +2062,6 @@ class _GraphCard extends StatelessWidget {
     }
   }
 
-  static String? _descriptionForFilename(String rawName, String title) {
-    final String base = rawName
-        .split('/')
-        .last
-        .split('\\')
-        .last
-        .replaceAll('.png', '')
-        .replaceAll('.PNG', '')
-        .trim()
-        .toLowerCase();
-
-    switch (base) {
-      // Scores (puntuació)
-      case 'scores_speed':
-        return 'Evolució de la puntuació en activitats de velocitat; tendències ascendents indiquen millora.';
-      case 'scores_sorting':
-        return "Puntuació en tasques d'ordenament; reflecteix precisió i consistència en seqüències.";
-      case 'scores_words':
-        return 'Puntuació en activitats de paraules; mesura fluïdesa verbal i memòria semàntica.';
-      case 'scores_concentration':
-        return "Puntuació en concentració; mostra manteniment d'atenció i control d'errors.";
-      case 'scores_multitasking':
-        return 'Puntuació en multitasca; integra capacitat d’alternar i gestionar tasques paral·leles.';
-      case 'scores_diary':
-        return 'Puntuacions del diari; evolució de mètriques de resposta diària.';
-      case 'scores_by_question_type':
-        return 'Mitjana de puntuació per domini; compara rendiment entre tipus d’activitat.';
-
-      // Speed (temps per completar)
-      case 'speed_speed':
-        return 'Temps per completar activitats de velocitat; valors decreixents indiquen més agilitat.';
-      case 'speed_sorting':
-        return "Temps en tasques d'ordenament; captura eficiència en organització de seqüències.";
-      case 'speed_words':
-        return 'Temps en activitats de paraules; reflecteix accés i recuperació lèxica.';
-      case 'speed_concentration':
-        return 'Temps en concentració; mostra estabilitat en l’atenció sostinguda.';
-      case 'speed_multitasking':
-        return 'Temps en multitasca; mesura la coordinació entre tasques simultànies.';
-      case 'speed_diary':
-        return 'Progressió del temps global per completar; resum d’agilitat general.';
-
-      case 'progress_composite':
-        return 'Progrés global compost; agregat de puntuacions per visió general.';
-
-      case 'question_metrics':
-        return "Analitza la freqüència de substantius, densitat d’idees, adherència al tema, ràtio de pronoms, etc.";
-
-      default:
-        return null;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -2168,15 +2071,6 @@ class _GraphCard extends StatelessWidget {
             ? mappedTitle
             : (graph.filename.isNotEmpty ? graph.filename : 'Gràfic'));
 
-    String _genericDescriptionForTitle(String t) {
-      return 'Gràfic: $t';
-    }
-
-    final String effectiveDescription =
-        (description != null && description!.trim().isNotEmpty)
-            ? description!.trim()
-            : (_descriptionForFilename(graph.filename, title) ??
-                _genericDescriptionForTitle(title));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: _sectionDecoration(isDarkMode, radius: 12),
@@ -2296,7 +2190,7 @@ class _GraphError extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: DoctorColors.critical(isDarkMode).withOpacity(0.08),
+        color: DoctorColors.critical(isDarkMode).withAlpha((255 * 0.08).round()),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -2564,7 +2458,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
 
   String get _hexValue {
     final String hex =
-        _currentColor.value.toRadixString(16).padLeft(8, '0').toUpperCase();
+        _currentColor.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${hex.substring(2)}';
   }
 
@@ -2596,7 +2490,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withAlpha((255 * 0.18).round()),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -2613,7 +2507,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: textColor.withOpacity(0.35),
+                    color: textColor.withAlpha((255 * 0.35).round()),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -2790,7 +2684,7 @@ class _ColorPreviewCard extends StatelessWidget {
         color: DoctorColors.background(isDarkMode),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: textColor.withOpacity(0.12),
+          color: textColor.withAlpha((255 * 0.12).round()),
         ),
       ),
       child: Row(
@@ -2802,7 +2696,7 @@ class _ColorPreviewCard extends StatelessWidget {
               color: background,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: textColor.withOpacity(0.15),
+                color: textColor.withAlpha((255 * 0.15).round()),
               ),
             ),
             child: Center(
@@ -2867,10 +2761,10 @@ class _GradientSlider extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
     final Color thumbColor =
-        isDark ? Colors.white : Colors.black.withOpacity(0.85);
-    final Color overlayColor = thumbColor.withOpacity(0.15);
+        isDark ? Colors.white : Colors.black.withAlpha((255 * 0.85).round());
+    final Color overlayColor = thumbColor.withAlpha((255 * 0.15).round());
     final Color frameColor =
-        (isDark ? Colors.white : Colors.black).withOpacity(0.12);
+        (isDark ? Colors.white : Colors.black).withAlpha((255 * 0.12).round());
     final SliderThemeData sliderTheme = SliderTheme.of(context).copyWith(
       trackHeight: 16,
       activeTrackColor: Colors.transparent,
@@ -2890,14 +2784,14 @@ class _GradientSlider extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9),
+                color: theme.textTheme.bodyLarge?.color?.withAlpha((255 * 0.9).round()),
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
               valueLabel,
               style: TextStyle(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withAlpha((255 * 0.7).round()),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -2967,7 +2861,7 @@ class __HoverableHistoryTileState extends State<_HoverableHistoryTile> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _isHovering ? DoctorColors.primary(widget.isDarkMode).withOpacity(0.1) : Colors.transparent,
+            color: _isHovering ? DoctorColors.primary(widget.isDarkMode).withAlpha((255 * 0.1).round()) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: _HistoryTile(
