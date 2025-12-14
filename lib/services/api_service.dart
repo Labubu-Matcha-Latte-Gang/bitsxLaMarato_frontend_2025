@@ -7,6 +7,7 @@ import '../models/activity_models.dart';
 import '../models/question_models.dart';
 import '../models/user_models.dart';
 import '../models/transcription_models.dart';
+import '../models/flashcard_models.dart';
 import '../config.dart';
 import 'session_manager.dart';
 
@@ -988,6 +989,36 @@ class ApiService {
     if (!saved) {
       throw ApiException(
         'La sessió s\'ha creat però no s\'ha pogut persistir localment.',
+        0,
+      );
+    }
+  }
+
+  static Future<Flashcard> getRecommendedTask() async {
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/llm-recommendation'),
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          throw ApiException('Resposta de recomanació buida', 500);
+        }
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        return Flashcard.fromJson(responseData);
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'ha pogut obtenir la recomanació d\'activitat.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
         0,
       );
     }
