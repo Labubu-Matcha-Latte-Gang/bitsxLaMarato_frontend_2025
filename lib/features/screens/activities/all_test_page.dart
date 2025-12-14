@@ -617,6 +617,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
 
   // Advanced filters field removed
 
+  void _showNotImplementedSnackbar(String gameName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$gameName no està disponible en aquesta versió'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Widget _buildBody() {
     if (_isLoading) {
       return Center(
@@ -717,20 +726,14 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     }
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SudokuPage(isDarkMode: isDarkMode),
-        ),
-      );
+      // TODO: Implement SudokuPage navigation
+      _showNotImplementedSnackbar('Sudoku');
       return;
     }
 
     if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const WordleScreen(),
-        ),
-      );
+      // TODO: Implement WordleScreen navigation
+      _showNotImplementedSnackbar('Wordle');
       return;
     }
 
