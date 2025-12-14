@@ -644,6 +644,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                               backgroundColor:
                                   DoctorColors.secondary(isDarkMode)
                                       .withAlpha((255 * 0.2).round()),
+                              foregroundColor: DoctorColors.primary(isDarkMode),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -654,6 +655,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                               backgroundColor:
                                   DoctorColors.secondary(isDarkMode)
                                       .withAlpha((255 * 0.2).round()),
+                              foregroundColor: DoctorColors.primary(isDarkMode),
                             ),
                           ),
                           const SizedBox(width: 6),
