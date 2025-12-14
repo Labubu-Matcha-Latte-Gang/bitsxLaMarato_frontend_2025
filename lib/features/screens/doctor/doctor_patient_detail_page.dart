@@ -738,6 +738,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
+          _buildDiarySection(),
+          const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
               final double width = constraints.maxWidth;
@@ -770,8 +772,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
               }
             },
           ),
-          const SizedBox(height: 16),
-          _buildDiarySection(),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildGraphsSection(),
