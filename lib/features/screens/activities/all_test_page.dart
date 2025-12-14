@@ -10,6 +10,7 @@ import '../../../utils/effects/particle_system.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 import 'games/sorting.dart';
+import 'games/stroop.dart';
 import 'games/sudoku_easy.dart';
 import 'games/wordle_easy.dart';
 import 'widgets/activity_card.dart';
@@ -19,7 +20,7 @@ class AllActivitiesPage extends StatefulWidget {
 
   const AllActivitiesPage({
     super.key,
-    this.initialDarkMode = true,
+    this.initialDarkMode = false,
   });
 
   @override
@@ -103,9 +104,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
         difficultyMax: difficultyMax,
         title: titleText.isEmpty ? null : titleText,
       );
-      // Filtrar activitats que comencen amb "TEST - "
+      // Només mostrar activitats de test: títols que comencen per "TEST - "
       final filteredResults = results.where((activity) {
-        return !activity.title.startsWith('TEST - ');
+        return activity.title.startsWith('TEST - ');
       }).toList();
       setState(() {
         _activities = filteredResults;
@@ -194,7 +195,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Totes les activitats',
+                    'Tots els tests',
                     style: TextStyle(
                       color: AppColors.getPrimaryTextColor(isDarkMode),
                       fontSize: 24,
@@ -203,7 +204,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Cerca activitats…',
+                    'Cerca tests…',
                     style: TextStyle(
                       color: AppColors.getSecondaryTextColor(isDarkMode),
                     ),
@@ -239,7 +240,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               controller: _searchController,
               onChanged: (_) => _scheduleSearch(),
               decoration: InputDecoration(
-                hintText: 'Cerca activitats…',
+                hintText: 'Cerca tests…',
                 hintStyle: TextStyle(
                   color: AppColors.getPlaceholderTextColor(isDarkMode),
                 ),
@@ -705,6 +706,15 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
   void _openActivity(Activity activity) {
     final lowerType = activity.activityType.toLowerCase();
     final lowerTitle = activity.title.toLowerCase();
+
+    if (lowerType.contains('stroop') || lowerTitle.contains('stroop')) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SroopTestPage(isDarkMode: isDarkMode),
+        ),
+      );
+      return;
+    }
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
       Navigator.of(context).push(

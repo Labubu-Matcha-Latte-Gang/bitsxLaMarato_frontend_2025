@@ -3,7 +3,8 @@ import 'dart:io' show File;
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:open_filex/open_filex.dart';
@@ -138,6 +139,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       _qrFullscreen = !_qrFullscreen;
     });
   }
+
   Future<void> _downloadReport() async {
     setState(() {
       _downloadingPdf = true;
@@ -147,8 +149,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       final bytes = await ApiService.downloadPatientReport(widget.patientEmail);
       if (!mounted) return;
 
-      final filename =
-          'informe_.pdf';
+      final filename = 'informe_.pdf';
       if (kIsWeb) {
         final blob = html.Blob([bytes], 'application/pdf');
         final url = html.Url.createObjectUrlFromBlob(blob);
@@ -298,7 +299,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   double _calculateLuminance(Color color) {
     double channelToLinear(int channel) {
       final double c = channel / 255.0;
-      return c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
+      return c <= 0.03928
+          ? c / 12.92
+          : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
     }
 
     final double r = channelToLinear(color.red);
@@ -313,6 +316,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${hex.substring(2)}';
   }
+
   @override
   Widget build(BuildContext context) {
     final bg = DoctorColors.background(isDarkMode);
@@ -365,12 +369,29 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-                          color: DoctorColors.textPrimary(isDarkMode),
-                        ),
-                        onPressed: _toggleTheme,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton.filledTonal(
+                            onPressed: _loadPatientData,
+                            icon: const Icon(Icons.refresh),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  DoctorColors.secondary(isDarkMode)
+                                      .withOpacity(0.2),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            icon: Icon(
+                              isDarkMode
+                                  ? Icons.wb_sunny
+                                  : Icons.nightlight_round,
+                              color: DoctorColors.textPrimary(isDarkMode),
+                            ),
+                            onPressed: _toggleTheme,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -436,9 +457,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          _buildPatientInfo(patient),
-          const SizedBox(height: 12),
-          _buildStatsGrid(),
+          _buildPatientAndStatsLayout(patient),
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
@@ -465,21 +484,23 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     return parts.join(' ');
   }
 
-  String _formatMeasurement(num? value, String unit,
-      {int fractionDigits = 0}) {
+  String _formatMeasurement(num? value, String unit, {int fractionDigits = 0}) {
     if (value == null) return '—';
     final double numericValue = value.toDouble();
     final bool hasDecimals =
-        numericValue - numericValue.truncateToDouble() != 0 || fractionDigits > 0;
+        numericValue - numericValue.truncateToDouble() != 0 ||
+            fractionDigits > 0;
     final int digits = hasDecimals ? math.max(1, fractionDigits) : 0;
-    final String formatted =
-        digits > 0 ? numericValue.toStringAsFixed(digits) : numericValue.toStringAsFixed(0);
+    final String formatted = digits > 0
+        ? numericValue.toStringAsFixed(digits)
+        : numericValue.toStringAsFixed(0);
     return '$formatted $unit';
   }
 
   String _formatScore(double? score) {
     if (score == null) return '—';
-    final value = score >= 10 ? score.toStringAsFixed(0) : score.toStringAsFixed(1);
+    final value =
+        score >= 10 ? score.toStringAsFixed(0) : score.toStringAsFixed(1);
     return value;
   }
 
@@ -504,6 +525,41 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       return '${remaining}s';
     }
     return '${minutes}m ${remaining.toString().padLeft(2, '0')}s';
+  }
+
+  Widget _buildPatientAndStatsLayout(UserProfile patient) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        // On screens >= 820px wide, place side-by-side; otherwise stack vertically.
+        final bool isSideBySide = width >= 820;
+
+        if (isSideBySide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _buildPatientInfo(patient),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 1,
+                child: _buildStatsGrid(),
+              ),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              _buildPatientInfo(patient),
+              const SizedBox(height: 12),
+              _buildStatsGrid(),
+            ],
+          );
+        }
+      },
+    );
   }
 
   Widget _buildPatientInfo(UserProfile patient) {
@@ -601,53 +657,103 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 2.8,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      children: cards,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        const double spacing = 12;
+        final double idealWidth =
+            (width - spacing * (cards.length - 1)) / cards.length;
+        final double cardWidth = idealWidth.clamp(140, 220);
+
+        // On very narrow screens, allow horizontal scroll but keep one row.
+        final bool needsScroll =
+            width < (cardWidth * cards.length + spacing * (cards.length - 1));
+
+        final row = Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (int i = 0; i < cards.length; i++) ...[
+              SizedBox(width: cardWidth, child: cards[i]),
+              if (i != cards.length - 1) const SizedBox(width: spacing),
+            ],
+          ],
+        );
+
+        if (needsScroll) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: row,
+            ),
+          );
+        }
+
+        return row;
+      },
     );
   }
 
   Widget _buildActionsRow() {
-    return Row(
-      children: [
-        Expanded(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final bool isNarrow = width < 320;
+
+        // Button takes full available width with small side margins
+        final double buttonWidth = width - 16;
+
+        // Responsive padding and font size
+        final EdgeInsets buttonPadding = width >= 700
+            ? const EdgeInsets.symmetric(horizontal: 28, vertical: 16)
+            : width >= 480
+                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+
+        final double buttonFontSize = width >= 700
+            ? 17
+            : width >= 480
+                ? 14
+                : isNarrow
+                    ? 12
+                    : 13;
+
+        final double iconSize = width >= 700
+            ? 22
+            : isNarrow
+                ? 18
+                : 20;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: ElevatedButton.icon(
             onPressed: _downloadingPdf ? null : _downloadReport,
             icon: _downloadingPdf
                 ? const SizedBox(
-                    width: 18,
-                    height: 18,
+                    width: 16,
+                    height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.picture_as_pdf_outlined),
+                : Icon(
+                    Icons.picture_as_pdf_outlined,
+                    size: iconSize,
+                  ),
             label: Text(
               _downloadingPdf ? 'Descarregant...' : 'Descarregar informe',
+              style: TextStyle(fontSize: buttonFontSize),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: DoctorColors.primary(isDarkMode),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: buttonPadding,
+              minimumSize: Size(buttonWidth, 0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        IconButton.filledTonal(
-          onPressed: _loadPatientData,
-          icon: const Icon(Icons.refresh),
-          style: IconButton.styleFrom(
-            backgroundColor:
-                DoctorColors.secondary(isDarkMode).withOpacity(0.2),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -752,6 +858,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       ),
     );
   }
+
   Widget _buildQrFrame(double dimension, Widget child) {
     return Container(
       width: dimension,
@@ -781,7 +888,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     try {
       final commaIndex = _qrDataUri!.indexOf(',');
-      final bool isDataUri = _qrDataUri!.startsWith('data:') && commaIndex != -1;
+      final bool isDataUri =
+          _qrDataUri!.startsWith('data:') && commaIndex != -1;
       if (isDataUri) {
         final String header = _qrDataUri!.substring(5, commaIndex);
         final String dataPart = _qrDataUri!.substring(commaIndex + 1);
@@ -1180,31 +1288,30 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           ),
           const SizedBox(height: 10),
           ...questions.take(4).map(
-                (q) {
-                  final analysisChips = q.analysis.entries
-                      .map((entry) =>
-                          '${entry.key}: ${entry.value.toStringAsFixed(2)}')
-                      .toList();
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: _HistoryTile(
-                      icon: Icons.question_answer_outlined,
-                      iconColor: DoctorColors.secondary(isDarkMode),
-                      title: q.question.text.isNotEmpty
-                          ? q.question.text
-                          : 'Pregunta',
-                      subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
-                      metadata: [
-                        if (q.question.questionType.isNotEmpty)
-                          'Tipus: ${q.question.questionType}',
-                        'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
-                        ...analysisChips,
-                      ],
-                      isDarkMode: isDarkMode,
-                    ),
-                  );
-                },
-              ),
+            (q) {
+              final analysisChips = q.analysis.entries
+                  .map((entry) =>
+                      '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+                  .toList();
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: _HistoryTile(
+                  icon: Icons.question_answer_outlined,
+                  iconColor: DoctorColors.secondary(isDarkMode),
+                  title:
+                      q.question.text.isNotEmpty ? q.question.text : 'Pregunta',
+                  subtitle: 'Respost el ${_formatDateTimeLabel(q.answeredAt)}',
+                  metadata: [
+                    if (q.question.questionType.isNotEmpty)
+                      'Tipus: ${q.question.questionType}',
+                    'Dificultat: ${q.question.difficulty.toStringAsFixed(1)}',
+                    ...analysisChips,
+                  ],
+                  isDarkMode: isDarkMode,
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -1214,6 +1321,16 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final graphs = _data?.graphFiles ?? [];
     if (graphs.isEmpty) {
       return const SizedBox.shrink();
+    }
+
+    // Find the last HTML graph to label it specifically as requested.
+    int lastHtmlIndex = -1;
+    for (int i = graphs.length - 1; i >= 0; i--) {
+      final t = graphs[i].contentType.toLowerCase();
+      if (t.contains('html') || t.contains('htm')) {
+        lastHtmlIndex = i;
+        break;
+      }
     }
 
     return Container(
@@ -1234,20 +1351,51 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             ),
           ),
           const SizedBox(height: 10),
-          ...graphs.map(
-            (graph) => Padding(
+          ...graphs.asMap().entries.map((entry) {
+            final int idx = entry.key;
+            final graph = entry.value;
+            // Custom titles and descriptions for the first four graphs.
+            const titles = <String>[
+              'Progressió de puntuacions',
+              'Puntuació mitjana per àmbit',
+              'Evolució de velocitat',
+              'Progressió global',
+            ];
+            const descriptions = <String>[
+              'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
+              'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
+              'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
+              'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
+            ];
+
+            // Overrides for last HTML graph take precedence.
+            String? customTitle;
+            String? customDesc;
+            if (idx == lastHtmlIndex) {
+              customTitle = 'Evolució de mètriques de preguntes';
+              customDesc =
+                  'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
+            } else {
+              customTitle = idx < titles.length ? titles[idx] : null;
+              customDesc = idx < descriptions.length ? descriptions[idx] : null;
+            }
+
+            return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _GraphCard(
                 graph: graph,
                 isDarkMode: isDarkMode,
+                titleOverride: customTitle,
+                description: customDesc,
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 }
+
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -1270,31 +1418,32 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: DoctorColors.border(isDarkMode)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: DoctorColors.primary(isDarkMode)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: DoctorColors.textSecondary(isDarkMode),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: DoctorColors.textPrimary(isDarkMode),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+          Icon(
+            icon,
+            color: DoctorColors.primary(isDarkMode),
+            size: 22,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: DoctorColors.textSecondary(isDarkMode),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
         ],
@@ -1408,7 +1557,8 @@ class _HistoryTile extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                      color:
+                          DoctorColors.secondary(isDarkMode).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1460,15 +1610,20 @@ class _ScoreBadge extends StatelessWidget {
 class _GraphCard extends StatelessWidget {
   final GraphFile graph;
   final bool isDarkMode;
+  final String? titleOverride;
+  final String? description;
 
   const _GraphCard({
     required this.graph,
     required this.isDarkMode,
+    this.titleOverride,
+    this.description,
   });
 
   @override
   Widget build(BuildContext context) {
-    final title = graph.filename.isNotEmpty ? graph.filename : 'Gràfic';
+    final title = titleOverride ??
+        (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1487,13 +1642,22 @@ class _GraphCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            graph.contentType,
-            style: TextStyle(
-              color: DoctorColors.textSecondary(isDarkMode),
-              fontSize: 12,
+          if ((description ?? '').isNotEmpty)
+            Text(
+              description!,
+              style: TextStyle(
+                color: DoctorColors.textSecondary(isDarkMode),
+                fontSize: 12,
+              ),
+            )
+          else
+            Text(
+              graph.contentType,
+              style: TextStyle(
+                color: DoctorColors.textSecondary(isDarkMode),
+                fontSize: 12,
+              ),
             ),
-          ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -1543,12 +1707,20 @@ class _GraphContentRenderer extends StatelessWidget {
     }
 
     if (type.contains('html') || type.contains('htm')) {
-      return SizedBox(
-        height: 280,
-        child: _HtmlGraphView(
-          graph: graph,
-          isDarkMode: isDarkMode,
-        ),
+      // Make HTML graphs responsive: height scales with width (approx 16:9),
+      // with sensible clamps to fit various screen sizes.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final double w = constraints.maxWidth;
+          final double h = (w / (16 / 9)).clamp(200.0, 480.0);
+          return SizedBox(
+            height: h,
+            child: _HtmlGraphView(
+              graph: graph,
+              isDarkMode: isDarkMode,
+            ),
+          );
+        },
       );
     }
 
@@ -1650,6 +1822,22 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant _HtmlGraphView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final bool themeChanged = oldWidget.isDarkMode != widget.isDarkMode;
+    final bool contentChanged = oldWidget.graph.content != widget.graph.content;
+    if (themeChanged || contentChanged) {
+      _htmlContent = _decodeHtmlContent(widget.graph.content);
+      if (_htmlContent == null) return;
+      if (kIsWeb && _iframeElement != null) {
+        _iframeElement!.srcdoc = _htmlContent!;
+      } else if (_supportsNativeWebView && _webViewController != null) {
+        _webViewController!.loadHtmlString(_htmlContent!);
+      }
+    }
+  }
+
   String? _decodeHtmlContent(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return null;
@@ -1684,17 +1872,78 @@ class _HtmlGraphViewState extends State<_HtmlGraphView> {
   }
 
   String _wrapHtml(String body) {
+    // Inject a minimal responsive stylesheet so incoming HTML graphs adapt
+    // to the page style and screen resolution.
+    final bool dark = widget.isDarkMode;
+    final String bg = dark ? '#121212' : '#FFFFFF';
+    final String text = dark ? '#E6E6E6' : '#1B1B1B';
+    final String border = dark ? '#2A2A2A' : '#E0E0E0';
+
     return '''
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
-    html, body { margin: 0; padding: 0; background: transparent; }
+    :root {
+      --bg: ${bg};
+      --text: ${text};
+      --border: ${border};
+    }
+    html, body {
+      margin: 0; padding: 0; background: transparent; color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+      height: 100%;
+      line-height: 1.35;
+      -webkit-text-size-adjust: 100%;
+      text-rendering: optimizeLegibility;
+      color-scheme: ${dark ? 'dark' : 'light'};
+    }
+    /* Universal box sizing */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* Responsive container that fills the iframe/webview */
+    .graph-container {
+      display: flex; align-items: stretch; justify-content: center;
+      width: 100%; height: 100%;
+      padding: 8px; background: transparent; overflow: hidden;
+    }
+    .graph-inner {
+      flex: 1 1 auto; min-width: 0; min-height: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* Make visual elements scale nicely */
+    img, svg, canvas, iframe { display: block; max-width: 100% !important; }
+    img, svg, canvas { width: 100% !important; height: auto !important; }
+    svg[height], canvas[height] { height: auto !important; }
+
+    /* Common chart library containers */
+    .plotly, .js-plotly-plot, .chartjs-render-monitor, .chart-container,
+    .echarts, [data-echarts] {
+      width: 100% !important; height: 100% !important;
+    }
+
+    /* Tables inside graphs */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--border); padding: 6px; }
+
+    /* Typography scales */
+    body { font-size: clamp(12px, 1.5vw, 16px); }
+    h1 { font-size: clamp(16px, 2vw, 20px); margin: 0 0 8px; }
+    h2 { font-size: clamp(14px, 1.8vw, 18px); margin: 0 0 6px; }
+    p { margin: 0 0 6px; }
+
+    /* Small screens tweaks */
+    @media (max-width: 420px) {
+      .graph-container { padding: 6px; }
+      th, td { padding: 5px; }
+    }
   </style>
 </head>
 <body>
-$body
+  <div class="graph-container"><div class="graph-inner">$body</div></div>
 </body>
 </html>
 ''';
@@ -1776,12 +2025,10 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
     final Color secondaryTextColor =
         DoctorColors.textSecondary(widget.isDarkMode);
 
-    final Color backgroundColor = widget.role == _QRColorRole.back
-        ? _currentColor
-        : widget.pairedColor;
-    final Color foregroundColor = widget.role == _QRColorRole.fill
-        ? _currentColor
-        : widget.pairedColor;
+    final Color backgroundColor =
+        widget.role == _QRColorRole.back ? _currentColor : widget.pairedColor;
+    final Color foregroundColor =
+        widget.role == _QRColorRole.fill ? _currentColor : widget.pairedColor;
 
     final EdgeInsets viewInsets = MediaQuery.of(context).viewInsets;
 

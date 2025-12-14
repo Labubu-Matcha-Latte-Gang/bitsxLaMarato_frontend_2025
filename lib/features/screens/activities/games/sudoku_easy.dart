@@ -2,12 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 /// A simple 9x9 Sudoku page where the user fills blanks.
 /// Maintains the same header/particle styling and AppColors from the app.
 class SudokuPage extends StatefulWidget {
   final bool isDarkMode;
-  const SudokuPage({Key? key, this.isDarkMode = false}) : super(key: key);
+  final String? activityId;
+  const SudokuPage({Key? key, this.isDarkMode = false, this.activityId}) : super(key: key);
 
   @override
   State<SudokuPage> createState() => _SudokuPageState();
@@ -16,40 +19,84 @@ class SudokuPage extends StatefulWidget {
 class _SudokuPageState extends State<SudokuPage> {
   // A known puzzle and its solution (classic easy puzzle)
   final List<List<int>> _initial = const [
-    [5,3,0,0,7,0,0,0,0],
-    [6,0,0,1,9,5,0,0,0],
-    [0,9,8,0,0,0,0,6,0],
-    [8,0,0,0,6,0,0,0,3],
-    [4,0,0,8,0,3,0,0,1],
-    [7,0,0,0,2,0,0,0,6],
-    [0,6,0,0,0,0,2,8,0],
-    [0,0,0,4,1,9,0,0,5],
-    [0,0,0,0,8,0,0,7,9],
+    [6,9,0,1,7,0,0,0,0],
+    [3,5,0,0,4,0,1,0,0],
+    [8,0,2,3,6,0,7,0,4],
+    [0,0,0,0,0,0,9,0,8],
+    [9,4,0,0,0,0,0,0,5],
+    [0,0,0,5,9,0,6,3,0],
+    [2,6,0,0,5,0,0,8,7],
+    [0,8,1,0,0,6,4,9,0],
+    [0,7,3,0,8,2,0,1,0],
   ];
 
   final List<List<int>> _solution = const [
-    [5,3,4,6,7,8,9,1,2],
-    [6,7,2,1,9,5,3,4,8],
-    [1,9,8,3,4,2,5,6,7],
-    [8,5,9,7,6,1,4,2,3],
-    [4,2,6,8,5,3,7,9,1],
-    [7,1,3,9,2,4,8,5,6],
-    [9,6,1,5,3,7,2,8,4],
-    [2,8,7,4,1,9,6,3,5],
-    [3,4,5,2,8,6,1,7,9],
+    [6,9,4,1,7,5,8,2,3],
+    [3,5,7,2,4,8,1,6,9],
+    [8,1,2,3,6,9,7,5,4],
+    [1,3,5,6,2,7,9,4,8],
+    [9,4,6,8,1,3,2,7,5],
+    [7,2,8,5,9,4,6,3,1],
+    [2,6,9,4,5,1,3,8,7],
+    [5,8,1,7,3,6,4,9,2],
+    [4,7,3,9,8,2,5,1,6],
   ];
 
   late List<List<int?>> _board;
   late List<List<bool>> _fixed; // true if not editable
   int? _selectedRow;
   int? _selectedCol;
-  bool _isDarkModeLocal = false;
+  bool _isDarkModeLocal = true;
+
+  int numIncorrect = 0;
+  DateTime? _gameStartTime;
+  Duration _totalTime = Duration.zero;
+
+  int totalSquares = 81;
+  int filledSquares = 39;
+  int? difference;
+  double score = 0.0;
+
+  double difficulty = 1.5;
+
+  // Resolved activity id if not provided
+  String? _resolvedActivityId;
 
   @override
   void initState() {
     super.initState();
     _isDarkModeLocal = widget.isDarkMode;
     _resetBoard();
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
+  }
+
+  // Ensure we have an activity id (prefer explicit widget.activityId, else cached, else fetch)
+  Future<String?> _ensureActivityId(String title) async {
+    if (widget.activityId != null && widget.activityId!.isNotEmpty) return widget.activityId;
+    if (_resolvedActivityId != null && _resolvedActivityId!.isNotEmpty) return _resolvedActivityId;
+    try {
+      final activity = await ApiService.getActivity(title);
+      if (!mounted) return null;
+      setState(() { _resolvedActivityId = activity.id; });
+      return activity.id;
+    } catch (e) {
+      debugPrint('Failed to resolve activity id for $title: $e');
+      return null;
+    }
+  }
+
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      final activity = await ApiService.getActivity('Sudoku (fàcil)');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      debugPrint('Failed to resolve Sudoku Easy activity id: $e');
+    }
   }
 
   void _resetBoard() {
@@ -101,7 +148,131 @@ class _SudokuPageState extends State<SudokuPage> {
         if (_board[r][c] != _solution[r][c]) return false;
       }
     }
+    _recordGameTime();
+    _calculateScore();
     return true;
+  }
+
+  Future<void> _submitScore(String activityId) async {
+    try {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enviant resultats...',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final request = ActivityCompleteRequest(
+        id: activityId,
+        score: score,
+        secondsToFinish: _totalTime.inSeconds.toDouble(),
+      );
+
+      await ApiService.completeActivity(request);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          title: Text(
+            'Resultats Enviats',
+            style: TextStyle(
+              color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Els resultats s\'han registrat correctament.',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          content: Text(
+            'No s\'ha pogut enviar els resultats: $e',
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(_isDarkModeLocal),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'D\'acord',
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _recordGameTime() {
+    if (_gameStartTime != null) {
+      final dur = DateTime.now().difference(_gameStartTime!);
+      _totalTime = _totalTime + dur;
+      _gameStartTime = null;
+    }
+  }
+
+  void _calculateScore() {
+    difference= totalSquares - filledSquares;
+
+    score = max(0.0, 10*(difference! - numIncorrect)/difference! + (difficulty - 1.5) * 0.25);
   }
 
   void _checkSolution() {
@@ -115,6 +286,8 @@ class _SudokuPageState extends State<SudokuPage> {
       }
     }
 
+    numIncorrect += wrong;
+
     if (_isCompleteCorrect()) {
       showDialog<void>(
         context: context,
@@ -124,7 +297,16 @@ class _SudokuPageState extends State<SudokuPage> {
           backgroundColor: AppColors.getSecondaryBackgroundColor(_isDarkModeLocal),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                // Resolve id (explicit, cached, or fetch)
+                final id = await _ensureActivityId('Sudoku (fàcil)');
+                if (id != null) {
+                  await _submitScore(id);
+                } else {
+                  if (mounted) Navigator.pop(context);
+                }
+              },
               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(_isDarkModeLocal))),
             )
           ],
@@ -191,18 +373,17 @@ class _SudokuPageState extends State<SudokuPage> {
         // and explicit TextAlign + a stable height on the TextStyle.
         child: value == null
             ? const SizedBox.shrink()
-            : Center(
-                child: Text(
-                  '${value}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    height: 1.0, // avoid extra line-height that can shift vertical centering
-                    fontWeight: fixed ? FontWeight.bold : FontWeight.w500,
-                    color: fixed
-                        ? AppColors.getPrimaryTextColor(_isDarkModeLocal)
-                        : (isWrong ? Colors.red : AppColors.getPrimaryTextColor(_isDarkModeLocal)),
-                  ),
+            : Text(
+                '${value}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  // Scale font size with the cell size but keep it within readable bounds
+                  fontSize: (size * 0.6).clamp(12.0, 28.0),
+                  height: 1.0, // avoid extra line-height that can shift vertical centering
+                  fontWeight: fixed ? FontWeight.bold : FontWeight.w500,
+                  color: fixed
+                      ? AppColors.getPrimaryTextColor(_isDarkModeLocal)
+                      : (isWrong ? Colors.red : AppColors.getPrimaryTextColor(_isDarkModeLocal)),
                 ),
               ),
       ),
@@ -307,12 +488,13 @@ class _SudokuPageState extends State<SudokuPage> {
                                       foregroundColor: AppColors.getPrimaryTextColor(_isDarkModeLocal),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                       elevation: 0,
+                                      padding: EdgeInsets.zero, // remove default padding so text can be perfectly centered
+                                      minimumSize: const Size(44, 44), // ensure button keeps the same size
+                                      alignment: Alignment.center, // explicitly center the child
                                     ),
                                     onPressed: () => _enterNumber(n),
-                                    // Ensure the digit is perfectly centered inside the button
-                                    child: Center(
-                                      child: Text('$n', textAlign: TextAlign.center, style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal))),
-                                    ),
+                                    // The SizedBox + style alignment + zero padding guarantee exact centering
+                                    child: Text('$n', textAlign: TextAlign.center, style: TextStyle(color: AppColors.getPrimaryTextColor(_isDarkModeLocal), fontSize: 16, height: 1.0)),
                                   ),
                                 );
                               }),
@@ -320,23 +502,20 @@ class _SudokuPageState extends State<SudokuPage> {
                                 width: 44,
                                 height: 44,
                                 child: Tooltip(
-                                  message: 'Clear cell',
+                                  message: 'Clear selected cell',
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.getPrimaryButtonColor(_isDarkModeLocal),
                                       foregroundColor: AppColors.getPrimaryButtonTextColor(_isDarkModeLocal),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                       elevation: 0,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(44, 44),
+                                      alignment: Alignment.center,
                                     ),
                                     onPressed: () => _enterNumber(null),
-                                    // Center the icon as well so it's visually aligned with the number buttons
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.backspace_outlined,
-                                        size: 20,
-                                        color: AppColors.getPrimaryButtonTextColor(_isDarkModeLocal),
-                                      ),
-                                    ),
+                                    // Use a backspace icon to indicate clearing the selected cell
+                                    child: Icon(Icons.backspace, color: AppColors.getPrimaryButtonTextColor(_isDarkModeLocal)),
                                   ),
                                 ),
                               ),

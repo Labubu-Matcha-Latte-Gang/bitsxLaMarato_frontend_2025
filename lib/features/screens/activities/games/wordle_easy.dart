@@ -1,16 +1,21 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
-import '../recommended_activities_page.dart';
+import '../../../../services/api_service.dart';
+import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 // Wordle game screen: 8 tries, 5-letter words.
 class WordleScreen extends StatefulWidget {
   final bool isDarkMode;
-  const WordleScreen({Key? key, this.isDarkMode = false}) : super(key: key);
+  // Optional explicit activity id (preferred), and name fallback
+  final String? activityId;
+
+  const WordleScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
 
   @override
   State<WordleScreen> createState() => _WordleScreenState();
@@ -37,15 +42,36 @@ class _WordleScreenState extends State<WordleScreen>
   Set<String>? _dictionarySet;
   List<String>? _easyWords;
 
-  // Gameplay stats (previously removed) — keep them here so other parts of the file compile
-  int invalidWordCount = 0;
-  int incorrectGuessCount = 0;
+  ApiService apiService = ApiService();
+  // Local resolved activity id if not provided by caller
+  String? _resolvedActivityId;
 
-  @override
-  void initState() {
+    int invalidWordCount = 0;
+    int incorrectGuessCount = 0;
+
+    double difficulty = 1.5;
+
+    double score = 0.0;
+
+    // Timing: track when the current game started, duration of the last finished
+    // game, and cumulative total time spent playing Wordle in this app session.
+    DateTime? _gameStartTime;
+    Duration _currentGameDuration = Duration.zero;
+    Duration _totalTime = Duration.zero;
+
+    Timer? _timer;
+    int _elapsedSeconds = 0;
+    bool _isRunning = false;
+
+    @override
+    void initState() {
     super.initState();
     isDark = widget.isDarkMode;
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    // Attempt to resolve activity id from backend if not provided
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
     // Load dictionaries first, then start the game so we can prefer easy words
     _loadDictionary().whenComplete(() {
       // After the first frame, show difficulty selector before starting
@@ -53,7 +79,17 @@ class _WordleScreenState extends State<WordleScreen>
         _showDialog();
       });
     });
-  }
+    }
+
+    // Record the currently running game's time (if any) into totals and reset
+    void _recordGameTime() {
+      if (_gameStartTime != null) {
+        final dur = DateTime.now().difference(_gameStartTime!);
+        _currentGameDuration = dur;
+        _totalTime = _totalTime + dur;
+        _gameStartTime = null;
+      }
+    }
 
   Future<void> _loadDictionary() async {
     try {
@@ -105,7 +141,55 @@ class _WordleScreenState extends State<WordleScreen>
     }
   }
 
-  void _startNewGame() {
+  // Fallback: resolve activity id from API by known title
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      // Adjust the title if your backend uses a different one
+      final activity = await ApiService.getActivity('Wordle Fàcil');
+      print('Resolved Wordle Easy activity id: ${activity.id}');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      // If resolution fails, keep _resolvedActivityId null; submission will skip
+      debugPrint('Failed to resolve Wordle Easy activity id: $e');
+    }
+  }
+
+  // Helper that ensures we have an activity id. Returns the id or null if not found.
+  Future<String?> _ensureActivityId(String title) async {
+    // Prefer explicit id passed via widget
+    if (widget.activityId != null && widget.activityId!.isNotEmpty) {
+      return widget.activityId;
+    }
+
+    if (_resolvedActivityId != null && _resolvedActivityId!.isNotEmpty) {
+      return _resolvedActivityId;
+    }
+
+    try {
+      final activity = await ApiService.getActivity(title);
+      if (!mounted) return null;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+      return activity.id;
+    } catch (e) {
+      debugPrint('Could not resolve activity id for "$title": $e');
+      return null;
+    }
+  }
+
+    void _startNewGame() {
+    // If a game was running (user pressed New game while playing), record its time
+    _recordGameTime();
+
+    // Stop any previous timer and reset elapsed seconds
+    _timer?.cancel();
+    _elapsedSeconds = 0;
+    _isRunning = true;
+
     // Choose secret word exclusively from easy_words.json if available.
     // If easy_words.json is missing or empty, fall back to a fixed default.
     // (Removed an unnecessary if that caused an unmatched brace)
@@ -139,8 +223,23 @@ class _WordleScreenState extends State<WordleScreen>
     keyStates.clear();
     for (var c = 'A'.codeUnitAt(0); c <= 'Z'.codeUnitAt(0); c++)
       keyStates[String.fromCharCode(c)] = LetterState.initial;
+
+    // Start timing this new game
+    _gameStartTime = DateTime.now();
+    _currentGameDuration = Duration.zero;
+
+    // start periodic timer to track elapsed seconds (like MemoryGame)
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_isRunning) return;
+      setState(() {
+        _elapsedSeconds++;
+      });
+    });
+
+    print('New secret word: $secretWord');
+
     setState(() {});
-  }
+    }
 
   // Show dialog
   Future<void> _showDialog() async {
@@ -177,8 +276,17 @@ class _WordleScreenState extends State<WordleScreen>
 
   @override
   void dispose() {
+    // Ensure we record any in-progress game time when the user leaves
+    _recordGameTime();
     _shakeController.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  // Called when the user navigates back from this screen so we record elapsed time
+  void _exitScreen() {
+    _recordGameTime();
+    Navigator.of(context).pop();
   }
 
   void _toggleTheme() {
@@ -208,6 +316,163 @@ class _WordleScreenState extends State<WordleScreen>
     setState(() {
       currentGuess = currentGuess.substring(0, currentGuess.length - 1);
     });
+  }
+
+  // Compute a score between 0.0 and 10.0 based on guesses and penalties.
+  double _computeScore({required bool won}) {
+    if (!won) return 0.0;
+
+    // If won, reward faster (fewer guesses) and penalize invalid attempts.
+    final guessesUsed = guesses.length.clamp(1, rows);
+    // Base: more points for fewer guesses. Win in 1 => best, in `rows` => worse.
+    final base = ((rows - (guessesUsed - 1)) / rows) * 10.0;
+
+    // Penalize invalid word attempts lightly
+    final invalidPenalty = invalidWordCount * 0.5;
+
+    // Optionally incorporate difficulty (higher difficulty yields small bonus)
+    final difficultyBonus = (difficulty - 1.5).clamp(0.0, 2.0) * 0.2;
+
+    var score = base - invalidPenalty + difficultyBonus;
+    if (score.isNaN) score = 0.0;
+    score = score.clamp(0.0, 10.0);
+    return score;
+  }
+
+  void _calculateScore() {
+    // Placeholder for score calculation logic if needed
+    double computedScore = 0.0;
+    double guessScore = max(0, (10 * (6 - incorrectGuessCount) / 5));
+    double invalidScore = max(5, 0.7 * invalidWordCount);
+    double difficultyScore = (difficulty - 1.5) * 0.25;
+
+    computedScore = min(10, guessScore + invalidScore + difficultyScore);
+    score = computedScore;
+    // Debug
+    // print('Score calculated: $score');
+  }
+
+  Future<void> _submitActivityScore(String activityId, double score) async {
+     // Prefer explicit activityId (like MemoryGame); fallback to resolving by name
+     final seconds = _elapsedSeconds.toDouble();
+
+     try {
+       if (!mounted) return;
+
+       // Show loading dialog immediately so the progress indicator is visible.
+       showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (ctx) => const AlertDialog(
+           content: Column(
+             mainAxisSize: MainAxisSize.min,
+             children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Enviant resultats...')],
+           ),
+         ),
+       );
+
+      final request = ActivityCompleteRequest(
+        id: activityId,
+        score: score,
+        secondsToFinish: seconds,
+      );
+
+      // Await the API call
+      await ApiService.completeActivity(request);
+
+       if (!mounted) return;
+
+       // Close the loading dialog before showing success
+       Navigator.of(context).pop();
+
+       showDialog(
+         context: context,
+         barrierDismissible: false,
+         builder: (context) => AlertDialog(
+           title: const Text('Resultats Enviats'),
+           content: Text(
+             'La puntuació de ${score.toStringAsFixed(1)} ha estat registrada correctament.',
+           ),
+           actions: [
+             ElevatedButton(
+               onPressed: () {
+                 Navigator.pop(context); // Close success dialog
+                 Navigator.pop(context); // Go back to activities page
+               },
+               style: ElevatedButton.styleFrom(
+                 backgroundColor: AppColors.getPrimaryButtonColor(isDark),
+                 foregroundColor: Colors.white,
+               ),
+               child: const Text('Acceptar'),
+             ),
+           ],
+         ),
+       );
+
+     } catch (e) {
+       // Close loading if still shown
+       if (mounted) Navigator.of(context).pop();
+
+       // Show error dialog so user can see the failure and await until they dismiss it
+       if (mounted) {
+         await showDialog(
+           context: context,
+           builder: (ctx) => AlertDialog(
+             title: const Text('Error'),
+             content: Text('No s\'ha pogut enviar el resultat: $e'),
+             actions: [
+               TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Acceptar')),
+             ],
+           ),
+         );
+       }
+
+       return;
+     }
+   }
+
+  // Centered results dialog showing statistics and an Accept button that returns
+  // the user to the Recommended Activities page.
+  void _showResultDialog({required bool won}) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final title = won ? 'Has guanyat!' : 'Final';
+        final message = won
+            ? 'Ho has aconseguit en ${guesses.length} intents.'
+            : 'No has encertat. La paraula era $secretWord.';
+        return AlertDialog(
+          title: Text(title, style: TextStyle(color: AppColors.getPrimaryTextColor(isDark))),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message, style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
+            ],
+          ),
+          backgroundColor: AppColors.getSecondaryBackgroundColor(isDark),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // Pop result dialog first, then resolve id and submit
+                Navigator.pop(context);
+                final score = _computeScore(won: won);
+                // Ensure we have an id (prefer explicit, then resolved, else fetch)
+                final id = await _ensureActivityId('Wordle Fàcil');
+                if (id != null) {
+                  await _submitActivityScore(id, score);
+                } else {
+                  // Couldn't resolve id -> just go back to activities list
+                  if (mounted) Navigator.pop(context);
+                }
+              },
+               child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
+             ),
+           ],
+         );
+       },
+     );
   }
 
   void _submitGuess() {
@@ -258,8 +523,16 @@ class _WordleScreenState extends State<WordleScreen>
     });
 
     if (guess == secretWord) {
+      _recordGameTime();
+      // Stop the timer so secondsToFinish is accurate before submission
+      _isRunning = false;
+      _calculateScore();
       _showResultDialog(won: true);
     } else if (guesses.length >= rows) {
+      _recordGameTime();
+      // Stop the timer so secondsToFinish is accurate before submission
+      _isRunning = false;
+      _calculateScore();
       _showResultDialog(won: false);
     }
   }
@@ -302,7 +575,6 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   Color _colorForState(LetterState s) {
-    // Use AppColors/theme-aware colors so tiles adapt when toggling the theme
     switch (s) {
       case LetterState.correct:
         return Colors.green.shade600;
@@ -316,8 +588,7 @@ class _WordleScreenState extends State<WordleScreen>
   }
 
   bool _isValidWord(String word) {
-    if (_dictionarySet == null)
-      return true; // if dictionary not loaded, accept all
+    if (_dictionarySet == null) return true;
     return _dictionarySet!.contains(word);
   }
 
@@ -327,56 +598,23 @@ class _WordleScreenState extends State<WordleScreen>
     } catch (_) {}
   }
 
-
-  // Centered results dialog showing statistics and an Accept button that returns
-  // the user to the Recommended Activities page.
-  void _showResultDialog({required bool won}) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        final title = won ? 'Has guanyat!' : 'Final';
-        final message = won
-            ? 'Ho has aconseguit en ${guesses.length} intents.'
-            : 'No has encertat. La paraula era $secretWord.';
-        return AlertDialog(
-          title: Text(title, style: TextStyle(color: AppColors.getPrimaryTextColor(isDark))),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(message, style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              const SizedBox(height: 12),
-              Text('Nombre d\'intents: ${guesses.length}', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              Text('Intents incorrectes vàlids: $incorrectGuessCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-              Text('Paraules no existents: $invalidWordCount', style: TextStyle(color: AppColors.getSecondaryTextColor(isDark))),
-            ],
-          ),
-          backgroundColor: AppColors.getSecondaryBackgroundColor(isDark),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // close dialog
-                // Navigate back to Recommended Activities page
-                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RecommendedActivitiesPage(initialDarkMode: isDark)));
-              },
-              child: Text('Acceptar', style: TextStyle(color: AppColors.getPrimaryButtonColor(isDark))),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = isDark ? ThemeData.dark() : ThemeData.light();
 
-    Widget buildGrid(double maxWidth) {
-      final tileSize = maxWidth / cols;
+    Widget buildGrid(BoxConstraints constraints) {
+      final maxWidth = min(constraints.maxWidth * 0.95, 560.0);
+      final maxHeight = constraints.maxHeight;
+
+      // Determine tile size based on both available width and height so the
+      // grid always fits within the provided constraints (prevents keyboard
+      // overlapping on wide screens / web by keeping the grid height bounded).
+      final tileSize = min(maxWidth / cols, maxHeight / rows);
+
+      final gridWidth = tileSize * cols;
 
       return SizedBox(
-        width: tileSize * cols,
+        width: gridWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(rows, (r) {
@@ -407,7 +645,8 @@ class _WordleScreenState extends State<WordleScreen>
                           : AppColors.getPrimaryTextColor(isDark))
                       : AppColors.getPrimaryTextColor(isDark);
 
-                  return Expanded(
+                  return SizedBox(
+                    width: tileSize,
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                       decoration: BoxDecoration(
@@ -507,9 +746,7 @@ class _WordleScreenState extends State<WordleScreen>
                               Icons.arrow_back,
                               color: AppColors.getPrimaryTextColor(isDark),
                             ),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
+                            onPressed: _exitScreen,
                           ),
                         ),
                         // Right-side controls: reload + theme
@@ -571,9 +808,7 @@ class _WordleScreenState extends State<WordleScreen>
                   Expanded(
                     child: Center(
                       child: LayoutBuilder(builder: (context, constraints) {
-                        final maxWidth =
-                            min(constraints.maxWidth * 0.95, 560.0);
-                        return buildGrid(maxWidth);
+                        return buildGrid(constraints);
                       }),
                     ),
                   ),

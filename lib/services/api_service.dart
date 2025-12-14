@@ -74,8 +74,6 @@ class ApiService {
   ) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - API Request URL: $_baseUrl/user/patient');
-      print('DEBUG - API Request Body: $requestBody');
 
       final response = await _sharedClient.post(
         Uri.parse('$_baseUrl/user/patient'),
@@ -84,9 +82,6 @@ class ApiService {
         },
         body: requestBody,
       );
-
-      print('DEBUG - API Response Status: ${response.statusCode}');
-      print('DEBUG - API Response Body: ${response.body}');
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
@@ -132,7 +127,6 @@ class ApiService {
         // Intentar parsear el error del servidor
         try {
           final errorData = json.decode(response.body);
-          print('DEBUG - Error Data: $errorData');
 
           // Para 422, intentar mostrar los errores específicos de validación
           if (response.statusCode == 422 && errorData.containsKey('errors')) {
@@ -146,7 +140,6 @@ class ApiService {
 
           throw ApiException(errorMessage, response.statusCode);
         } catch (e) {
-          print('DEBUG - Error parsing server response: $e');
           if (e is ApiException) rethrow;
           throw ApiException(
               '$errorMessage\nDetalls: ${response.body}', response.statusCode);
@@ -305,8 +298,6 @@ class ApiService {
 
       uri = uri.replace(queryParameters: params);
 
-      print('DEBUG: Fetching activities from URL: $uri');
-
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(
           uri,
@@ -334,10 +325,10 @@ class ApiService {
     }
   }
 
-  static Future<Activity> getActivity(String id) async {
+  static Future<Activity> getActivity(String name) async {
     try {
-      final uri =
-          Uri.parse('$_baseUrl/activity').replace(queryParameters: {'id': id});
+      final uri = Uri.parse('$_baseUrl/activity')
+          .replace(queryParameters: {'title': name});
 
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(
@@ -490,8 +481,6 @@ class ApiService {
   ) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - Doctor API Request URL: $_baseUrl/user/doctor');
-      print('DEBUG - Doctor API Request Body: $requestBody');
 
       final response = await _sharedClient.post(
         Uri.parse('$_baseUrl/user/doctor'),
@@ -500,9 +489,6 @@ class ApiService {
         },
         body: requestBody,
       );
-
-      print('DEBUG - Doctor API Response Status: ${response.statusCode}');
-      print('DEBUG - Doctor API Response Body: ${response.body}');
 
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
@@ -547,7 +533,6 @@ class ApiService {
         // Intentar parsear el error del servidor
         try {
           final errorData = json.decode(response.body);
-          print('DEBUG - Doctor Error Data: $errorData');
 
           // Para 422, intentar mostrar los errores específicos de validación
           if (response.statusCode == 422 && errorData.containsKey('errors')) {
@@ -561,7 +546,6 @@ class ApiService {
 
           throw ApiException(errorMessage, response.statusCode);
         } catch (e) {
-          print('DEBUG - Error parsing doctor server response: $e');
           if (e is ApiException) rethrow;
           throw ApiException(
               '$errorMessage\nDetalls: ${response.body}', response.statusCode);
@@ -581,8 +565,6 @@ class ApiService {
   static Future<LoginResponse> loginUser(LoginRequest request) async {
     try {
       final requestBody = json.encode(request.toJson());
-      print('DEBUG - Login Request URL: $_baseUrl/user/login');
-      print('DEBUG - Login Request Body: $requestBody');
 
       final response = await _sharedClient.post(
         Uri.parse('$_baseUrl/user/login'),
@@ -592,11 +574,6 @@ class ApiService {
         body: requestBody,
       );
 
-      print('DEBUG - Login Response Status: ${response.statusCode}');
-      print('DEBUG - Login Response Body: ${response.body}');
-      print('DEBUG - Login Response Body Length: ${response.body.length}');
-      print('DEBUG - Login Response Headers: ${response.headers}');
-
       if (response.statusCode == 200) {
         if (response.body.isEmpty) {
           throw ApiException('La resposta de la API està buida', 200);
@@ -604,7 +581,6 @@ class ApiService {
 
         try {
           final responseData = json.decode(response.body);
-          print('DEBUG - Parsed Response Data: $responseData');
 
           final loginResponse = LoginResponse.fromJson(responseData);
           await _persistSession(
@@ -617,7 +593,6 @@ class ApiService {
           );
           return loginResponse;
         } catch (e) {
-          print('DEBUG - Error parsing JSON: $e');
           throw ApiException(
               'Error processant la resposta: ${e.toString()}', 200);
         }
@@ -664,14 +639,12 @@ class ApiService {
                 'Error desconegut (${response.statusCode}): ${response.body}';
         }
 
-        print('DEBUG - Login API Error: $errorMessage');
         throw ApiException(errorMessage, response.statusCode);
       }
     } catch (e) {
       if (e is ApiException) {
         rethrow;
       }
-      print('DEBUG - Login Exception: $e');
       throw ApiException(
         'Error de connexió amb el servidor: ${e.toString()}',
         0,
@@ -871,18 +844,10 @@ class ApiService {
             ),
           );
 
-          print(
-            'DEBUG - Uploading transcription chunk: session=${request.sessionId} index=${request.chunkIndex} size=${request.audioBytes.length} filename=${request.filename}',
-          );
-
           final streamedResponse = await client.send(multipartRequest);
           return http.Response.fromStream(streamedResponse);
         },
       );
-
-      print(
-          'DEBUG - Chunk upload HTTP ${response.statusCode} for session=${request.sessionId} index=${request.chunkIndex}');
-      print('DEBUG - Chunk upload response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData =

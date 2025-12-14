@@ -123,54 +123,7 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                     padding: const EdgeInsets.symmetric(horizontal: 40.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo LMLG con imagen real
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 40),
-                          child: Column(
-                            children: [
-                              // Logo con imagen real
-                              SizedBox(
-                                height: 180,
-                                width: 280,
-                                child: Image.asset(
-                                  isDarkMode
-                                      ? TImages.lightLogoText
-                                      : TImages.darkLogoText,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    // Fallback en caso de que la imagen no se encuentre
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.local_hospital,
-                                          size: 60,
-                                          color: AppColors.getPrimaryTextColor(
-                                              isDarkMode),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'LMLG',
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                AppColors.getPrimaryTextColor(
-                                                    isDarkMode),
-                                            letterSpacing: 3,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      children: [],
                     ),
                   ),
                 ),
@@ -181,11 +134,42 @@ class _RegisterLobbyState extends State<RegisterLobby> {
             ),
           ),
 
-          // Recuadro inferior posicionado a 1/6 desde el final
+          // Logo fijo en la parte superior
           Positioned(
-            bottom: MediaQuery.of(context).size.height / 6,
+            top: 80,
             left: 0,
             right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  width: 180,
+                  child: Image.asset(
+                    isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_hospital,
+                        size: 60,
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Recuadro inferior posicionado
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.40,
+            left: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
+            right: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -325,6 +309,8 @@ class _RegisterLobbyState extends State<RegisterLobby> {
                               color: AppColors.getTertiaryTextColor(isDarkMode),
                               fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
+                              decorationColor:
+                                  AppColors.getTertiaryTextColor(isDarkMode),
                             ),
                           ),
                         ),
