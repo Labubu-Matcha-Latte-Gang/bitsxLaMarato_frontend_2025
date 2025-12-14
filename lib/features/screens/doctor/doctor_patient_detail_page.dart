@@ -1455,30 +1455,22 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           ...graphs.asMap().entries.map((entry) {
             final int idx = entry.key;
             final graph = entry.value;
-            // Custom titles and descriptions for the first four graphs.
-            const titles = <String>[
-              'Progressió de puntuacions',
-              'Puntuació mitjana per àmbit',
-              'Evolució de velocitat',
-              'Progressió global',
-            ];
-            const descriptions = <String>[
-              'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
-              'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
-              'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
-              'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
-            ];
 
-            // Overrides for last HTML graph take precedence.
+            // Prefer filename-based titles for PNG graphs, as requested.
             String? customTitle;
             String? customDesc;
-            if (idx == lastHtmlIndex) {
+
+            final type = graph.contentType.toLowerCase();
+            final isHtml = type.contains('html') || type.contains('htm');
+
+            if (idx == lastHtmlIndex && isHtml) {
+              // Keep a meaningful title only for the last HTML graph.
               customTitle = 'Evolució de mètriques de preguntes';
-              customDesc =
-                  'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
+              customDesc = null; // Focus on title; description not required.
             } else {
-              customTitle = idx < titles.length ? titles[idx] : null;
-              customDesc = idx < descriptions.length ? descriptions[idx] : null;
+              // For non-HTML (e.g., PNG) graphs, map by filename.
+              customTitle = _GraphCard._titleForFilename(graph.filename);
+              customDesc = null; // Only titles requested.
             }
 
             return Padding(
@@ -1727,10 +1719,61 @@ class _GraphCard extends StatelessWidget {
     this.description,
   });
 
+  // Map graph PNG base filename to user-requested titles.
+  static String? _titleForFilename(String rawName) {
+    // Normalize: strip extension and any path segments, lowercase.
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return "Históric de puntuació de velocitat";
+      case 'scores_sorting':
+        return "Históric de puntuació d'ordenament";
+      case 'scores_words':
+        return "Históric de puntuació de paraules";
+      case 'scores_concentration':
+        return "Históric de puntuació de concentració";
+      case 'progress_composite':
+        return "Progressió de puntuació global";
+      case 'scores_by_question_type':
+        return "Mitjana per domini de puntuació";
+      case 'scores_diary':
+        return "Evolució de mètriques de les preguntes diaries";
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return "Históric de temps per completar de tipus velocitat";
+      case 'speed_sorting':
+        return "Históric de temps per completar de tipus ordenament";
+      case 'speed_words':
+        return "Históric de temps per completar de tipus paraules";
+      case 'speed_concentration':
+        return "Históric de temps per completar de tipus concentració";
+      case 'speed_diary':
+        return "Progressió de temps per completar global";
+
+      // If other filenames appear, return null so we fall back to filename.
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String mappedTitle = _titleForFilename(graph.filename) ?? '';
     final title = titleOverride ??
-        (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
+        (mappedTitle.isNotEmpty
+            ? mappedTitle
+            : (graph.filename.isNotEmpty ? graph.filename : 'Gràfic'));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
