@@ -327,8 +327,8 @@ class ApiService {
 
   static Future<Activity> getActivity(String name) async {
     try {
-      final uri =
-          Uri.parse('$_baseUrl/activity').replace(queryParameters: {'title': name});
+      final uri = Uri.parse('$_baseUrl/activity')
+          .replace(queryParameters: {'title': name});
 
       final response = await _sendAuthorizedRequest(
         (token, client) => client.get(
@@ -766,6 +766,36 @@ class ApiService {
       throw _apiExceptionFromResponse(
         response,
         'No s\'ha pogut eliminar l\'usuari actual.',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(
+        'Error de connexió amb el servidor: ${e.toString()}',
+        0,
+      );
+    }
+  }
+
+  static Future<List<UserProfile>> getDoctorPatients() async {
+    try {
+      final response = await _sendAuthorizedRequest(
+        (token, client) => client.get(
+          Uri.parse('$_baseUrl/user/doctor/patients/mine'),
+          headers: _jsonHeaders(token),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        return responseData
+            .whereType<Map<String, dynamic>>()
+            .map((json) => UserProfile.fromJson(json))
+            .toList();
+      }
+
+      throw _apiExceptionFromResponse(
+        response,
+        'No s\'han pogut recuperar els pacients del metge.',
       );
     } catch (e) {
       if (e is ApiException) rethrow;

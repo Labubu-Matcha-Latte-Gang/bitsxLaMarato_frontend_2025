@@ -63,8 +63,7 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       setState(() {
         _doctorProfile = profile;
       });
-      final emails = profile.role.patients;
-      await _loadAssignedPatients(emails);
+      await _loadAssignedPatients();
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -74,31 +73,43 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
     }
   }
 
-  Future<void> _loadAssignedPatients(List<String> emails) async {
+  Future<void> _loadAssignedPatients() async {
     setState(() {
       _loadingPatients = true;
       _errorMessage = null;
     });
 
-    final List<PatientDataResponse> loaded = [];
-    for (final email in emails) {
-      try {
-        final data = await ApiService.getPatientData(email);
-        loaded.add(data);
-      } catch (e) {
-        _showSnack(
-          'No s\'ha pogut carregar $email. Revisa la connexió o els permisos.',
-        );
-      }
-    }
+    try {
+      final patients = await ApiService.getDoctorPatients();
+      final List<PatientDataResponse> loaded = [];
 
-    if (!mounted) return;
-    setState(() {
-      _assignedPatients = loaded;
-      _selectedEmails =
-          _selectedEmails.where((email) => emails.contains(email)).toSet();
-      _loadingPatients = false;
-    });
+      for (final patient in patients) {
+        try {
+          final data = await ApiService.getPatientData(patient.email);
+          loaded.add(data);
+        } catch (e) {
+          _showSnack(
+            'No s\'ha pogut carregar ${patient.email}. Revisa la connexió o els permisos.',
+          );
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _assignedPatients = loaded;
+        final patientEmails = patients.map((p) => p.email).toList();
+        _selectedEmails = _selectedEmails
+            .where((email) => patientEmails.contains(email))
+            .toSet();
+        _loadingPatients = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Error al carregar els pacients: ${e.toString()}';
+        _loadingPatients = false;
+      });
+    }
   }
 
   void _toggleTheme() {
@@ -298,8 +309,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       _mutatingPatient = true;
     });
     try {
-      final profile = await ApiService.assignPatientsToDoctor([email]);
-      await _loadAssignedPatients(profile.role.patients);
+      await ApiService.assignPatientsToDoctor([email]);
+      await _loadAssignedPatients();
       setState(() {
         _searchResults = [];
         _searchController.clear();
@@ -324,8 +335,8 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
       _mutatingPatient = true;
     });
     try {
-      final profile = await ApiService.unassignPatientsFromDoctor([email]);
-      await _loadAssignedPatients(profile.role.patients);
+      await ApiService.unassignPatientsFromDoctor([email]);
+      await _loadAssignedPatients();
       _showSnack('Pacient eliminat de la teva llista.');
     } catch (e) {
       _showSnack(
