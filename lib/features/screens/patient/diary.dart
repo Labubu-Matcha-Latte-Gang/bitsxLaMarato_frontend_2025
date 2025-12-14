@@ -65,6 +65,7 @@ class _DiaryPageState extends State<DiaryPage>
   bool _hasMicPermission = false;
   bool _isCheckingPermission = false;
   bool _showCompletionOverlay = false;
+  bool _isProcessing = false; // Loading state during API call
 
   // Waveform animation
   late final AnimationController _waveController;
@@ -484,9 +485,14 @@ class _DiaryPageState extends State<DiaryPage>
   Future<void> _completeDiaryTranscription() async {
     if (_currentSessionId == null || _diaryQuestion == null) return;
 
-    try {
-      setState(() => _isUploading = true);
+    // Show overlay with loading state immediately
+    setState(() {
+      _isProcessing = true;
+      _showCompletionOverlay = true;
+      _isUploading = true;
+    });
 
+    try {
       // Wait for all pending chunk uploads to complete
       if (_pendingChunkUploads.isNotEmpty) {
         print(
@@ -504,7 +510,7 @@ class _DiaryPageState extends State<DiaryPage>
 
       setState(() {
         _transcriptionText = response.transcription;
-        _showCompletionOverlay = true;
+        _isProcessing = false; // Stop loading
         _isUploading = false;
       });
 
@@ -515,7 +521,7 @@ class _DiaryPageState extends State<DiaryPage>
       print('ERROR completing diary transcription: $e');
 
       setState(() {
-        _showCompletionOverlay = true;
+        _isProcessing = false; // Stop loading on error
         _isUploading = false;
       });
     }
@@ -757,12 +763,55 @@ class _DiaryPageState extends State<DiaryPage>
   }
 
   Widget _buildCompletionOverlay() {
+    // Show loading state while processing
+    if (_isProcessing) {
+      return Dialog(
+        backgroundColor: AppColors.getBackgroundColor(isDarkMode),
+        elevation: 16,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.getPrimaryButtonColor(isDarkMode),
+                ),
+                strokeWidth: 3,
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Processant resposta...',
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Si us plau espera',
+                style: TextStyle(
+                  color: AppColors.getSecondaryTextColor(isDarkMode),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show completion result
     return Dialog(
       backgroundColor: AppColors.getBackgroundColor(isDarkMode),
       elevation: 16,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(64),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -780,7 +829,7 @@ class _DiaryPageState extends State<DiaryPage>
                 color: _hasUploadError ? Color(0xFFEF476F) : Color(0xFF06A77D),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             Text(
               _hasUploadError ? 'Error en la gravació' : 'Gravació completada!',
               style: TextStyle(
@@ -790,7 +839,7 @@ class _DiaryPageState extends State<DiaryPage>
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 48),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
