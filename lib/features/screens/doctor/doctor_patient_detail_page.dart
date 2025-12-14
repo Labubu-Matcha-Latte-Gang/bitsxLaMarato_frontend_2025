@@ -1761,7 +1761,64 @@ class _GraphCard extends StatelessWidget {
       case 'speed_diary':
         return "Progressió de temps per completar global";
 
+      // Question metrics summary
+      case 'question_metrics':
+        return "Mètriques de preguntes diàries";
+
       // If other filenames appear, return null so we fall back to filename.
+      default:
+        return null;
+    }
+  }
+
+  static String? _descriptionForFilename(String rawName, String title) {
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return 'Evolució de la puntuació en activitats de velocitat; tendències ascendents indiquen millora.';
+      case 'scores_sorting':
+        return "Puntuació en tasques d'ordenament; reflecteix precisió i consistència en seqüències.";
+      case 'scores_words':
+        return 'Puntuació en activitats de paraules; mesura fluïdesa verbal i memòria semàntica.';
+      case 'scores_concentration':
+        return "Puntuació en concentració; mostra manteniment d'atenció i control d'errors.";
+      case 'scores_multitasking':
+        return 'Puntuació en multitasca; integra capacitat d’alternar i gestionar tasques paral·leles.';
+      case 'scores_diary':
+        return 'Puntuacions del diari; evolució de mètriques de resposta diària.';
+      case 'scores_by_question_type':
+        return 'Mitjana de puntuació per domini; compara rendiment entre tipus d’activitat.';
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return 'Temps per completar activitats de velocitat; valors decreixents indiquen més agilitat.';
+      case 'speed_sorting':
+        return "Temps en tasques d'ordenament; captura eficiència en organització de seqüències.";
+      case 'speed_words':
+        return 'Temps en activitats de paraules; reflecteix accés i recuperació lèxica.';
+      case 'speed_concentration':
+        return 'Temps en concentració; mostra estabilitat en l’atenció sostinguda.';
+      case 'speed_multitasking':
+        return 'Temps en multitasca; mesura la coordinació entre tasques simultànies.';
+      case 'speed_diary':
+        return 'Progressió del temps global per completar; resum d’agilitat general.';
+
+      case 'progress_composite':
+        return 'Progrés global compost; agregat de puntuacions per visió general.';
+
+      case 'question_metrics':
+        return "Analitza la freqüència de substantius, densitat d’idees, adherència al tema i ràtio de pronoms.";
+
       default:
         return null;
     }
@@ -1774,6 +1831,16 @@ class _GraphCard extends StatelessWidget {
         (mappedTitle.isNotEmpty
             ? mappedTitle
             : (graph.filename.isNotEmpty ? graph.filename : 'Gràfic'));
+
+    String _genericDescriptionForTitle(String t) {
+      return 'Gràfic: $t';
+    }
+
+    final String effectiveDescription =
+        (description != null && description!.trim().isNotEmpty)
+            ? description!.trim()
+            : (_descriptionForFilename(graph.filename, title) ??
+                _genericDescriptionForTitle(title));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1792,22 +1859,13 @@ class _GraphCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          if ((description ?? '').isNotEmpty)
-            Text(
-              description!,
-              style: TextStyle(
-                color: DoctorColors.textSecondary(isDarkMode),
-                fontSize: 12,
-              ),
-            )
-          else
-            Text(
-              graph.contentType,
-              style: TextStyle(
-                color: DoctorColors.textSecondary(isDarkMode),
-                fontSize: 12,
-              ),
+          Text(
+            effectiveDescription,
+            style: TextStyle(
+              color: DoctorColors.textSecondary(isDarkMode),
+              fontSize: 12,
             ),
+          ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
