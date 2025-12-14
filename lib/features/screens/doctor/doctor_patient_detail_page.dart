@@ -80,6 +80,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Color? _backSuggestion;
   _QRColorRole _lastEditedColor = _QRColorRole.fill;
   String? _qrDataUri;
+  VoidCallback? _dialogRebuild;
+  bool _dialogOpen = false;
 
   @override
   void initState() {
@@ -351,6 +353,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     setState(() {
       _qrFullscreen = !_qrFullscreen;
     });
+    _dialogRebuild?.call();
   }
 
   Future<void> _downloadReport() async {
@@ -399,6 +402,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         'Cal m\'és contrast entre colors abans de generar el QR.',
         isError: true,
       );
+      _dialogRebuild?.call();
       return;
     }
 
@@ -422,6 +426,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _qrPreviewReady = _qrDataUri != null;
         });
         _showSnack('QR generat correctament.');
+        _dialogRebuild?.call();
       } else {
         setState(() {
           _qrPreviewReady = false;
@@ -430,6 +435,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           'No s\'ha pogut generar el QR.',
           isError: true,
         );
+        _dialogRebuild?.call();
       }
     } catch (e) {
       setState(() {
@@ -439,11 +445,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         'Error en generar el QR: ',
         isError: true,
       );
+      _dialogRebuild?.call();
     } finally {
       if (mounted) {
         setState(() {
           _generatingQr = false;
         });
+        _dialogRebuild?.call();
       }
     }
   }
@@ -470,6 +478,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       _lastEditedColor = role;
       _updateContrastFeedback(role);
     });
+    _dialogRebuild?.call();
   }
 
   void _updateContrastFeedback(_QRColorRole updatedRole) {
@@ -596,6 +605,16 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                             ),
                           ),
                           const SizedBox(width: 6),
+                          IconButton.filledTonal(
+                            onPressed: _openQrDialog,
+                            icon: const Icon(Icons.qr_code_2),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  DoctorColors.secondary(isDarkMode)
+                                      .withOpacity(0.2),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           IconButton(
                             icon: Icon(
                               isDarkMode
@@ -675,7 +694,38 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
-          _buildQrSection(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              // On tablet screens (>= 600px) place side-by-side; otherwise stack vertically.
+              final bool isTabletOrLarger = width >= 600;
+
+              if (isTabletOrLarger) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: _buildScoresSection(),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _buildQuestionsSection(),
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    _buildScoresSection(),
+                    const SizedBox(height: 12),
+                    _buildQuestionsSection(),
+                  ],
+                );
+              }
+            },
+          ),
           const SizedBox(height: 16),
           _buildScoresSection(),
           const SizedBox(height: 12),
@@ -683,11 +733,64 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildDiarySection(),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
-            const SizedBox(height: 12),
             _buildGraphsSection(),
           ],
         ],
       ),
+    );
+  }
+
+  void _openQrDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, localSetState) {
+            _dialogRebuild = () => localSetState(() {});
+            _dialogOpen = true;
+            return Dialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              backgroundColor: DoctorColors.surface(isDarkMode),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Codi QR personalitzat',
+                          style: TextStyle(
+                            color: DoctorColors.textPrimary(isDarkMode),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _dialogRebuild = null;
+                            _dialogOpen = false;
+                            Navigator.of(context).pop();
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: DoctorColors.textSecondary(isDarkMode),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildQrSection(showTitle: false),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -962,7 +1065,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     );
   }
 
-  Widget _buildQrSection() {
+  Widget _buildQrSection({bool showTitle = true}) {
     final double qrDimension =
         (MediaQuery.of(context).size.width * 0.55).clamp(220.0, 320.0);
     return Container(
@@ -971,27 +1074,25 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Codi QR personalitzat',
-                style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+          if (showTitle)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Codi QR personalitzat',
+                  style: TextStyle(
+                    color: DoctorColors.textPrimary(isDarkMode),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              if (_generatingQr)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Divider(color: DoctorColors.border(isDarkMode).withOpacity(0.18), height: 1),
+                if (_generatingQr)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
           const SizedBox(height: 10),
           Center(
             child: GestureDetector(
@@ -1305,7 +1406,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final ratioLabel = Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        'Contrast actual: :1',
+        'Contrast actual: ${_contrastRatio.toStringAsFixed(2)}:1',
         style: TextStyle(
           color: DoctorColors.textSecondary(isDarkMode),
           fontSize: 13,
@@ -1640,11 +1741,56 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 isDarkMode: isDarkMode,
                 titleOverride: customTitle,
                 description: customDesc,
+              );
+
+              if (wide) {
+                return SizedBox(
+                  width: tileWidth,
+                  child: card,
+                );
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: card,
+                );
+              }
+            }).toList();
+          }
+
+          final tiles = buildTile(isWide, constraints.maxWidth);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Gràfics generats',
+                style: TextStyle(
+                  color: DoctorColors.textPrimary(isDarkMode),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            );
-          }),
-        ],
+              const SizedBox(height: 10),
+              if (isWide)
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: tiles,
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: tiles,
+                ),
+            ],
+          );
+        },
       ),
+    );
+
+    // Prevent graphs from interacting when the dialog is open (e.g. WebView/iframe).
+    return AbsorbPointer(
+      absorbing: _dialogOpen,
+      child: graphsContent,
     );
   }
 }
@@ -1666,7 +1812,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: _sectionDecoration(isDarkMode, radius: 16),
+      decoration: BoxDecoration(
+        color: DoctorColors.surface(isDarkMode),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DoctorColors.border(isDarkMode)),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1826,7 +1976,7 @@ class _HistoryTile extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color:
-                          DoctorColors.secondary(isDarkMode).withOpacity(0.08),
+                          DoctorColors.secondary(isDarkMode).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
@@ -1905,10 +2055,128 @@ class _GraphCard extends StatelessWidget {
     this.description,
   });
 
+  // Map graph PNG base filename to user-requested titles.
+  static String? _titleForFilename(String rawName) {
+    // Normalize: strip extension and any path segments, lowercase.
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return "Históric de puntuació de velocitat";
+      case 'scores_sorting':
+        return "Históric de puntuació d'ordenament";
+      case 'scores_words':
+        return "Históric de puntuació de paraules";
+      case 'scores_concentration':
+        return "Históric de puntuació de concentració";
+      case 'progress_composite':
+        return "Progressió de puntuació global";
+      case 'scores_by_question_type':
+        return "Mitjana per domini de puntuació";
+      case 'scores_diary':
+        return "Evolució de mètriques de les preguntes diaries";
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return "Históric de temps per completar de tipus velocitat";
+      case 'speed_sorting':
+        return "Históric de temps per completar de tipus ordenament";
+      case 'speed_words':
+        return "Históric de temps per completar de tipus paraules";
+      case 'speed_concentration':
+        return "Históric de temps per completar de tipus concentració";
+      case 'speed_diary':
+        return "Progressió de temps per completar global";
+
+      // Question metrics summary
+      case 'question_metrics':
+        return "Mètriques de preguntes diàries";
+
+      // If other filenames appear, return null so we fall back to filename.
+      default:
+        return null;
+    }
+  }
+
+  static String? _descriptionForFilename(String rawName, String title) {
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return 'Evolució de la puntuació en activitats de velocitat; tendències ascendents indiquen millora.';
+      case 'scores_sorting':
+        return "Puntuació en tasques d'ordenament; reflecteix precisió i consistència en seqüències.";
+      case 'scores_words':
+        return 'Puntuació en activitats de paraules; mesura fluïdesa verbal i memòria semàntica.';
+      case 'scores_concentration':
+        return "Puntuació en concentració; mostra manteniment d'atenció i control d'errors.";
+      case 'scores_multitasking':
+        return 'Puntuació en multitasca; integra capacitat d’alternar i gestionar tasques paral·leles.';
+      case 'scores_diary':
+        return 'Puntuacions del diari; evolució de mètriques de resposta diària.';
+      case 'scores_by_question_type':
+        return 'Mitjana de puntuació per domini; compara rendiment entre tipus d’activitat.';
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return 'Temps per completar activitats de velocitat; valors decreixents indiquen més agilitat.';
+      case 'speed_sorting':
+        return "Temps en tasques d'ordenament; captura eficiència en organització de seqüències.";
+      case 'speed_words':
+        return 'Temps en activitats de paraules; reflecteix accés i recuperació lèxica.';
+      case 'speed_concentration':
+        return 'Temps en concentració; mostra estabilitat en l’atenció sostinguda.';
+      case 'speed_multitasking':
+        return 'Temps en multitasca; mesura la coordinació entre tasques simultànies.';
+      case 'speed_diary':
+        return 'Progressió del temps global per completar; resum d’agilitat general.';
+
+      case 'progress_composite':
+        return 'Progrés global compost; agregat de puntuacions per visió general.';
+
+      case 'question_metrics':
+        return "Analitza la freqüència de substantius, densitat d’idees, adherència al tema, ràtio de pronoms, etc.";
+
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String mappedTitle = _titleForFilename(graph.filename) ?? '';
     final title = titleOverride ??
-        (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
+        (mappedTitle.isNotEmpty
+            ? mappedTitle
+            : (graph.filename.isNotEmpty ? graph.filename : 'Gràfic'));
+
+    String _genericDescriptionForTitle(String t) {
+      return 'Gràfic: $t';
+    }
+
+    final String effectiveDescription =
+        (description != null && description!.trim().isNotEmpty)
+            ? description!.trim()
+            : (_descriptionForFilename(graph.filename, title) ??
+                _genericDescriptionForTitle(title));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: _sectionDecoration(isDarkMode, radius: 12),

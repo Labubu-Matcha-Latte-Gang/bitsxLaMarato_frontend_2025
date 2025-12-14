@@ -6,6 +6,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
+import '../activities/all_test_page.dart' as test_page;
 import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';

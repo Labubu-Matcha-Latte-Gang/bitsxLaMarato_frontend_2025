@@ -218,37 +218,48 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Logo grande en la parte superior
-                Container(
-                  margin: const EdgeInsets.only(bottom: 30),
-                  child: SizedBox(
-                    height: 120,
-                    width: 180,
-                    child: Image.asset(
-                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.local_hospital,
-                          size: 60,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
                 // Spacer para empujar el contenido hacia arriba
                 const Spacer(),
               ],
             ),
           ),
 
-          // Recuadro de formulario posicionado desde arriba
+          // Logo fijo en la parte superior
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
+            top: 80,
             left: 0,
             right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  width: 180,
+                  child: Image.asset(
+                    isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_hospital,
+                        size: 60,
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Recuadro de formulario posicionado desde arriba
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.30,
+            left: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
+            right: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(
@@ -379,28 +390,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 15),
 
-                        // Link "T'has oblidat de la contrasenya?"
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: Implementar recuperación de contraseña
-                              },
-                              child: Text(
-                                'T\'has oblidat de la contrasenya?',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.getTertiaryTextColor(
-                                      isDarkMode),
-                                  fontWeight: FontWeight.w400,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
                         const SizedBox(height: 25),
 
                         // Botón LOGIN
@@ -447,10 +436,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Link "Nou a LMLG? Registra't"
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context).pop();
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => const RegisterLobby(),
+                                builder: (context) =>
+                                    RegisterLobby(isDarkMode: isDarkMode),
                               ),
                             );
                           },
@@ -458,11 +447,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Nou a LMLG? Registra\'t',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.getPrimaryTextColor(isDarkMode),
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTertiaryTextColor(isDarkMode),
+                              fontWeight: FontWeight.w400,
                               decoration: TextDecoration.underline,
                               decorationColor:
-                                  AppColors.getPrimaryTextColor(isDarkMode),
+                                  AppColors.getTertiaryTextColor(isDarkMode),
                             ),
                           ),
                         ),

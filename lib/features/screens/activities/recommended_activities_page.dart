@@ -48,7 +48,6 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       _errorMessage = null;
     });
     try {
-      print('DEBUG - Fetching recommended activity from API...');
       final results = await _api.fetchRecommendedActivities();
 
       // Filtrar activitats que comencen amb "TEST - "
@@ -58,22 +57,16 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
 
       if (filteredResults.isNotEmpty) {
         final activity = filteredResults.first;
-        print('DEBUG - ✓ Recommended activity loaded successfully');
-        print('DEBUG - Activity ID: ${activity.id}');
-        print('DEBUG - Activity Title: ${activity.title}');
-        print('DEBUG - Activity Type: ${activity.activityType}');
-        print('DEBUG - Activity Difficulty: ${activity.difficulty}');
-        print('DEBUG - Activity Description: ${activity.description}');
-      } else {
-        print('DEBUG - ⚠ API returned empty results');
-      }
+        // Activity loaded successfully
+        // Logs removed
+      } else {}
+
 
       setState(() {
         _recommendedActivity =
             filteredResults.isNotEmpty ? filteredResults.first : null;
       });
     } catch (e) {
-      print('DEBUG - ✗ Error loading recommended activity: $e');
       setState(() {
         _errorMessage =
             'No s\'ha pogut carregar l\'activitat recomanada. Torna-ho a provar.';
@@ -92,6 +85,13 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+  }
+
+  String _displayTitle(String title) {
+    const prefix = 'ACTIVITAT - ';
+    return title.startsWith(prefix)
+        ? title.substring(prefix.length).trim()
+        : title;
   }
 
   void _openActivity(Activity activity) {
@@ -509,7 +509,9 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                                                   ),
                                                   const SizedBox(height: 6),
                                                   Text(
-                                                    _recommendedActivity!.title,
+                                                    _displayTitle(
+                                                        _recommendedActivity!
+                                                            .title),
                                                     style: TextStyle(
                                                       color: AppColors
                                                           .getPrimaryTextColor(
