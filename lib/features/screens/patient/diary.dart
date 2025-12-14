@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart';
+import 'package:record/record.dart'; // Asegúrate de que este import sigue ahí
 import 'package:uuid/uuid.dart';
 
 import '../../../models/question_models.dart';
@@ -35,8 +35,9 @@ class _DiaryPageState extends State<DiaryPage>
   Question? _diaryQuestion;
   String? _errorMessage;
 
-  // Audio recording variables (matching mic.dart exactly)
-  final Record _recorder = Record();
+  // Se cambia 'Record' por 'AudioRecorder' para compatibilidad con v6
+  final AudioRecorder _recorder = AudioRecorder();
+  
   bool _isRecording = false;
   Duration _recordDuration = Duration.zero;
   Timer? _timer;
@@ -263,6 +264,7 @@ class _DiaryPageState extends State<DiaryPage>
     );
   }
 
+  // Uso de RecordConfig para la v6
   Future<void> _startNewMobileRecording() async {
     try {
       final dir = await getTemporaryDirectory();
@@ -271,10 +273,12 @@ class _DiaryPageState extends State<DiaryPage>
       _currentChunkPath = filePath;
 
       await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.opus,
+          bitRate: 128000,
+          sampleRate: 48000, // samplingRate ahora es sampleRate
+        ),
         path: filePath,
-        encoder: AudioEncoder.opus,
-        bitRate: 128000,
-        samplingRate: 48000,
       );
     } catch (e) {
       rethrow;

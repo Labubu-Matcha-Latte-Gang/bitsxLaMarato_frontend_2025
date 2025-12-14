@@ -100,3 +100,18 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# --- Android ---
+
+# Archivo de configuración local (tiene rutas de TU pc, como C:/Users/Kire/...)
+**/android/local.properties
+
+# Carpetas de compilación internas de Android Studio
+**/android/.gradle
+**/android/app/build
+**/android/.idea
+**/android/.navigation
+
+# Archivos temporales
+**/android/app/release
+**/android/app/debug
