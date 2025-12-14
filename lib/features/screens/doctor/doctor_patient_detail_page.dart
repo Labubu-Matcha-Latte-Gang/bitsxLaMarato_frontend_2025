@@ -1817,7 +1817,7 @@ class _GraphCard extends StatelessWidget {
         return 'Progrés global compost; agregat de puntuacions per visió general.';
 
       case 'question_metrics':
-        return "Analitza la freqüència de substantius, densitat d’idees, adherència al tema i ràtio de pronoms.";
+        return "Analitza la freqüència de substantius, densitat d’idees, adherència al tema, ràtio de pronoms, etc.";
 
       default:
         return null;
