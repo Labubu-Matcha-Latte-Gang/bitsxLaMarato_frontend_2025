@@ -2352,7 +2352,12 @@ class _GraphContentRenderer extends StatelessWidget {
       return LayoutBuilder(
         builder: (context, constraints) {
           final double w = constraints.maxWidth;
-          final double h = (w / (16 / 9)).clamp(200.0, 480.0);
+          // For wide screens (> 800px), hardcode a smaller max height.
+          // For narrower screens, keep the previous behavior.
+          final bool isWide = w > 800.0;
+          final double h = isWide
+              ? (w / (16 / 9)).clamp(200.0, 360.0)
+              : (w / (16 / 9)).clamp(200.0, 480.0);
           return SizedBox(
             height: h,
             child: _HtmlGraphView(
