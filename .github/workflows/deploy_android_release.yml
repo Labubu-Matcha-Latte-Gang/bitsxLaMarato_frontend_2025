@@ -31,7 +31,7 @@ jobs:
 
       # Compilamos inyectando el número de ejecución de GitHub como versión
       - name: Build APK
-        run: flutter build apk --release --split-per-abi=false --build-number=${{ github.run_number }}
+        run: flutter build apk --release --split-per-abi=false --build-number=${{ github.run_number }} --dart-define=API_URL="${{ secrets.PROD_API_URL }}"
 
       # Usamos una acción que crea la Release automáticamente
       - name: Publish to GitHub Releases
