@@ -296,8 +296,8 @@ class _Flashcards extends State<Flashcards> with SingleTickerProviderStateMixin 
           style: GoogleFonts.poppins(
             textStyle: TextStyle(
               color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 16,
-              height: 1.4,
+              fontSize: 22,
+              height: 1.5,
             ),
           ),
         ),
@@ -320,23 +320,34 @@ class _Flashcards extends State<Flashcards> with SingleTickerProviderStateMixin 
                 style: GoogleFonts.poppins(
                   textStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
-                    fontSize: 14,
-                    height: 1.3,
+                    fontSize: 18,
+                    height: 1.4,
                   ),
                 ),
               ),
             ),
           // Pie chart showing cognitive areas
-          if (areas.isNotEmpty)
+          if (areas.isNotEmpty) ...[
+            Text(
+              'Mètriques Millorades',
+              style: GoogleFonts.poppins(
+                textStyle: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode).withAlpha((0.8 * 255).round()),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
-              height: 180,
+              height: 120,
               child: _AreasPieChart(
                 areas: areas,
                 isDarkMode: isDarkMode,
               ),
             )
-          else
+          ] else
             Text(
               'No hi ha dades d\'àrees.',
               style: GoogleFonts.poppins(textStyle: TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode))),
@@ -371,58 +382,60 @@ class _AreasPieChart extends StatelessWidget {
         Expanded(
           flex: 1,
           child: CustomPaint(
-            size: const Size.square(160),
+            size: const Size.square(140),
             painter: _PiePainter(areas: areas, colors: colors, total: total, innerColor: innerColor),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           flex: 1,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: areas.map((a) {
-              final idx = areas.indexOf(a) % colors.length;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: Row(
-                  children: [
-                    // Colored circle marker (no icon) to indicate the legend color
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: colors[idx],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.getPrimaryTextColor(isDarkMode).withAlpha((0.12 * 255).round())),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: areas.map((a) {
+                final idx = areas.indexOf(a) % colors.length;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    children: [
+                      // Colored circle marker (no icon) to indicate the legend color
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: colors[idx],
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.getPrimaryTextColor(isDarkMode).withAlpha((0.12 * 255).round())),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _capitalize(a.name),
-                        style: GoogleFonts.poppins(
-                          textStyle: TextStyle(
-                            color: AppColors.getPrimaryTextColor(isDarkMode),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _translateCognitiveArea(_capitalize(a.name)),
+                          style: GoogleFonts.poppins(
+                            textStyle: TextStyle(
+                              color: AppColors.getPrimaryTextColor(isDarkMode),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Text(
-                      '${total > 0 ? (a.percentage / total * 100).toStringAsFixed(0) : a.percentage.toStringAsFixed(0)}% ',
-                      style: GoogleFonts.poppins(
-                        textStyle: TextStyle(
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                          fontWeight: FontWeight.w700,
+                      Text(
+                        '${total > 0 ? (a.percentage / total * 100).toStringAsFixed(0) : a.percentage.toStringAsFixed(0)}% ',
+                        style: GoogleFonts.poppins(
+                          textStyle: TextStyle(
+                            color: AppColors.getPrimaryTextColor(isDarkMode),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ],
@@ -468,3 +481,17 @@ String _capitalize(String s) {
   return s[0].toUpperCase() + s.substring(1);
 }
 
+String _translateCognitiveArea(String area) {
+  switch (area.toLowerCase()) {
+    case 'memory':
+      return 'Memòria';
+    case 'attention':
+      return 'Atenció';
+    case 'speed':
+      return 'Velocitat';
+    case 'alternating_fluency':
+      return 'Fluïdesa Alternant';
+    default:
+      return area;
+  }
+}
