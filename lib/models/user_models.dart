@@ -309,11 +309,15 @@ class QuestionAnswerWithAnalysis {
   final Question question;
   final String answeredAt;
   final Map<String, double> analysis;
+  final String? transcription;
+  final String? answerText;
 
   QuestionAnswerWithAnalysis({
     required this.question,
     required this.answeredAt,
     required this.analysis,
+    this.transcription,
+    this.answerText,
   });
 
   factory QuestionAnswerWithAnalysis.fromJson(Map<String, dynamic> json) {
@@ -330,7 +334,20 @@ class QuestionAnswerWithAnalysis {
           (json['question'] as Map<String, dynamic>?) ?? <String, dynamic>{}),
       answeredAt: json['answered_at']?.toString() ?? '',
       analysis: parsedAnalysis,
+      transcription: json['transcription']?.toString(),
+      answerText: json['answer_text']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    final out = <String, dynamic>{
+      'question': question.toJson(),
+      'answered_at': answeredAt,
+      'analysis': analysis,
+    };
+    if (transcription != null) out['transcription'] = transcription;
+    if (answerText != null) out['answer_text'] = answerText;
+    return out;
   }
 }
 
