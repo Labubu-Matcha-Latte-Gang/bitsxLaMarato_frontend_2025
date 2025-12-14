@@ -461,17 +461,25 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   value: null,
                   child: Text('Tots'),
                 ),
-                ...const [
-                  'concentration',
-                  'speed',
-                  'words',
-                  'sorting',
-                  'multitasking',
-                ].map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ),
+                DropdownMenuItem(
+                  value: 'concentration',
+                  child: const Text('Concentració'),
+                ),
+                DropdownMenuItem(
+                  value: 'speed',
+                  child: const Text('Velocitat'),
+                ),
+                DropdownMenuItem(
+                  value: 'words',
+                  child: const Text('Paraules'),
+                ),
+                DropdownMenuItem(
+                  value: 'sorting',
+                  child: const Text('Ordenació'),
+                ),
+                DropdownMenuItem(
+                  value: 'multitasking',
+                  child: const Text('Multitasca'),
                 ),
               ],
               onChanged: (value) {

@@ -86,12 +86,6 @@ class ActivityCard extends StatelessWidget {
                     icon: Icons.category_outlined,
                     isDarkMode: isDarkMode,
                   ),
-                  _InfoChip(
-                    label:
-                        'Dificultat: ${activity.difficulty.toStringAsFixed(1)}',
-                    icon: Icons.speed_outlined,
-                    isDarkMode: isDarkMode,
-                  ),
                 ],
               ),
             ],
