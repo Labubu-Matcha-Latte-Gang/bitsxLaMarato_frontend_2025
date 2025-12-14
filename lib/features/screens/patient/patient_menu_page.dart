@@ -374,7 +374,7 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                   title: 'Supera\'t',
                                   description:
                                       'Activitats en el món real per ajudar-te a superar els teus reptes.',
-                                  icon: Icons.auto_awesome,
+                                  icon: Icons.emoji_events,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
