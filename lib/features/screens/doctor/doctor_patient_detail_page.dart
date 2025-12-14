@@ -1441,49 +1441,79 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DoctorColors.border(isDarkMode)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Gràfics generats',
-            style: TextStyle(
-              color: DoctorColors.textPrimary(isDarkMode),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...graphs.asMap().entries.map((entry) {
-            final int idx = entry.key;
-            final graph = entry.value;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 800;
 
-            // Prefer filename-based titles for PNG graphs, as requested.
-            String? customTitle;
-            String? customDesc;
+          // Build tiles once, then lay them out responsively.
+          List<Widget> buildTile(bool wide, double maxWidth) {
+            final double tileWidth = wide ? ((maxWidth - 12) / 2) : maxWidth;
+            return graphs.asMap().entries.map((entry) {
+              final int idx = entry.key;
+              final graph = entry.value;
 
-            final type = graph.contentType.toLowerCase();
-            final isHtml = type.contains('html') || type.contains('htm');
+              String? customTitle;
+              String? customDesc;
 
-            if (idx == lastHtmlIndex && isHtml) {
-              // Keep a meaningful title only for the last HTML graph.
-              customTitle = 'Evolució de mètriques de preguntes';
-              customDesc = null; // Focus on title; description not required.
-            } else {
-              // For non-HTML (e.g., PNG) graphs, map by filename.
-              customTitle = _GraphCard._titleForFilename(graph.filename);
-              customDesc = null; // Only titles requested.
-            }
+              final type = graph.contentType.toLowerCase();
+              final isHtml = type.contains('html') || type.contains('htm');
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _GraphCard(
+              if (idx == lastHtmlIndex && isHtml) {
+                customTitle = 'Evolució de mètriques de preguntes';
+                customDesc = null;
+              } else {
+                customTitle = _GraphCard._titleForFilename(graph.filename);
+                customDesc = null;
+              }
+
+              final card = _GraphCard(
                 graph: graph,
                 isDarkMode: isDarkMode,
                 titleOverride: customTitle,
                 description: customDesc,
+              );
+
+              if (wide) {
+                return SizedBox(
+                  width: tileWidth,
+                  child: card,
+                );
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: card,
+                );
+              }
+            }).toList();
+          }
+
+          final tiles = buildTile(isWide, constraints.maxWidth);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Gràfics generats',
+                style: TextStyle(
+                  color: DoctorColors.textPrimary(isDarkMode),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            );
-          }),
-        ],
+              const SizedBox(height: 10),
+              if (isWide)
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: tiles,
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: tiles,
+                ),
+            ],
+          );
+        },
       ),
     );
 
