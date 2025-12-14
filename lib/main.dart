@@ -17,7 +17,8 @@ Future<void> main() async {
   );
 
   final startLoggedIn = await ApiService.restoreSession();
-  final savedThemeDark = await SessionManager.getThemeMode() ?? false;
+  // Default to dark mode when no preference is stored
+  final savedThemeDark = await SessionManager.getThemeMode() ?? true;
   Map<String, dynamic>? userData = await SessionManager.getUserData();
   if (startLoggedIn && (userData == null || userData['user_type'] == null)) {
     try {
@@ -48,7 +49,7 @@ class MyApp extends StatelessWidget {
     this.startLoggedIn = false,
     this.startInActivities = false,
     this.userType = 'unknown',
-    this.initialDarkMode = false,
+    this.initialDarkMode = true,
   });
 
   @override
