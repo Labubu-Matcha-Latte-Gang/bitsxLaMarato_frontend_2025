@@ -128,9 +128,13 @@ class _DoctorHomePageState extends State<DoctorHomePage> {
             final borderColor =
                 DoctorColors.primary(isDarkMode).withOpacity(0.25);
             final iconBg = DoctorColors.primary(isDarkMode).withOpacity(0.14);
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isWide = screenWidth > 800;
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              insetPadding: isWide
+                  ? EdgeInsets.symmetric(horizontal: screenWidth * 0.25)
+                  : const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
                 decoration: BoxDecoration(

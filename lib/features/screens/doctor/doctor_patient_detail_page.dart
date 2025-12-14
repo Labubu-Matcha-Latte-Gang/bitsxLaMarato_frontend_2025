@@ -2,15 +2,16 @@ import 'dart:convert';
 import 'dart:io' show File;
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/user_models.dart';
 import '../../../services/api_service.dart';
@@ -18,6 +19,26 @@ import '../../../services/qr_api_service.dart';
 import '../../../services/session_manager.dart';
 import '../../../utils/doctor_colors.dart';
 import '../../../utils/platform_view_registry.dart';
+
+// Top-level helper decoration so all local widgets can reuse it (soft border + shadow)
+BoxDecoration _sectionDecoration(bool isDarkMode, {double radius = 14}) {
+  return BoxDecoration(
+    color: DoctorColors.surface(isDarkMode),
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(
+      color: DoctorColors.border(isDarkMode).withAlpha((255 * 0.18).round()),
+      width: 1,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color:
+            DoctorColors.cardShadow(isDarkMode).withAlpha((255 * 0.06).round()),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+}
 
 class DoctorPatientDetailPage extends StatefulWidget {
   final String patientEmail;
@@ -59,6 +80,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Color? _backSuggestion;
   _QRColorRole _lastEditedColor = _QRColorRole.fill;
   String? _qrDataUri;
+  VoidCallback? _dialogRebuild;
 
   @override
   void initState() {
@@ -80,11 +102,245 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final greetingWord = isFemaleDoctor ? 'Benvinguda' : 'Benvingut';
     final honorific = isFemaleDoctor ? 'Dra.' : 'Dr.';
     final fullName = [_doctorName, _doctorSurname]
-        .where((part) => part != null && part!.trim().isNotEmpty)
+        .where((part) => part != null && part.trim().isNotEmpty)
         .map((part) => part!.trim())
         .join(' ');
     final nameSegment = fullName.isEmpty ? '' : ' $fullName';
     return '$greetingWord $honorific$nameSegment';
+  }
+
+  // Show a centered modal with blurred background displaying a diary transcription
+  void _showDiaryTranscription(String transcription,
+      [Map<String, double>? analysis]) {
+    if (!mounted) return;
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Diary transcription',
+      barrierColor: Colors.black.withAlpha((255 * 0.25).round()),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: math.min(
+                          720, MediaQuery.of(context).size.width * 0.92),
+                      maxHeight: MediaQuery.of(context).size.height * 0.82,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
+                      decoration: BoxDecoration(
+                        color: DoctorColors.surface(isDarkMode),
+                        borderRadius: BorderRadius.circular(14),
+                        border:
+                            Border.all(color: DoctorColors.border(isDarkMode)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DoctorColors.cardShadow(isDarkMode)
+                                .withAlpha((255 * 0.06).round()),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Transcripció',
+                                style: GoogleFonts.inter(
+                                  color: DoctorColors.textPrimary(isDarkMode),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: DoctorColors.background(isDarkMode),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.close,
+                                      color: DoctorColors.textSecondary(
+                                          isDarkMode)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    transcription.isNotEmpty
+                                        ? transcription
+                                        : 'No transcription available.',
+                                    style: GoogleFonts.inter(
+                                      color:
+                                          DoctorColors.textPrimary(isDarkMode),
+                                      fontSize: 14,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (analysis != null &&
+                                      analysis.isNotEmpty) ...[
+                                    Divider(
+                                        color: DoctorColors.border(isDarkMode)
+                                            .withAlpha((255 * 0.12).round())),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Anàlisi',
+                                      style: GoogleFonts.inter(
+                                        color: DoctorColors.textPrimary(
+                                            isDarkMode),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: analysis.entries.map((e) {
+                                        final label = e.key;
+                                        final value = e.value;
+                                        String formatted;
+                                        if (value >= 0 && value <= 1) {
+                                          formatted =
+                                              '${(value * 100).toStringAsFixed(value * 100 >= 10 ? 1 : 0)}%';
+                                        } else {
+                                          formatted = value.toStringAsFixed(2);
+                                        }
+
+                                        // color swatch for the metric
+                                        Color swatch;
+                                        try {
+                                          final int hash = label.runes
+                                              .fold(0, (p, r) => p + r);
+                                          final palette = [
+                                            Colors.blue.shade600,
+                                            Colors.green.shade600,
+                                            Colors.purple.shade600,
+                                            Colors.orange.shade600,
+                                            Colors.teal.shade600,
+                                            Colors.indigo.shade600,
+                                            Colors.red.shade600,
+                                            Colors.brown.shade600,
+                                          ];
+                                          swatch =
+                                              palette[hash % palette.length];
+                                        } catch (_) {
+                                          swatch = DoctorColors.secondary(
+                                              isDarkMode);
+                                        }
+
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: DoctorColors.background(
+                                                isDarkMode),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                                color: DoctorColors.border(
+                                                    isDarkMode)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 10,
+                                                height: 10,
+                                                decoration: BoxDecoration(
+                                                  color: swatch,
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                  border: Border.all(
+                                                      color:
+                                                          DoctorColors.border(
+                                                                  isDarkMode)
+                                                              .withAlpha((255 *
+                                                                      0.12)
+                                                                  .round())),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(label,
+                                                      style: GoogleFonts.inter(
+                                                          color: DoctorColors
+                                                              .textPrimary(
+                                                                  isDarkMode),
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                  const SizedBox(height: 2),
+                                                  Text(formatted,
+                                                      style: GoogleFonts.inter(
+                                                          color: DoctorColors
+                                                              .textSecondary(
+                                                                  isDarkMode),
+                                                          fontSize: 12)),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = Curves.easeOut.transform(animation.value);
+        return FadeTransition(
+          opacity: animation,
+          child: Transform.scale(
+            scale: 0.98 + 0.02 * curved,
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadDoctorProfile() async {
@@ -138,6 +394,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     setState(() {
       _qrFullscreen = !_qrFullscreen;
     });
+    _dialogRebuild?.call();
   }
 
   Future<void> _downloadReport() async {
@@ -153,17 +410,19 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       if (kIsWeb) {
         final blob = html.Blob([bytes], 'application/pdf');
         final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..download = filename
-          ..click();
+        html.window.open(url, '_blank');
         html.Url.revokeObjectUrl(url);
         _showSnack('Informe descarregat al navegador.');
       } else {
-        final dir = await getTemporaryDirectory();
-        final file = File('/');
-        await file.writeAsBytes(bytes, flush: true);
-        await OpenFilex.open(file.path);
-        _showSnack('Informe desat a ');
+        final uri = Uri.parse(filename);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          final file = File(filename);
+          if (await file.exists()) {
+            // Open file with default application
+          }
+        }
       }
     } catch (e) {
       _showSnack(
@@ -183,9 +442,10 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     if (!_isContrastValid) {
       _updateContrastFeedback(_lastEditedColor);
       _showSnack(
-        'Cal més contrast entre colors abans de generar el QR.',
+        'Cal m\'és contrast entre colors abans de generar el QR.',
         isError: true,
       );
+      _dialogRebuild?.call();
       return;
     }
 
@@ -209,6 +469,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           _qrPreviewReady = _qrDataUri != null;
         });
         _showSnack('QR generat correctament.');
+        _dialogRebuild?.call();
       } else {
         setState(() {
           _qrPreviewReady = false;
@@ -217,6 +478,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           'No s\'ha pogut generar el QR.',
           isError: true,
         );
+        _dialogRebuild?.call();
       }
     } catch (e) {
       setState(() {
@@ -226,11 +488,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
         'Error en generar el QR: ',
         isError: true,
       );
+      _dialogRebuild?.call();
     } finally {
       if (mounted) {
         setState(() {
           _generatingQr = false;
         });
+        _dialogRebuild?.call();
       }
     }
   }
@@ -257,6 +521,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
       _lastEditedColor = role;
       _updateContrastFeedback(role);
     });
+    _dialogRebuild?.call();
   }
 
   void _updateContrastFeedback(_QRColorRole updatedRole) {
@@ -304,9 +569,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
     }
 
-    final double r = channelToLinear(color.red);
-    final double g = channelToLinear(color.green);
-    final double b = channelToLinear(color.blue);
+    final double r = channelToLinear((color.r * 255.0).round().clamp(0, 255));
+    final double g = channelToLinear((color.g * 255.0).round().clamp(0, 255));
+    final double b = channelToLinear((color.b * 255.0).round().clamp(0, 255));
 
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
@@ -348,7 +613,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                           children: [
                             Text(
                               _doctorGreeting,
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: DoctorColors.textPrimary(isDarkMode),
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -360,7 +625,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                               patient != null
                                   ? 'Revisant ${_patientDisplayName(patient)}'
                                   : 'Detall del pacient',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: DoctorColors.textSecondary(isDarkMode),
                                 fontSize: 13,
                               ),
@@ -378,7 +643,17 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                             style: IconButton.styleFrom(
                               backgroundColor:
                                   DoctorColors.secondary(isDarkMode)
-                                      .withOpacity(0.2),
+                                      .withAlpha((255 * 0.2).round()),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton.filledTonal(
+                            onPressed: _openQrDialog,
+                            icon: const Icon(Icons.qr_code_2),
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  DoctorColors.secondary(isDarkMode)
+                                      .withAlpha((255 * 0.2).round()),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -410,7 +685,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 onTap: _toggleQrFullscreen,
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withAlpha((255 * 0.7).round()),
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(16),
                   child: _buildQrFrame(
@@ -461,17 +736,98 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           const SizedBox(height: 12),
           _buildActionsRow(),
           const SizedBox(height: 16),
-          _buildQrSection(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              // On tablet screens (>= 600px) place side-by-side; otherwise stack vertically.
+              final bool isTabletOrLarger = width >= 600;
+
+              if (isTabletOrLarger) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: _buildScoresSection(),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _buildQuestionsSection(),
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: [
+                    _buildScoresSection(),
+                    const SizedBox(height: 12),
+                    _buildQuestionsSection(),
+                  ],
+                );
+              }
+            },
+          ),
           const SizedBox(height: 16),
-          _buildScoresSection(),
-          const SizedBox(height: 12),
-          _buildQuestionsSection(),
+          _buildDiarySection(),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildGraphsSection(),
           ],
         ],
       ),
+    );
+  }
+
+  void _openQrDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, localSetState) {
+            _dialogRebuild = () => localSetState(() {});
+            return Dialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              backgroundColor: DoctorColors.surface(isDarkMode),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Codi QR personalitzat',
+                          style: TextStyle(
+                            color: DoctorColors.textPrimary(isDarkMode),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _dialogRebuild = null;
+                            Navigator.of(context).pop();
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: DoctorColors.textSecondary(isDarkMode),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildQrSection(showTitle: false),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -565,24 +921,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   Widget _buildPatientInfo(UserProfile patient) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-        boxShadow: [
-          BoxShadow(
-            color: DoctorColors.cardShadow(isDarkMode),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 16),
       child: Row(
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor:
-                DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+            backgroundColor: DoctorColors.secondary(isDarkMode)
+                .withAlpha((255 * 0.12).round()),
             child: Icon(
               Icons.person_outline,
               color: DoctorColors.primary(isDarkMode),
@@ -757,37 +1102,34 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     );
   }
 
-  Widget _buildQrSection() {
+  Widget _buildQrSection({bool showTitle = true}) {
     final double qrDimension =
         (MediaQuery.of(context).size.width * 0.55).clamp(220.0, 320.0);
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Codi QR personalitzat',
-                style: TextStyle(
-                  color: DoctorColors.textPrimary(isDarkMode),
-                  fontWeight: FontWeight.w700,
+          if (showTitle)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Codi QR personalitzat',
+                  style: TextStyle(
+                    color: DoctorColors.textPrimary(isDarkMode),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              if (_generatingQr)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
+                if (_generatingQr)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
           const SizedBox(height: 10),
           Center(
             child: GestureDetector(
@@ -1090,7 +1432,8 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           color: primary,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: DoctorColors.border(isDarkMode).withOpacity(0.5),
+            color:
+                DoctorColors.border(isDarkMode).withAlpha((255 * 0.5).round()),
           ),
         ),
       ),
@@ -1101,7 +1444,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     final ratioLabel = Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        'Contrast actual: :1',
+        'Contrast actual: ${_contrastRatio.toStringAsFixed(2)}:1',
         style: TextStyle(
           color: DoctorColors.textSecondary(isDarkMode),
           fontSize: 13,
@@ -1129,10 +1472,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.orangeAccent.withOpacity(isDarkMode ? 0.12 : 0.08),
+            color: Colors.orangeAccent
+                .withAlpha((255 * (isDarkMode ? 0.12 : 0.08)).round()),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.orangeAccent.withOpacity(0.4),
+              color: Colors.orangeAccent.withAlpha((255 * 0.4).round()),
             ),
           ),
           child: Column(
@@ -1218,11 +1562,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1231,8 +1571,14 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(
+              color: DoctorColors.border(isDarkMode)
+                  .withAlpha((255 * 0.18).round()),
+              height: 1),
           const SizedBox(height: 10),
           ...scores.take(5).map(
                 (s) => Padding(
@@ -1261,7 +1607,11 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
   }
 
   Widget _buildQuestionsSection() {
-    final questions = _data?.questions ?? [];
+    final allAnswers = _data?.questions ?? [];
+    // Show only non-diary answers here
+    final questions = allAnswers
+        .where((q) => q.question.questionType.toLowerCase() != 'diary')
+        .toList();
     if (questions.isEmpty) {
       return _EmptyCard(
         message: 'Sense qüestionaris contestats.',
@@ -1271,11 +1621,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1284,8 +1630,14 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(
+              color: DoctorColors.border(isDarkMode)
+                  .withAlpha((255 * 0.18).round()),
+              height: 1),
           const SizedBox(height: 10),
           ...questions.take(4).map(
             (q) {
@@ -1317,6 +1669,63 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
     );
   }
 
+  Widget _buildDiarySection() {
+    final allAnswers = _data?.questions ?? [];
+    // Show only diary-typed answers here
+    final diaryAnswers = allAnswers
+        .where((q) => q.question.questionType.toLowerCase() == 'diary')
+        .toList();
+    if (diaryAnswers.isEmpty) {
+      return _EmptyCard(
+        message: 'Diari no respòs.',
+        isDarkMode: isDarkMode,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Respostes del diari',
+            style: TextStyle(
+              color: DoctorColors.textPrimary(isDarkMode),
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Divider(
+              color: DoctorColors.border(isDarkMode)
+                  .withAlpha((255 * 0.18).round()),
+              height: 1),
+          const SizedBox(height: 10),
+          ...diaryAnswers.take(4).map(
+            (q) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: _HoverableHistoryTile(
+                  question: q,
+                  isDarkMode: isDarkMode,
+                  onTap: () {
+                    final String text = (q.transcription ?? q.answerText ?? '')
+                        .toString()
+                        .trim();
+                    _showDiaryTranscription(
+                        text.isNotEmpty ? text : 'No transcription available.',
+                        q.analysis);
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGraphsSection() {
     final graphs = _data?.graphFiles ?? [];
     if (graphs.isEmpty) {
@@ -1335,11 +1744,7 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1348,48 +1753,103 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
           ),
+          const SizedBox(height: 8),
+          Divider(
+              color: DoctorColors.border(isDarkMode)
+                  .withAlpha((255 * 0.18).round()),
+              height: 1),
           const SizedBox(height: 10),
-          ...graphs.asMap().entries.map((entry) {
-            final int idx = entry.key;
-            final graph = entry.value;
-            // Custom titles and descriptions for the first four graphs.
-            const titles = <String>[
-              'Progressió de puntuacions',
-              'Puntuació mitjana per àmbit',
-              'Evolució de velocitat',
-              'Progressió global',
-            ];
-            const descriptions = <String>[
-              'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
-              'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
-              'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
-              'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
-            ];
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              final bool isWide = width > 800;
+              const double spacing = 12;
 
-            // Overrides for last HTML graph take precedence.
-            String? customTitle;
-            String? customDesc;
-            if (idx == lastHtmlIndex) {
-              customTitle = 'Evolució de mètriques de preguntes';
-              customDesc =
-                  'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
-            } else {
-              customTitle = idx < titles.length ? titles[idx] : null;
-              customDesc = idx < descriptions.length ? descriptions[idx] : null;
-            }
+              final graphCards = graphs.asMap().entries.map((entry) {
+                final int idx = entry.key;
+                final graph = entry.value;
+                final String baseName = graph.filename
+                    .split('/')
+                    .last
+                    .split('\\')
+                    .last
+                    .replaceAll('.png', '')
+                    .replaceAll('.PNG', '')
+                    .trim()
+                    .toLowerCase();
+                // Custom titles and descriptions for the first four graphs.
+                const titles = <String>[
+                  'Progressió de puntuacions',
+                  'Puntuació mitjana per àmbit',
+                  'Evolució de velocitat',
+                  'Progressió global',
+                ];
+                const descriptions = <String>[
+                  'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
+                  'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
+                  'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
+                  'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
+                ];
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _GraphCard(
-                graph: graph,
-                isDarkMode: isDarkMode,
-                titleOverride: customTitle,
-                description: customDesc,
-              ),
-            );
-          }),
+                // Overrides for last HTML graph take precedence.
+                String? customTitle;
+                String? customDesc;
+                if (idx == lastHtmlIndex) {
+                  customTitle = 'Evolució de mètriques de preguntes';
+                  customDesc =
+                      'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
+                } else {
+                  customTitle = idx < titles.length ? titles[idx] : null;
+                  customDesc =
+                      idx < descriptions.length ? descriptions[idx] : null;
+                }
+
+                // Apply filename-based title/description overrides when available.
+                final mappedTitle =
+                    _GraphCard._titleForFilename(graph.filename);
+                final mappedDesc =
+                    _GraphCard._descriptionForFilename(graph.filename);
+                customTitle = mappedTitle ?? customTitle;
+                customDesc = mappedDesc ?? customDesc;
+
+                return _GraphCard(
+                  graph: graph,
+                  isDarkMode: isDarkMode,
+                  titleOverride: customTitle,
+                  description: customDesc,
+                );
+              }).toList();
+
+              if (!isWide) {
+                return Column(
+                  children: [
+                    for (int i = 0; i < graphCards.length; i++) ...[
+                      graphCards[i],
+                      if (i != graphCards.length - 1)
+                        const SizedBox(height: spacing),
+                    ],
+                  ],
+                );
+              }
+
+              final double itemWidth = (width - spacing) / 2;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: graphCards
+                    .map(
+                      (card) => SizedBox(
+                        width: itemWidth,
+                        child: card,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -1433,10 +1893,15 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: DoctorColors.textSecondary(isDarkMode),
-              fontSize: 12,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
+          Divider(
+              color: DoctorColors.border(isDarkMode)
+                  .withAlpha((255 * 0.12).round()),
+              height: 1),
+          const SizedBox(height: 6),
           Text(
             value,
             textAlign: TextAlign.center,
@@ -1465,11 +1930,7 @@ class _EmptyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 12),
       child: Text(
         message,
         style: TextStyle(
@@ -1504,6 +1965,26 @@ class _HistoryTile extends StatelessWidget {
     final textPrimary = DoctorColors.textPrimary(isDarkMode);
     final textSecondary = DoctorColors.textSecondary(isDarkMode);
 
+    Color _swatchColorFor(String text) {
+      try {
+        final key = text.split(':').first.trim().toLowerCase();
+        final int hash = key.runes.fold(0, (p, e) => p + e);
+        final colors = [
+          Colors.blue.shade600,
+          Colors.green.shade600,
+          Colors.purple.shade600,
+          Colors.orange.shade600,
+          Colors.teal.shade600,
+          Colors.indigo.shade600,
+          Colors.red.shade600,
+          Colors.brown.shade600,
+        ];
+        return colors[hash % colors.length];
+      } catch (_) {
+        return DoctorColors.secondary(isDarkMode);
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1514,7 +1995,7 @@ class _HistoryTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withAlpha((255 * 0.12).round()),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor),
@@ -1526,15 +2007,16 @@ class _HistoryTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: textPrimary,
                       fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: textSecondary,
                       fontSize: 12,
                     ),
@@ -1555,19 +2037,37 @@ class _HistoryTile extends StatelessWidget {
                 .map(
                   (text) => Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color:
-                          DoctorColors.secondary(isDarkMode).withOpacity(0.12),
+                      color: DoctorColors.secondary(isDarkMode)
+                          .withAlpha((255 * 0.12).round()),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: _swatchColorFor(text),
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(
+                              color: DoctorColors.border(isDarkMode)
+                                  .withAlpha((255 * 0.12).round()),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          text,
+                          style: GoogleFonts.inter(
+                            color: textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -1593,7 +2093,7 @@ class _ScoreBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: DoctorColors.primary(isDarkMode).withOpacity(0.15),
+        color: DoctorColors.primary(isDarkMode).withAlpha((255 * 0.15).round()),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -1620,17 +2120,127 @@ class _GraphCard extends StatelessWidget {
     this.description,
   });
 
+  // Map graph PNG base filename to user-requested titles.
+  static String? _titleForFilename(String rawName) {
+    // Normalize: strip extension and any path segments, lowercase.
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return "Históric de puntuació de velocitat";
+      case 'scores_sorting':
+        return "Históric de puntuació d'ordenament";
+      case 'scores_words':
+        return "Históric de puntuació de paraules";
+      case 'scores_concentration':
+        return "Históric de puntuació de concentració";
+      case 'scores_multitasking':
+        return "Históric de puntuació de multitasca";
+      case 'progress_composite':
+        return "Progressió de puntuació global";
+      case 'scores_by_question_type':
+        return "Mitjana per domini de puntuació";
+      case 'scores_diary':
+        return "Evolució de mètriques de les preguntes diaries";
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return "Históric de temps per completar de tipus velocitat";
+      case 'speed_sorting':
+        return "Históric de temps per completar de tipus ordenament";
+      case 'speed_words':
+        return "Históric de temps per completar de tipus paraules";
+      case 'speed_concentration':
+        return "Históric de temps per completar de tipus concentració";
+      case 'speed_multitasking':
+        return "Históric de temps per completar de tipus multitasca";
+      case 'speed_diary':
+        return "Progressió de temps per completar global";
+
+      // Question metrics summary
+      case 'question_metrics':
+        return "Mètriques de preguntes diàries";
+
+      // If other filenames appear, return null so we fall back to filename.
+      default:
+        return null;
+    }
+  }
+
+  // Map graph PNG base filename to descriptive text.
+  static String? _descriptionForFilename(String rawName) {
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return "Evolució de la puntuació en activitats de velocitat; valors a l'alça indiquen més agilitat cognitiva.";
+      case 'scores_sorting':
+        return "Puntuació en activitats d'ordenament; reflecteix organització i planificació.";
+      case 'scores_words':
+        return "Puntuacions en activitats de paraules; mesuren fluïdesa verbal i recuperació lèxica.";
+      case 'scores_concentration':
+        return "Puntuacions en activitats de concentració; indiquen atenció sostinguda i control d'interferències.";
+      case 'scores_multitasking':
+        return "Puntuacions en activitats de multitasca; avalua gestió simultània de tasques.";
+      case 'scores_diary':
+        return "Mètriques derivades de les respostes del diari; mostren la qualitat i constància de les entrades.";
+      case 'scores_by_question_type':
+        return "Mitjana de puntuació per domini; permet comparar fortaleses i àrees de millora entre tipus de pregunta.";
+      case 'progress_composite':
+        return "Visió global de la puntuació; agrega indicadors per veure la tendència general del progrés.";
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return "Temps en activitats de velocitat; una davallada indica més rapidesa mantenint la precisió.";
+      case 'speed_sorting':
+        return "Temps en activitats d'ordenament; segueix l'eficiència organitzant seqüències.";
+      case 'speed_words':
+        return "Temps en activitats de paraules; mesura la fluïdesa en la recuperació lèxica.";
+      case 'speed_concentration':
+        return "Temps en activitats de concentració; indica capacitat de mantenir el focus amb agilitat.";
+      case 'speed_multitasking':
+        return "Temps en activitats de multitasca; avalua coordinació i canvi ràpid entre tasques.";
+      case 'speed_diary':
+        return "Temps global per completar sessions; resum transversal de l'agilitat en les activitats.";
+
+      // Question metrics summary
+      case 'question_metrics':
+        return "Mostra com evolucionen les mètriques de les preguntes diàries (precisió, temps de resposta, dificultat, etc) per detectar millores o regressions.";
+
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String mappedTitle = _titleForFilename(graph.filename) ?? '';
     final title = titleOverride ??
-        (graph.filename.isNotEmpty ? graph.filename : 'Gràfic');
+        (mappedTitle.isNotEmpty
+            ? mappedTitle
+            : (graph.filename.isNotEmpty ? graph.filename : 'Gràfic'));
+
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: DoctorColors.surface(isDarkMode),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DoctorColors.border(isDarkMode)),
-      ),
+      decoration: _sectionDecoration(isDarkMode, radius: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1639,6 +2249,7 @@ class _GraphCard extends StatelessWidget {
             style: TextStyle(
               color: DoctorColors.textPrimary(isDarkMode),
               fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
           const SizedBox(height: 2),
@@ -1746,7 +2357,8 @@ class _GraphError extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: DoctorColors.critical(isDarkMode).withOpacity(0.08),
+        color:
+            DoctorColors.critical(isDarkMode).withAlpha((255 * 0.08).round()),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -2015,7 +2627,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
   String get _hexValue {
     final String hex =
         _currentColor.value.toRadixString(16).padLeft(8, '0').toUpperCase();
-    return '#';
+    return '#${hex.substring(2)}';
   }
 
   @override
@@ -2046,7 +2658,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withAlpha((255 * 0.18).round()),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -2063,7 +2675,7 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: textColor.withOpacity(0.35),
+                    color: textColor.withAlpha((255 * 0.35).round()),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -2240,7 +2852,7 @@ class _ColorPreviewCard extends StatelessWidget {
         color: DoctorColors.background(isDarkMode),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: textColor.withOpacity(0.12),
+          color: textColor.withAlpha((255 * 0.12).round()),
         ),
       ),
       child: Row(
@@ -2252,7 +2864,7 @@ class _ColorPreviewCard extends StatelessWidget {
               color: background,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: textColor.withOpacity(0.15),
+                color: textColor.withAlpha((255 * 0.15).round()),
               ),
             ),
             child: Center(
@@ -2317,10 +2929,10 @@ class _GradientSlider extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
     final Color thumbColor =
-        isDark ? Colors.white : Colors.black.withOpacity(0.85);
-    final Color overlayColor = thumbColor.withOpacity(0.15);
+        isDark ? Colors.white : Colors.black.withAlpha((255 * 0.85).round());
+    final Color overlayColor = thumbColor.withAlpha((255 * 0.15).round());
     final Color frameColor =
-        (isDark ? Colors.white : Colors.black).withOpacity(0.12);
+        (isDark ? Colors.white : Colors.black).withAlpha((255 * 0.12).round());
     final SliderThemeData sliderTheme = SliderTheme.of(context).copyWith(
       trackHeight: 16,
       activeTrackColor: Colors.transparent,
@@ -2340,14 +2952,16 @@ class _GradientSlider extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: theme.textTheme.bodyLarge?.color?.withOpacity(0.9),
+                color: theme.textTheme.bodyLarge?.color
+                    ?.withAlpha((255 * 0.9).round()),
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
               valueLabel,
               style: TextStyle(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color
+                    ?.withAlpha((255 * 0.7).round()),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -2380,5 +2994,79 @@ class _GradientSlider extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _HoverableHistoryTile extends StatefulWidget {
+  final QuestionAnswerWithAnalysis question;
+  final bool isDarkMode;
+  final VoidCallback onTap;
+
+  const _HoverableHistoryTile({
+    required this.question,
+    required this.isDarkMode,
+    required this.onTap,
+  });
+
+  @override
+  __HoverableHistoryTileState createState() => __HoverableHistoryTileState();
+}
+
+class __HoverableHistoryTileState extends State<_HoverableHistoryTile> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final analysisChips = widget.question.analysis.entries
+        .map((entry) => '${entry.key}: ${entry.value.toStringAsFixed(2)}')
+        .toList();
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _isHovering
+                ? DoctorColors.primary(widget.isDarkMode)
+                    .withAlpha((255 * 0.1).round())
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _HistoryTile(
+            icon: Icons.question_answer_outlined,
+            iconColor: DoctorColors.secondary(widget.isDarkMode),
+            title: widget.question.question.text.isNotEmpty
+                ? widget.question.question.text
+                : 'Pregunta',
+            subtitle:
+                'Respost el ${_formatDateTimeLabel(widget.question.answeredAt)}',
+            metadata: [
+              if (widget.question.question.questionType.isNotEmpty)
+                'Tipus: ${widget.question.question.questionType}',
+              'Dificultat: ${widget.question.question.difficulty.toStringAsFixed(1)}',
+              ...analysisChips,
+            ],
+            isDarkMode: widget.isDarkMode,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTimeLabel(String? raw) {
+    if (raw == null || raw.isEmpty) return '—';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final dt = parsed.toLocal();
+    final datePart =
+        '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    final timePart =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '$datePart · $timePart';
   }
 }

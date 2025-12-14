@@ -1,5 +1,3 @@
-// lib/features/screens/micro/mic.dart
-
 import 'dart:async';
 import 'dart:io' show File;
 import 'dart:math';
@@ -32,10 +30,10 @@ class _MicScreenState extends State<MicScreen>
     with SingleTickerProviderStateMixin {
   bool isDarkMode = false;
 
-  /// Grabador nativo (m\xf3vil / desktop)
-  final Record _recorder = Record();
+  /// Grabador nativo (móvil / desktop)
+  final AudioRecorder _recorder = AudioRecorder();
 
-  /// Grabador espec\xedfico para Web (chunks .webm/MP3 comprimidos)
+  /// Grabador específico para Web (chunks .webm/MP3 comprimidos)
   WebAudioRecorder? _webRecorder;
 
   bool _isRecording = false;
@@ -43,22 +41,22 @@ class _MicScreenState extends State<MicScreen>
   Timer? _timer;
   Timer? _chunkTimer;
 
-  // Ruta temporal del fragment actual en dispositivos m\xf3viles
+  // Ruta temporal del fragment actual en dispositivos móviles
   String? _currentChunkPath;
 
-  // Estado de carga y transcripci\xf3n
+  // Estado de carga y transcripción
   bool _isUploading = false;
   String? _transcriptionText;
   bool _hasUploadError = false;
 
-  // Sesi\xf3n e \xedndice de fragment
+  // Sesión e índice de fragment
   String? _currentSessionId;
   int _nextChunkIndex = 0;
 
   // Lista de cargas pendientes para esperar antes de finalizar
   final List<Future<void>> _pendingChunkUploads = [];
 
-  // M\xe1ximo de segundos por fragment (Web autom\xe1tico, m\xf3vil con buffer overlap)
+  // Máximo de segundos por fragment (Web automático, móvil con buffer overlap)
   static const int _maxChunkSeconds = 5;
   static const int _minRecordingSeconds = 10;
 
@@ -85,7 +83,7 @@ class _MicScreenState extends State<MicScreen>
   late final Future<Question> _dailyQuestionFuture;
   Question? _currentDailyQuestion;
 
-  // Permisos y flujo de finalitzaci\xf3
+  // Permisos y flujo de finalització
   bool _hasMicPermission = false;
   bool _isCheckingPermission = false;
   bool _canNavigateToActivities = false;
@@ -93,7 +91,7 @@ class _MicScreenState extends State<MicScreen>
   bool _completionHadError = false;
   String? _completionMessage;
 
-  // Animaci\xf3 de ones simulades
+  // Animació de ones simulades
   late final AnimationController _waveController;
   final Random _waveRandom = Random();
   static const int _waveBarCount = 22;
@@ -147,7 +145,7 @@ class _MicScreenState extends State<MicScreen>
     } catch (e) {
       if (showToast) {
         _showError(
-          'No hem pogut demanar el micr\xf2fon. Revisa els permisos del sistema.',
+          'No hem pogut demanar el micròfon. Revisa els permisos del sistema.',
         );
       }
     } finally {
@@ -160,7 +158,7 @@ class _MicScreenState extends State<MicScreen>
     }
 
     if (!granted && showToast) {
-      _showError("Cal autoritzar el micr\u00f2fon per continuar.");
+      _showError("Cal autoritzar el micròfon per continuar.");
     }
 
     return granted;
@@ -185,7 +183,7 @@ class _MicScreenState extends State<MicScreen>
     return question;
   }
 
-  /// Inicia la grabaci\xf3n. Se genera un nuevo session_id y se configuran los
+  /// Inicia la grabación. Se genera un nuevo session_id y se configuran los
   /// temporizadores para enviar fragmentos de voz de 15s al backend.
   Future<void> _startRecording() async {
     if (_isRecording) return;
@@ -199,18 +197,18 @@ class _MicScreenState extends State<MicScreen>
       _completionMessage = null;
     });
 
-    // Reinicializa estado de la sesi\xf3n
+    // Reinicializa estado de la sesión
     _transcriptionText = null;
     _hasUploadError = false;
     _currentSessionId = const Uuid().v4();
     _nextChunkIndex = 0;
     _pendingChunkUploads.clear();
 
-    // --- WEB: usamos WebAudioRecorder (MediaRecorder + chunks .webm v\xe1lidos) ---
+    // --- WEB: usamos WebAudioRecorder (MediaRecorder + chunks .webm válidos) ---
     if (kIsWeb) {
       // Use larger chunkMillis on web to produce fewer, longer chunks
       _webRecorder ??= WebAudioRecorder(
-        // Use 2000\u20133000ms chunks to satisfy minimum duration and reduce overhead
+        // Use 2000–3000ms chunks to satisfy minimum duration and reduce overhead
         chunkMillis: (_maxChunkSeconds + 1) * 1000,
       );
 
@@ -220,7 +218,7 @@ class _MicScreenState extends State<MicScreen>
       });
       _waveController.repeat();
 
-      // Temporizador para actualizar la duraci\xf3n visible
+      // Temporizador para actualizar la duración visible
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         setState(() {
@@ -230,7 +228,7 @@ class _MicScreenState extends State<MicScreen>
 
       try {
         await _webRecorder!.start((Uint8List bytes) async {
-          // Cada chunk llega como bytes de un .wav v\xe1lido
+          // Cada chunk llega como bytes de un .wav válido
           if (_currentSessionId == null) return;
 
           final Future<void> f = _sendWebChunk(bytes);
@@ -242,7 +240,7 @@ class _MicScreenState extends State<MicScreen>
           }
         });
       } catch (e) {
-        _showError("No s'ha pogut accedir al micr\u00f2fon.");
+        _showError("No s'ha pogut accedir al micròfon.");
         setState(() {
           _isRecording = false;
           _recordDuration = Duration.zero;
@@ -252,10 +250,10 @@ class _MicScreenState extends State<MicScreen>
       return;
     }
 
-    // --- M\xd3VIL / DESKTOP: plugin record ---
+    // --- MÓVIL / DESKTOP: plugin record ---
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
-      _showError("No s'ha pogut accedir al micr\u00f2fon.");
+      _showError("No s'ha pogut accedir al micròfon.");
       return;
     }
 
@@ -263,7 +261,7 @@ class _MicScreenState extends State<MicScreen>
     try {
       await _startNewMobileRecording();
     } catch (e) {
-      _showError("No s'ha pogut iniciar la gravaci\u00f3.");
+      _showError("No s'ha pogut iniciar la gravació.");
       return;
     }
 
@@ -282,8 +280,8 @@ class _MicScreenState extends State<MicScreen>
     });
 
     // ESTRATEGIA SIMPLIFICADA: Volvemos al enfoque original
-    // El restart r\xe1pido est\xe1 causando archivos corruptos
-    // Mejor tener un gap peque\xf1o que chunks inv\xe1lidos
+    // El restart rápido está causando archivos corruptos
+    // Mejor tener un gap pequeño que chunks inválidos
 
     _chunkTimer?.cancel();
     _chunkTimer = Timer.periodic(
@@ -291,8 +289,8 @@ class _MicScreenState extends State<MicScreen>
       (_) async {
         if (_currentSessionId == null || _isUploading) return;
 
-        // Env\xedo simple sin restart para evitar corrupci\xf3n
-        // HACK: Crear nueva sesi\xf3n para cada chunk como test
+        // Envío simple sin restart para evitar corrupción
+        // HACK: Crear nueva sesión para cada chunk como test
         final Future<void> f = _sendCurrentMobileChunkSimple();
         _pendingChunkUploads.add(f);
         f.whenComplete(() => _pendingChunkUploads.remove(f));
@@ -300,7 +298,7 @@ class _MicScreenState extends State<MicScreen>
     );
   }
 
-  /// Detiene la grabaci\xf3n, env\xeda el \xfaltimo fragmento y completa la sesi\xf3n.
+  /// Detiene la grabación, envía el último fragmento y completa la sesión.
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
 
@@ -318,7 +316,7 @@ class _MicScreenState extends State<MicScreen>
     _chunkTimer = null;
 
     if (kIsWeb) {
-      // Detener grabaci\xf3n en Web
+      // Detener grabación en Web
       try {
         await _webRecorder?.stop();
 
@@ -329,7 +327,7 @@ class _MicScreenState extends State<MicScreen>
         _bufferFlushTimer?.cancel();
       } catch (_) {}
     } else {
-      // Detener la grabaci\xf3n m\xf3vil y enviar el \xfaltimo fragmento
+      // Detener la grabación móvil y enviar el último fragmento
       try {
         final Future<void> f = _sendCurrentMobileChunk(restart: false);
         _pendingChunkUploads.add(f);
@@ -354,11 +352,11 @@ class _MicScreenState extends State<MicScreen>
       }
     } catch (_) {}
 
-    // Finalizar la sesi\xf3n de transcripci\xf3n
+    // Finalizar la sesión de transcripción
     await _completeTranscription();
   }
 
-  /// Inicia una nueva grabaci\xf3n (m\xf3vil) creando un archivo temporal.
+  /// Inicia una nueva grabación (móvil) creando un archivo temporal.
   Future<void> _startNewMobileRecording() async {
     try {
       final dir = await getTemporaryDirectory();
@@ -367,27 +365,29 @@ class _MicScreenState extends State<MicScreen>
       _currentChunkPath = filePath;
 
       await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.opus, // contenedor/webm compatible con Whisper
+          bitRate: 128000,
+          sampleRate: 48000, // sampleRate corregido
+        ),
         path: filePath,
-        encoder: AudioEncoder.opus, // contenedor/webm compatible con Whisper
-        bitRate: 128000,
-        samplingRate: 48000,
       );
 
-      print('DEBUG - Nueva grabaci\xf3n iniciada: $filePath');
+      print('DEBUG - Nueva grabación iniciada: $filePath');
     } catch (e) {
-      print('ERROR - Fallo al iniciar nueva grabaci\xf3n: $e');
+      print('ERROR - Fallo al iniciar nueva grabación: $e');
       rethrow;
     }
   }
 
-  /// Env\xeda el chunk actual SIN restart (estrategia simplificada)
+  /// Envía el chunk actual SIN restart (estrategia simplificada)
   Future<void> _sendCurrentMobileChunkSimple() async {
     if (_currentSessionId == null || _isUploading) return;
 
     setState(() => _isUploading = true);
 
     try {
-      // Detener grabaci\xf3n temporalmente
+      // Detener grabación temporalmente
       final String? path = await _recorder.stop();
       final String? filePath = path ?? _currentChunkPath;
 
@@ -398,10 +398,10 @@ class _MicScreenState extends State<MicScreen>
           final bytes = await file.readAsBytes();
 
           if (bytes.isNotEmpty && bytes.length > 1000) {
-            // Validar archivo v\xe1lido
+            // Validar archivo válido
 
-            // HACK TEMPORAL: Crear nueva sesi\xf3n para cada chunk como test
-            // Esto nos ayudar\xe1 a determinar si el problema es de estado en el backend
+            // HACK TEMPORAL: Crear nueva sesión para cada chunk como test
+            // Esto nos ayudará a determinar si el problema es de estado en el backend
             final testSessionId =
                 _nextChunkIndex == 0 ? _currentSessionId! : const Uuid().v4();
 
@@ -418,7 +418,7 @@ class _MicScreenState extends State<MicScreen>
             print(
                 'DEBUG - HACK TEST: Enviando chunk con session=$testSessionId, originalIndex=${_nextChunkIndex}, testIndex=0');
             await ApiService.uploadTranscriptionChunk(chunkRequest);
-            _consecutiveErrors = 0; // Reset contador en \xe9xito
+            _consecutiveErrors = 0; // Reset contador en éxito
             _nextChunkIndex += 1;
 
             // Limpiar archivo
@@ -428,39 +428,39 @@ class _MicScreenState extends State<MicScreen>
               print('Error borrando: $e');
             }
           } else {
-            print('WARNING - Chunk muy peque\xf1o: ${bytes.length} bytes');
+            print('WARNING - Chunk muy pequeño: ${bytes.length} bytes');
           }
         } else {
           print('WARNING - Archivo no existe: $filePath');
         }
       }
 
-      // Reiniciar grabaci\xf3n despu\xe9s del env\xedo
+      // Reiniciar grabación después del envío
       if (_isRecording && _currentSessionId != null) {
         await _startNewMobileRecording();
       }
     } catch (e) {
       _consecutiveErrors++;
       _hasUploadError = true;
-      _showError("Error en enviar l'\u00e0udio. Torna-ho a provar.");
+      _showError("Error en enviar l'àudio. Torna-ho a provar.");
       print(
           'ERROR en _sendCurrentMobileChunkSimple (${_consecutiveErrors} consecutivos): $e');
 
-      // Si hay muchos errores consecutivos, reiniciar sesi\xf3n
+      // Si hay muchos errores consecutivos, reiniciar sesión
       if (_consecutiveErrors >= 3) {
         print(
-            'CRITICAL - Demasiados errores consecutivos, reiniciando sesi\xf3n...');
+            'CRITICAL - Demasiados errores consecutivos, reiniciando sesión...');
         _currentSessionId = const Uuid().v4();
         _nextChunkIndex = 0;
         _consecutiveErrors = 0;
       }
 
-      // Intentar reiniciar grabaci\xf3n si est\xe1 en curso
+      // Intentar reiniciar grabación si está en curso
       if (_isRecording && _currentSessionId != null) {
         try {
           await _startNewMobileRecording();
         } catch (restartError) {
-          print('ERROR reiniciando grabaci\xf3n: $restartError');
+          print('ERROR reiniciando grabación: $restartError');
         }
       }
     } finally {
@@ -472,25 +472,25 @@ class _MicScreenState extends State<MicScreen>
   Future<void> _processContinuousChunk() async {
     if (_currentSessionId == null || _isUploading) return;
 
-    // Prevenir m\xfaltiples uploads simult\xe1neos
+    // Prevenir múltiples uploads simultáneos
     setState(() => _isUploading = true);
 
     try {
-      // Enviar chunk actual manteniendo la grabaci\xf3n activa
+      // Enviar chunk actual manteniendo la grabación activa
       await _sendCurrentMobileChunk(restart: true);
     } finally {
       setState(() => _isUploading = false);
     }
   }
 
-  /// Env\xeda el fragmento actual grabado en m\xf3vil. Si [restart] es true, arranca
-  /// una nueva grabaci\xf3n inmediatamente.
+  /// Envía el fragmento actual grabado en móvil. Si [restart] es true, arranca
+  /// una nueva grabación inmediatamente.
   Future<void> _sendCurrentMobileChunk({bool restart = true}) async {
     if (_currentSessionId == null) return;
 
     try {
       if (!restart) {
-        // Caso final: detener y enviar \xfaltimo chunk
+        // Caso final: detener y enviar último chunk
         final String? path = await _recorder.stop();
         final String? filePath = path ?? _currentChunkPath;
         if (filePath == null) return;
@@ -506,15 +506,16 @@ class _MicScreenState extends State<MicScreen>
               setState(() => _isUploading = false);
             }
           } else {
-            print('WARNING - Archivo final vac\xedo: $filePath');
+            print('WARNING - Archivo final vacío: $filePath');
             await file.delete().catchError((_) {});
           }
         }
       } else {
         // ESTRATEGIA MEJORADA: Validaciones adicionales
-        if (!await _recorder.isRecording()) {
+        // CORREGIDO: Usamos _isRecording local porque .isRecording() no existe en v6
+        if (!_isRecording) {
           print(
-              'WARNING - Recorder no est\xe1 grabando, iniciando nueva grabaci\xf3n');
+              'WARNING - Recorder no está grabando, iniciando nueva grabación');
           await _startNewMobileRecording();
           return;
         }
@@ -530,11 +531,11 @@ class _MicScreenState extends State<MicScreen>
             final bytes = await file.readAsBytes();
 
             if (bytes.isNotEmpty && bytes.length > 1000) {
-              // M\xednimo 1KB para ser v\xe1lido
-              // Iniciar nueva grabaci\xf3n ANTES de procesar
+              // Mínimo 1KB para ser válido
+              // Iniciar nueva grabación ANTES de procesar
               await _startNewMobileRecording();
 
-              // Procesar chunk v\xe1lido
+              // Procesar chunk válido
               final chunkRequest = TranscriptionChunkRequest(
                 sessionId: _currentSessionId!,
                 chunkIndex: _nextChunkIndex,
@@ -544,12 +545,12 @@ class _MicScreenState extends State<MicScreen>
               );
 
               print(
-                  'DEBUG - Enviando chunk v\xe1lido: index=${_nextChunkIndex}, size=${bytes.length}');
+                  'DEBUG - Enviando chunk válido: index=${_nextChunkIndex}, size=${bytes.length}');
               await ApiService.uploadTranscriptionChunk(chunkRequest);
               _nextChunkIndex += 1;
             } else {
               print(
-                  'WARNING - Archivo muy peque\xf1o o vac\xedo (${bytes.length} bytes), reiniciando grabaci\xf3n');
+                  'WARNING - Archivo muy pequeño o vacío (${bytes.length} bytes), reiniciando grabación');
               await _startNewMobileRecording();
             }
 
@@ -561,38 +562,38 @@ class _MicScreenState extends State<MicScreen>
             }
           } else {
             print(
-                'WARNING - Archivo no existe: $filePath, reiniciando grabaci\xf3n');
+                'WARNING - Archivo no existe: $filePath, reiniciando grabación');
             await _startNewMobileRecording();
           }
         } else {
           print(
-              'ERROR - No se obtuvo path del archivo, reiniciando grabaci\xf3n');
+              'ERROR - No se obtuvo path del archivo, reiniciando grabación');
           await _startNewMobileRecording();
         }
       }
     } catch (e) {
       _hasUploadError = true;
-      _showError("Error en enviar l'\u00e0udio. Torna-ho a provar.");
+      _showError("Error en enviar l'àudio. Torna-ho a provar.");
 
-      // En caso de error, intentar reiniciar grabaci\xf3n si es restart=true
+      // En caso de error, intentar reiniciar grabación si es restart=true
       if (restart && _isRecording) {
         try {
           await _startNewMobileRecording();
         } catch (restartError) {
-          print('ERROR - No se pudo reiniciar grabaci\xf3n: $restartError');
+          print('ERROR - No se pudo reiniciar grabación: $restartError');
         }
       }
     }
     // NOTA: _isUploading se maneja en _processContinuousChunk o localmente
   }
 
-  /// Divide archivos de audio grandes en chunks para env\xedo
+  /// Divide archivos de audio grandes en chunks para envío
   Future<void> _sendAudioInChunks(
       List<int> audioBytes, File originalFile) async {
     const int maxChunkSizeBytes = 10 * 1024 * 1024; // 10MB por chunk
 
     if (audioBytes.length <= maxChunkSizeBytes) {
-      // Archivo peque\xf1o, enviar directamente
+      // Archivo pequeño, enviar directamente
       final chunkRequest = TranscriptionChunkRequest(
         sessionId: _currentSessionId!,
         chunkIndex: _nextChunkIndex,
@@ -635,14 +636,14 @@ class _MicScreenState extends State<MicScreen>
 
   /// Maneja grabaciones extremadamente largas (>60s) dividiendo sin interrumpir
   Future<void> _splitLongRecording() async {
-    // Esta funci\xf3n se puede implementar en el futuro si es necesario
+    // Esta función se puede implementar en el futuro si es necesario
     // Por ahora, simplemente logueamos el evento
     print(
-        'DEBUG - Grabaci\xf3n larga detectada: ${_recordDuration.inSeconds}s');
+        'DEBUG - Grabación larga detectada: ${_recordDuration.inSeconds}s');
   }
 
-  /// Env\xeda un fragmento grabado en Web con estrategia de buffering para WebM.
-  /// Los chunks WebM se acumulan y env\xedan como un archivo m\xe1s grande y v\xe1lido.
+  /// Envía un fragmento grabado en Web con estrategia de buffering para WebM.
+  /// Los chunks WebM se acumulan y envían como un archivo más grande y válido.
   Future<void> _sendWebChunk(Uint8List bytes) async {
     if (_currentSessionId == null) return;
 
@@ -652,7 +653,7 @@ class _MicScreenState extends State<MicScreen>
       String contentType = 'audio/wav';
 
       print(
-          'DEBUG - *** NUEVA VERSI\xd3N CON BUFFERING ACTIVA *** chunk size: ${bytes.length}');
+          'DEBUG - *** NUEVA VERSIÓN CON BUFFERING ACTIVA *** chunk size: ${bytes.length}');
 
       if (bytes.length > 4) {
         // Detectar WAV (header: RIFF....WAVE)
@@ -668,7 +669,6 @@ class _MicScreenState extends State<MicScreen>
           // E
           detectedFormat = 'wav';
           contentType = 'audio/wav';
-          print('\U0001f3b5 DEBUG - WAV format detected');
         }
         // Detectar WebM/Matroska (EBML header 1A 45 DF A3)
         else if (bytes[0] == 0x1A &&
@@ -677,7 +677,6 @@ class _MicScreenState extends State<MicScreen>
             bytes[3] == 0xA3) {
           detectedFormat = 'webm';
           contentType = 'audio/webm';
-          print('\U0001f3b5 DEBUG - WEBM format detected');
         }
         // Detectar MP3 (headers: 0xFF 0xFB, 0xFF 0xFA, o "ID3")
         else if ((bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0) ||
@@ -736,13 +735,12 @@ class _MicScreenState extends State<MicScreen>
     } catch (e) {
       _hasUploadError = true;
       print('ERROR in _sendWebChunk: $e');
-      _showError("Error en enviar l'\u00e0udio. Torna-ho a provar.");
+      _showError("Error en enviar l'àudio. Torna-ho a provar.");
     }
   }
 
   /// Handle WebM chunks with buffering strategy
   Future<void> _handleWebMChunk(Uint8List bytes) async {
-    print('DEBUG - _handleWebMChunk called with ${bytes.length} bytes');
 
     // Add to buffer
     _webmChunkBuffer.add(bytes);
@@ -803,7 +801,7 @@ class _MicScreenState extends State<MicScreen>
     } catch (e) {
       _hasUploadError = true;
       print('ERROR in _flushWebMBuffer: $e');
-      _showError("Error en enviar l'\u00e0udio. Torna-ho a provar.");
+      _showError("Error en enviar l'àudio. Torna-ho a provar.");
     } finally {
       setState(() => _isUploading = false);
     }
@@ -812,7 +810,6 @@ class _MicScreenState extends State<MicScreen>
   /// Handle MP4/MP3 chunks with accumulation for minimum duration requirement
   Future<void> _handleMp4Chunk(
       Uint8List bytes, String format, String contentType) async {
-    print('DEBUG - _handleMp4Chunk called with ${bytes.length} bytes');
 
     // Add to MP4 buffer
     _mp4ChunkBuffer.add(bytes);
@@ -850,10 +847,7 @@ class _MicScreenState extends State<MicScreen>
           _flushMp4Buffer(format, contentType);
         } else {
           // Not enough yet, re-arm timer to check again
-          print(
-              'DEBUG - MP4 buffer timer: not enough data yet (buffer: ${_mp4ChunkBuffer.length}, combinedSize: $combinedSize). Re-arming.');
           _mp4BufferFlushTimer = Timer(_mp4BufferFlushInterval, () {
-            print('DEBUG - MP4 buffer timer re-triggered');
             int combinedSize2 =
                 _mp4ChunkBuffer.fold(0, (sum, chunk) => sum + chunk.length);
             bool canFlush2 = _mp4ChunkBuffer.length >= 2 ||
@@ -862,11 +856,8 @@ class _MicScreenState extends State<MicScreen>
             if (canFlush2) {
               _flushMp4Buffer(format, contentType);
             } else {
-              print(
-                  'DEBUG - MP4 buffer timer: still not enough (buffer: ${_mp4ChunkBuffer.length}, combinedSize: $combinedSize2). Re-arming again.');
               // Re-arm again until we have enough data
               _mp4BufferFlushTimer = Timer(_mp4BufferFlushInterval, () {
-                print('DEBUG - MP4 buffer timer final re-trigger');
                 _flushMp4Buffer(format, contentType);
               });
             }
@@ -908,7 +899,7 @@ class _MicScreenState extends State<MicScreen>
     } catch (e) {
       _hasUploadError = true;
       print('ERROR in _flushMp4Buffer: $e');
-      _showError("Error en enviar l'\u00e0udio MP4. Torna-ho a provar.");
+      _showError("Error en enviar l'àudio MP4. Torna-ho a provar.");
     } finally {
       setState(() => _isUploading = false);
     }
@@ -937,7 +928,7 @@ class _MicScreenState extends State<MicScreen>
     }
   }
 
-  /// Completa la sessi\xf3 actual i mostra la confirmaci\xf3.
+  /// Completa la sessió actual i mostra la confirmació.
   Future<void> _completeTranscription() async {
     final String? sessionId = _currentSessionId;
     if (sessionId == null) return;
@@ -950,7 +941,7 @@ class _MicScreenState extends State<MicScreen>
       setState(() => _isUploading = true);
 
       if (questionId == null || questionId.isEmpty) {
-        throw Exception('Pregunta di\xe0ria no carregada');
+        throw Exception('Pregunta diària no carregada');
       }
 
       final response = await ApiService.completeTranscriptionSession(
@@ -968,7 +959,7 @@ class _MicScreenState extends State<MicScreen>
     } catch (e) {
       _hasUploadError = true;
       _showError(
-        'No s\'ha pogut completar la transcripci\xf3, per\xf2 pots continuar.',
+        'No s\'ha pogut completar la transcripció, però pots continuar.',
       );
     } finally {
       setState(() {
@@ -980,8 +971,8 @@ class _MicScreenState extends State<MicScreen>
         _canNavigateToActivities = true;
         _completionHadError = !success;
         _completionMessage = success
-            ? 'Resposta enregistrada amb \xe8xit.'
-            : 'Hi ha hagut un problema en l\'enviament, per\xf2 pots continuar.';
+            ? 'Resposta enregistrada amb èxit.'
+            : 'Hi ha hagut un problema en l\'enviament, però pots continuar.';
       });
       _bufferFlushTimer?.cancel();
     }
@@ -1002,7 +993,7 @@ class _MicScreenState extends State<MicScreen>
     super.dispose();
   }
 
-  /// Formatea la duraci\xf3n en mm:ss
+  /// Formatea la duración en mm:ss
   String _formatDuration(Duration d) {
     final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -1060,11 +1051,11 @@ class _MicScreenState extends State<MicScreen>
     if (!_showCompletionOverlay) return const SizedBox.shrink();
 
     final title = _completionHadError
-        ? 'Resposta enregistrada amb incid\xe8ncies'
+        ? 'Resposta enregistrada amb incidències'
         : 'Resposta enregistrada!';
     final subtitle = _completionMessage ??
         (_completionHadError
-            ? 'Hi ha hagut un problema amb el servidor, per\xf2 pots continuar.'
+            ? 'Hi ha hagut un problema amb el servidor, però pots continuar.'
             : 'Hem rebut la teva resposta. Prem continuar per anar a activitats.');
 
     return Positioned.fill(
@@ -1230,9 +1221,6 @@ class _MicScreenState extends State<MicScreen>
             ? (stopLocked ? null : _stopRecording)
             : _startRecording)
         : null;
-    final Color micButtonColor = _isRecording
-        ? Colors.red.withOpacity(buttonEnabled ? 1.0 : 0.7)
-        : (buttonEnabled ? Colors.white : Colors.white.withOpacity(0.25));
 
     return Scaffold(
       body: Stack(
@@ -1244,7 +1232,7 @@ class _MicScreenState extends State<MicScreen>
             ),
           ),
 
-          // Sistema de part\xedcules decoratives
+          // Sistema de partícules decoratives
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
             particleCount: 50,
@@ -1296,7 +1284,7 @@ class _MicScreenState extends State<MicScreen>
                   ),
                 ),
 
-                // Cos amb pregunta, micr\xf2fon i controls
+                // Cos amb pregunta, micròfon i controls
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -1323,7 +1311,7 @@ class _MicScreenState extends State<MicScreen>
                                 );
                               } else if (snapshot.hasError) {
                                 child = Text(
-                                  "S'ha produ\u00eft un error en carregar la pregunta.",
+                                  "S'ha produït un error en carregar la pregunta.",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: AppColors.getPrimaryTextColor(
@@ -1335,7 +1323,7 @@ class _MicScreenState extends State<MicScreen>
                                 final question = snapshot.data;
                                 child = Text(
                                   question?.text ??
-                                      'No hi ha cap pregunta avui. Explica una experi\u00e8ncia teva!',
+                                      'No hi ha cap pregunta avui. Explica una experiència teva!',
                                   textAlign: TextAlign.center,
                                   softWrap: true,
                                   style: TextStyle(
@@ -1401,7 +1389,7 @@ class _MicScreenState extends State<MicScreen>
                               child: Column(
                                 children: [
                                   Text(
-                                    'Permet el micr\xf2fon per comen\xe7ar.',
+                                    'Permet el micròfon per començar.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: AppColors.getPrimaryTextColor(
@@ -1428,8 +1416,8 @@ class _MicScreenState extends State<MicScreen>
                                     icon: const Icon(Icons.lock_open_rounded),
                                     label: Text(
                                       _isCheckingPermission
-                                          ? 'Sol\xb7licitant...'
-                                          : 'Permetre micr\xf2fon',
+                                          ? 'Sol·licitant...'
+                                          : 'Permetre micròfon',
                                     ),
                                   ),
                                 ],
@@ -1438,7 +1426,7 @@ class _MicScreenState extends State<MicScreen>
                             const SizedBox(height: 12),
                           ],
 
-                          // Bot\xf3 de micr\xf2fon
+                          // Botó de micròfon
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -1478,8 +1466,8 @@ class _MicScreenState extends State<MicScreen>
                             _hasMicPermission
                                 ? (_isRecording
                                     ? 'Gravant...'
-                                    : 'Prem per comen\xe7ar')
-                                : 'Autoritza el micr\xf2fon per gravar',
+                                    : 'Prem per començar')
+                                : 'Autoritza el micròfon per gravar',
                             style: TextStyle(
                               color:
                                   AppColors.getSecondaryTextColor(isDarkMode),
@@ -1532,7 +1520,7 @@ class _MicScreenState extends State<MicScreen>
 
                           const SizedBox(height: 12.0),
 
-                          // Indicador de c\xe0rrega i preview
+                          // Indicador de càrrega i preview
                           if (_isUploading) ...[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -1550,7 +1538,7 @@ class _MicScreenState extends State<MicScreen>
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Pujant \xe0udio...',
+                                  'Pujant àudio...',
                                   style: TextStyle(
                                     color: AppColors.getPrimaryTextColor(
                                         isDarkMode),
@@ -1565,7 +1553,7 @@ class _MicScreenState extends State<MicScreen>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 28.0, vertical: 4),
                               child: Text(
-                                "Hi ha hagut un problema enviant l'\xe0udio. Pots tornar-ho a provar.",
+                                "Hi ha hagut un problema enviant l'àudio. Pots tornar-ho a provar.",
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: Color(0xFFEF476F),
@@ -1591,7 +1579,7 @@ class _MicScreenState extends State<MicScreen>
                           ],
                           const SizedBox(height: 8.0),
 
-                          // Barra de progr\xe9s
+                          // Barra de progrés
                           SizedBox(
                             width: 220.0,
                             child: LinearProgressIndicator(
@@ -1626,7 +1614,7 @@ class _MicScreenState extends State<MicScreen>
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  "Les activitats es desbloquegen despr\xe9s d'enviar la resposta d'avui.",
+                                  "Les activitats es desbloquegen després d'enviar la resposta d'avui.",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: AppColors.getSecondaryTextColor(

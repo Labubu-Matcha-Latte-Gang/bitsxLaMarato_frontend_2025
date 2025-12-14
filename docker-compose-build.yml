@@ -1,0 +1,10 @@
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: DockerfileDev
+    volumes:
+      - .:/app
+    
+    env_file:
+      - .env

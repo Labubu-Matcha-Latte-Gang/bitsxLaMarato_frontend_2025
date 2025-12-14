@@ -7,16 +7,16 @@ import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 /// A simple 9x9 Sudoku page where the user fills blanks.
 /// Maintains the same header/particle styling and AppColors from the app.
-class SudokuPage extends StatefulWidget {
+class SudokuEasyPage extends StatefulWidget {
   final bool isDarkMode;
   final String? activityId;
-  const SudokuPage({Key? key, this.isDarkMode = false, this.activityId}) : super(key: key);
+  const SudokuEasyPage({Key? key, this.isDarkMode = false, this.activityId}) : super(key: key);
 
   @override
-  State<SudokuPage> createState() => _SudokuPageState();
+  State<SudokuEasyPage> createState() => _SudokuEasyPageState();
 }
 
-class _SudokuPageState extends State<SudokuPage> {
+class _SudokuEasyPageState extends State<SudokuEasyPage> {
   // A known puzzle and its solution (classic easy puzzle)
   final List<List<int>> _initial = const [
     [6,9,0,1,7,0,0,0,0],

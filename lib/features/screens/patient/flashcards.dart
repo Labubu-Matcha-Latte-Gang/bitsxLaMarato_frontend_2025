@@ -401,8 +401,8 @@ class _AreasPieChart extends StatelessWidget {
                     children: [
                       // Colored circle marker (no icon) to indicate the legend color
                       Container(
-                        width: 28,
-                        height: 28,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: colors[idx],
                           shape: BoxShape.circle,

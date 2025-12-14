@@ -7,7 +7,11 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import 'games/sorting.dart';
 import 'games/sudoku_easy.dart';
+import 'games/sudoku_med.dart';
+import 'games/sudoku_hard.dart';
 import 'games/wordle_easy.dart';
+import 'games/wordle_med.dart';
+import 'games/wordle_hard.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 
@@ -44,7 +48,6 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
       _errorMessage = null;
     });
     try {
-      print('DEBUG - Fetching recommended activity from API...');
       final results = await _api.fetchRecommendedActivities();
 
       // Filtrar activitats que comencen amb "TEST - "
@@ -54,22 +57,16 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
 
       if (filteredResults.isNotEmpty) {
         final activity = filteredResults.first;
-        print('DEBUG - ✓ Recommended activity loaded successfully');
-        print('DEBUG - Activity ID: ${activity.id}');
-        print('DEBUG - Activity Title: ${activity.title}');
-        print('DEBUG - Activity Type: ${activity.activityType}');
-        print('DEBUG - Activity Difficulty: ${activity.difficulty}');
-        print('DEBUG - Activity Description: ${activity.description}');
-      } else {
-        print('DEBUG - ⚠ API returned empty results');
-      }
+        // Activity loaded successfully
+        // Logs removed
+      } else {}
+
 
       setState(() {
         _recommendedActivity =
             filteredResults.isNotEmpty ? filteredResults.first : null;
       });
     } catch (e) {
-      print('DEBUG - ✗ Error loading recommended activity: $e');
       setState(() {
         _errorMessage =
             'No s\'ha pogut carregar l\'activitat recomanada. Torna-ho a provar.';
@@ -90,98 +87,154 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
     });
   }
 
+  String _displayTitle(String title) {
+    const prefix = 'ACTIVITAT - ';
+    return title.startsWith(prefix)
+        ? title.substring(prefix.length).trim()
+        : title;
+  }
+
   void _openActivity(Activity activity) {
     final lowerType = activity.activityType.toLowerCase();
     final lowerTitle = activity.title.toLowerCase();
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SudokuPage(isDarkMode: isDarkMode),
-        ),
-      );
-      return;
-    }
-
-    if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const WordleScreen(),
-        ),
-      );
-      return;
-    }
-
-    if (lowerType.contains('memory') ||
-        lowerTitle.contains('memory') ||
-        lowerTitle.contains('memoritzar') ||
-        lowerType.contains('concentration')) {
-      // Route to specific memory game based on title
-      if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+      if (lowerTitle.contains('fàcil')) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameAnimals(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuEasyPage(),
           ),
         );
-      } else if (lowerTitle.contains('monuments') ||
-          lowerTitle.contains('monument')) {
+        return;
+      }
+      else if (lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameMonuments(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuMedPage(),
           ),
         );
-      } else {
-        // Default to animals if no specific match
+        return;
+      }
+      else if (lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameAnimals(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuHardPage(),
           ),
         );
+        return;
       }
       return;
     }
 
-    if (lowerType.contains('sorting')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SortingActivityPage(
-            activity: activity,
-            initialDarkMode: isDarkMode,
+    if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
+      if (lowerTitle.contains('fàcil')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleEasyScreen(),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
+      else if (lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleMedScreen(),
+          ),
+        );
+        return;
+      }
+      else if (lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleHardScreen(),
+          ),
+        );
+        return;
+      }
 
-    // Default behaviour: show a details dialog with the activity description.
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(activity.title,
-            style: TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode))),
-        content: Text(activity.description,
-            style:
-                TextStyle(color: AppColors.getSecondaryTextColor(isDarkMode))),
-        backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Tancar',
-                style: TextStyle(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode))),
-          )
-        ],
-      ),
-    );
+      if (lowerType.contains('memory') ||
+          lowerTitle.contains('memory') ||
+          lowerTitle.contains('memoritzar') ||
+          lowerType.contains('concentration')) {
+        // Route to specific memory game based on title
+        if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameAnimals(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        } else if (lowerTitle.contains('monuments') ||
+            lowerTitle.contains('monument')) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameMonuments(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        } else {
+          // Default to animals if no specific match
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameAnimals(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (lowerType.contains('sorting')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                SortingActivityPage(
+                  activity: activity,
+                  initialDarkMode: isDarkMode,
+                ),
+          ),
+        );
+        return;
+      }
+
+      // Default behaviour: show a details dialog with the activity description.
+      showDialog<void>(
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: Text(activity.title,
+                  style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode))),
+              content: Text(activity.description,
+                  style:
+                  TextStyle(
+                      color: AppColors.getSecondaryTextColor(isDarkMode))),
+              backgroundColor: AppColors.getSecondaryBackgroundColor(
+                  isDarkMode),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Tancar',
+                      style: TextStyle(
+                          color: AppColors.getPrimaryButtonColor(isDarkMode))),
+                )
+              ],
+            ),
+      );
+    }
   }
 
   @override
@@ -456,7 +509,9 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
                                                   ),
                                                   const SizedBox(height: 6),
                                                   Text(
-                                                    _recommendedActivity!.title,
+                                                    _displayTitle(
+                                                        _recommendedActivity!
+                                                            .title),
                                                     style: TextStyle(
                                                       color: AppColors
                                                           .getPrimaryTextColor(

@@ -7,31 +7,31 @@ class AppColors {
 
   /// Colores de fondo principales
   static const Color darkBackground = Color(0xFF1E2124);
-  static const Color lightBackground = Color(0xFF90E0EF);
+  static const Color lightBackground = Color(0xFFF3F6FB);
 
   /// Colores de fondo secundarios
   static const Color darkSecondaryBackground = Color(0xFF282B30);
-  static const Color lightSecondaryBackground = Color(0xFFCAF0F8);
+  static const Color lightSecondaryBackground = Color(0xFFFFFFFF);
 
   // =============== COLORES DE TEXTO ===============
 
   /// Texto principal
   static const Color darkPrimaryText = Colors.white;
-  static const Color lightPrimaryText = Color(0xFF1E3A8A);
+  static const Color lightPrimaryText = Color(0xFF0F172A);
 
   /// Texto secundario
   static const Color darkSecondaryText = Colors.white70;
-  static const Color lightSecondaryText = Color(0xFF1E3A8A);
+  static const Color lightSecondaryText = Color(0xFF334155);
 
   /// Texto terciario/suave
   static const Color darkTertiaryText = Colors.white60;
-  static const Color lightTertiaryText = Color(0xFF1E3A8A);
+  static const Color lightTertiaryText = Color(0xFF64748B);
 
   // =============== COLORES DE BOTONES ===============
 
   /// Botones primarios
   static const Color darkPrimaryButton = Color(0xFF7289DA);
-  static const Color lightPrimaryButton = Color(0xFF0077B6);
+  static const Color lightPrimaryButton = Color(0xFF1D70B8);
 
   /// Texto de botones primarios
   static const Color darkPrimaryButtonText = Colors.white;
@@ -39,17 +39,17 @@ class AppColors {
 
   /// Botones secundarios
   static const Color darkSecondaryButton = Color(0xFF7289DA);
-  static const Color lightSecondaryButton = Colors.white;
+  static const Color lightSecondaryButton = Color(0xFFE8EEF5);
 
   /// Texto de botones secundarios
   static const Color darkSecondaryButtonText = Colors.white;
-  static const Color lightSecondaryButtonText = Color(0xFF1E3A8A);
+  static const Color lightSecondaryButtonText = Color(0xFF0F172A);
 
   // =============== COLORES DE CONTENEDORES ===============
 
   /// Contenedores con blur/transparencia
   static Color darkBlurContainer = Colors.grey[800]!.withOpacity(0.8);
-  static Color lightBlurContainer = Colors.white.withOpacity(0.3);
+  static Color lightBlurContainer = Colors.white.withOpacity(0.72);
 
   /// Sombras de contenedores
   static Color containerShadow = Colors.black.withOpacity(0.1);
@@ -58,15 +58,15 @@ class AppColors {
 
   /// Fondos de campos de entrada
   static const Color darkFieldBackground = Color(0xFF7289DA);
-  static const Color lightFieldBackground = Colors.white;
+  static const Color lightFieldBackground = Color(0xFFF8FAFF);
 
   /// Texto de placeholder/hint
   static const Color darkPlaceholderText = Colors.white70;
-  static const Color lightPlaceholderText = Color(0xFF1E3A8A);
+  static const Color lightPlaceholderText = Color(0xFF94A3B8);
 
   /// Texto de entrada
   static const Color darkInputText = Colors.white;
-  static const Color lightInputText = Color(0xFF1E3A8A);
+  static const Color lightInputText = Color(0xFF0F172A);
 
   // =============== COLORES ESPECIALES ===============
 
@@ -75,7 +75,7 @@ class AppColors {
 
   /// Partículas del sistema de efectos
   static const Color darkParticles = Colors.white;
-  static const Color lightParticles = Color(0xFF1E3A8A);
+  static const Color lightParticles = Color(0xFF1D70B8);
 
   // =============== MÉTODOS HELPER ===============
 
@@ -167,9 +167,9 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
+      Color(0xFFF7F9FC),
       lightBackground,
-      lightBackground,
-      lightBackground,
+      Color(0xFFEFF3FA),
     ],
   );
 

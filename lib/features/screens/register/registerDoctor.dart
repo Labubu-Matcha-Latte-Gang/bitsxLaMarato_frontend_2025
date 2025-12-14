@@ -76,14 +76,6 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
           patients: [], // Por defecto sin pacientes asignados
         );
 
-        print('DEBUG - Doctor Form data being sent:');
-        print('  Name: ${request.name}');
-        print('  Surname: ${request.surname}');
-        print('  Email: ${request.email}');
-        print('  Password: ${request.password}');
-        print('  Gender: ${request.gender}');
-        print('  Patients: ${request.patients}');
-
         // Llamar a la API
         final response = await ApiService.registerDoctor(request);
 
@@ -267,36 +259,47 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                   ),
                 ),
 
-                // Logo
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  child: SizedBox(
-                    height: 100,
-                    width: 150,
-                    child: Image.asset(
-                      isDarkMode ? TImages.lightLogo : TImages.darkLogo,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.local_hospital,
-                          size: 40,
-                          color: AppColors.getPrimaryTextColor(isDarkMode),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
                 const Spacer(),
               ],
             ),
           ),
 
-          // Formulario posicionado
+          // Logo fijo en la parte superior
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
+            top: 80,
             left: 0,
             right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  width: 180,
+                  child: Image.asset(
+                    isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_hospital,
+                        size: 60,
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Formulario posicionado
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.30,
+            left: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
+            right: MediaQuery.of(context).size.width >= 800
+                ? MediaQuery.of(context).size.width * 0.25
+                : 0,
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(
@@ -434,7 +437,8 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                               'Sexe',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.getSecondaryTextColor(isDarkMode),
+                                color:
+                                    AppColors.getSecondaryTextColor(isDarkMode),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -442,20 +446,24 @@ class _RegisterDoctorState extends State<RegisterDoctor> {
                             Container(
                               height: 45,
                               decoration: BoxDecoration(
-                                color: AppColors.getFieldBackgroundColor(isDarkMode),
+                                color: AppColors.getFieldBackgroundColor(
+                                    isDarkMode),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: DropdownButtonFormField<String>(
                                 value: _selectedGender,
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 12),
                                 ),
                                 style: TextStyle(
-                                  color: AppColors.getInputTextColor(isDarkMode),
+                                  color:
+                                      AppColors.getInputTextColor(isDarkMode),
                                 ),
                                 dropdownColor:
-                                    AppColors.getSecondaryBackgroundColor(isDarkMode),
+                                    AppColors.getSecondaryBackgroundColor(
+                                        isDarkMode),
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'male',

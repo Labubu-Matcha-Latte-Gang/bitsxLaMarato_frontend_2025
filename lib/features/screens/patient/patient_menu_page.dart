@@ -6,6 +6,7 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/session_manager.dart';
 import '../activities/all_activities_page.dart';
+import '../activities/all_test_page.dart' as test_page;
 import '../activities/recommended_activities_page.dart';
 import '../initialPage/initialPage.dart';
 import 'qr_generate_page.dart';
@@ -64,9 +65,13 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                 .withAlpha((0.25 * 255).round());
             final iconBg = AppColors.getPrimaryButtonColor(isDarkMode)
                 .withAlpha((0.12 * 255).round());
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isWide = screenWidth > 800;
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              insetPadding: isWide
+                  ? EdgeInsets.symmetric(horizontal: screenWidth * 0.25)
+                  : const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
                 decoration: BoxDecoration(
@@ -366,6 +371,27 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
+                                  title: 'Tots els tests',
+                                  description:
+                                      'Realitza tests i avaluacions cognitives per monitoritzar el teu progrés.',
+                                  icon: Icons.quiz_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            test_page.AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
                                   title: 'Totes les activitats',
                                   description:
                                       'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
@@ -388,16 +414,15 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                 child: _ActionCard(
                                   title: 'Supera\'t',
                                   description:
-                                  'Activitats en el món real per ajudar-te a superar els teus reptes.',
+                                      'Activitats en el món real per ajudar-te a superar els teus reptes.',
                                   icon: Icons.auto_awesome,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            Flashcards(
-                                              initialDarkMode: isDarkMode,
-                                            ),
+                                        builder: (_) => Flashcards(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
                                     );
                                   },
