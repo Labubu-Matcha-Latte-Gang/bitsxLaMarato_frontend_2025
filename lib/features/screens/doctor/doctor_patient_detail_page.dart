@@ -769,12 +769,9 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
             },
           ),
           const SizedBox(height: 16),
-          _buildScoresSection(),
-          const SizedBox(height: 12),
-          _buildQuestionsSection(),
-          const SizedBox(height: 12),
           _buildDiarySection(),
           if ((_data?.graphFiles ?? []).isNotEmpty) ...[
+            const SizedBox(height: 12),
             _buildGraphsSection(),
           ],
         ],
@@ -1765,45 +1762,92 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                   .withAlpha((255 * 0.18).round()),
               height: 1),
           const SizedBox(height: 10),
-          ...graphs.asMap().entries.map((entry) {
-            final int idx = entry.key;
-            final graph = entry.value;
-            // Custom titles and descriptions for the first four graphs.
-            const titles = <String>[
-              'Progressió de puntuacions',
-              'Puntuació mitjana per àmbit',
-              'Evolució de velocitat',
-              'Progressió global',
-            ];
-            const descriptions = <String>[
-              'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
-              'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
-              'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
-              'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
-            ];
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double width = constraints.maxWidth;
+              final bool isWide = width > 800;
+              const double spacing = 12;
 
-            // Overrides for last HTML graph take precedence.
-            String? customTitle;
-            String? customDesc;
-            if (idx == lastHtmlIndex) {
-              customTitle = 'Evolució de mètriques de preguntes';
-              customDesc =
-                  'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
-            } else {
-              customTitle = idx < titles.length ? titles[idx] : null;
-              customDesc = idx < descriptions.length ? descriptions[idx] : null;
-            }
+              final graphCards = graphs.asMap().entries.map((entry) {
+                final int idx = entry.key;
+                final graph = entry.value;
+                final String baseName = graph.filename
+                    .split('/')
+                    .last
+                    .split('\\')
+                    .last
+                    .replaceAll('.png', '')
+                    .replaceAll('.PNG', '')
+                    .trim()
+                    .toLowerCase();
+                // Custom titles and descriptions for the first four graphs.
+                const titles = <String>[
+                  'Progressió de puntuacions',
+                  'Puntuació mitjana per àmbit',
+                  'Evolució de velocitat',
+                  'Progressió global',
+                ];
+                const descriptions = <String>[
+                  'Mostra l\'evolució de les puntuacions al llarg del temps; una tendència ascendent indica millora sostinguda.',
+                  'Comparativa de la puntuació mitjana en cada àmbit; ajuda a detectar fortaleses i àrees de millora.',
+                  'Canvis en el temps de resolució; valors decreixents suggereixen més agilitat i confiança.',
+                  'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
+                ];
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _GraphCard(
-                graph: graph,
-                isDarkMode: isDarkMode,
-                titleOverride: customTitle,
-                description: customDesc,
-              ),
-            );
-          }).toList(),
+                // Overrides for last HTML graph take precedence.
+                String? customTitle;
+                String? customDesc;
+                if (idx == lastHtmlIndex) {
+                  customTitle = 'Evolució de mètriques de preguntes';
+                  customDesc =
+                      'Seguiment de mètriques clau (p. ex. precisió, temps i dificultat) per interpretar l\'evolució de les respostes.';
+                } else {
+                  customTitle = idx < titles.length ? titles[idx] : null;
+                  customDesc =
+                      idx < descriptions.length ? descriptions[idx] : null;
+                }
+
+                if (baseName == 'question_metrics') {
+                  customDesc =
+                      'Mostra com evolucionen les mètriques de les preguntes diàries (precisió, temps de resposta i dificultat) per detectar millores o regressions.';
+                  customTitle ??= 'Mètriques de preguntes diàries';
+                }
+
+                return _GraphCard(
+                  graph: graph,
+                  isDarkMode: isDarkMode,
+                  titleOverride: customTitle,
+                  description: customDesc,
+                );
+              }).toList();
+
+              if (!isWide) {
+                return Column(
+                  children: [
+                    for (int i = 0; i < graphCards.length; i++) ...[
+                      graphCards[i],
+                      if (i != graphCards.length - 1)
+                        const SizedBox(height: spacing),
+                    ],
+                  ],
+                );
+              }
+
+              final double itemWidth = (width - spacing) / 2;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: graphCards
+                    .map(
+                      (card) => SizedBox(
+                        width: itemWidth,
+                        child: card,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -2097,6 +2141,8 @@ class _GraphCard extends StatelessWidget {
         return "Históric de puntuació de paraules";
       case 'scores_concentration':
         return "Históric de puntuació de concentració";
+      case 'scores_multitasking':
+        return "Históric de puntuació de multitasca";
       case 'progress_composite':
         return "Progressió de puntuació global";
       case 'scores_by_question_type':
@@ -2113,6 +2159,8 @@ class _GraphCard extends StatelessWidget {
         return "Históric de temps per completar de tipus paraules";
       case 'speed_concentration':
         return "Históric de temps per completar de tipus concentració";
+      case 'speed_multitasking':
+        return "Históric de temps per completar de tipus multitasca";
       case 'speed_diary':
         return "Progressió de temps per completar global";
 
