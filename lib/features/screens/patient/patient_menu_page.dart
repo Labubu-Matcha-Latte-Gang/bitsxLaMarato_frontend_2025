@@ -65,9 +65,13 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                 .withAlpha((0.25 * 255).round());
             final iconBg = AppColors.getPrimaryButtonColor(isDarkMode)
                 .withAlpha((0.12 * 255).round());
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isWide = screenWidth > 800;
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              insetPadding: isWide
+                  ? EdgeInsets.symmetric(horizontal: screenWidth * 0.25)
+                  : const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
                 decoration: BoxDecoration(
