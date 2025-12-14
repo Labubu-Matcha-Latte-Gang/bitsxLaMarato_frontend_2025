@@ -20,6 +20,8 @@ Write-Host "Flutter Frontend Docker Manager" -ForegroundColor Cyan
 
 $ComposeDev = "docker-compose-dev.yml"
 $ComposeProd = "docker-compose.yml"
+# 👇 NUEVO: Archivo dedicado para builds
+$ComposeBuild = "docker-compose-build.yml"
 
 while ($true) {
     Write-Host "`n----------------------------------------" -ForegroundColor Green
@@ -30,7 +32,8 @@ while ($true) {
     Write-Host "3. View Live Logs (Auto-detect)"
     Write-Host "4. Stop ALL Containers"
     Write-Host "5. Run Tests"
-    Write-Host "6. Exit"
+    Write-Host "6. Build Android APK (Release)" 
+    Write-Host "7. Exit"
     Write-Host "----------------------------------------"
     
     $selection = Read-Host "Select option"
@@ -98,6 +101,7 @@ while ($true) {
         Write-Host "Stopping EVERYTHING..." -ForegroundColor Magenta
         docker-compose -f $ComposeDev down
         docker-compose -f $ComposeProd down
+        docker-compose -f $ComposeBuild down 2>$null
         Write-Host "All clean." -ForegroundColor Green
     }
     elseif ($selection -eq "5") {
@@ -106,6 +110,53 @@ while ($true) {
         docker run --rm -v "${workdir}:/app" -w /app ghcr.io/cirruslabs/flutter:3.27.1 bash -lc "flutter pub get && flutter test"
     }
     elseif ($selection -eq "6") {
+        Write-Host "Building Android APK (Release)..." -ForegroundColor Cyan
+        
+        # --- LÓGICA PARA LEER EL .ENV ---
+        $envPath = ".env"
+        $prodUrl = $null
+
+        if (Test-Path $envPath) {
+            # 1. Buscamos la línea que empieza exactamente por "API_URL="
+            $line = Get-Content $envPath | Where-Object { $_ -match "^API_URL=" } | Select-Object -First 1
+            
+            if ($line) {
+                # 2. Dividimos la línea por el primer '=' y nos quedamos con la segunda parte
+                # 3. .Trim() limpia espacios en blanco
+                # 4. .Trim('"').Trim("'") elimina comillas si las hubiera (ej: "http://api.com")
+                $prodUrl = $line.Split("=", 2)[1].Trim().Trim('"').Trim("'")
+                
+                Write-Host "Creating build using URL from .env:" -ForegroundColor DarkGray
+                Write-Host " -> $prodUrl" -ForegroundColor Green
+            } else {
+                Write-Host "[ERROR] Variable 'API_URL' not found inside .env file." -ForegroundColor Red
+                Write-Host "Please add 'API_URL=https://tu-api.com' to your .env" -ForegroundColor Yellow
+                # Volvemos al inicio del bucle sin ejecutar nada
+                continue 
+            }
+        } else {
+            Write-Host "[ERROR] .env file not found in current directory." -ForegroundColor Red
+            continue
+        }
+
+        # --- EJECUCIÓN DEL BUILD ---
+        # Pasamos la variable $prodUrl que acabamos de extraer
+        docker-compose -f $ComposeBuild run --rm builder bash -c "flutter clean && flutter pub get && flutter build apk --release --dart-define=API_URL=$prodUrl"
+
+        if ($LASTEXITCODE -eq 0) {
+            $apkPath = "build\app\outputs\flutter-apk\app-release.apk"
+            if (Test-Path $apkPath) {
+                Write-Host "`n[SUCCESS] APK generated successfully!" -ForegroundColor Green
+                Write-Host "Location: $apkPath" -ForegroundColor Yellow
+                Invoke-Item (Split-Path $apkPath)
+            } else {
+                Write-Host "[WARNING] Build finished but APK not found." -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "[ERROR] Build failed." -ForegroundColor Red
+        }
+    }
+    elseif ($selection -eq "7") {
         Write-Host "Stopping and Exiting..."
         docker-compose -f $ComposeDev down 2>$null
         docker-compose -f $ComposeProd down 2>$null
