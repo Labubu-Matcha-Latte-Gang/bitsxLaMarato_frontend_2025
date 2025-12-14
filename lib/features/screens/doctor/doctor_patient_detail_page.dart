@@ -1807,11 +1807,13 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                       idx < descriptions.length ? descriptions[idx] : null;
                 }
 
-                if (baseName == 'question_metrics') {
-                  customDesc =
-                      'Mostra com evolucionen les mètriques de les preguntes diàries (precisió, temps de resposta i dificultat) per detectar millores o regressions.';
-                  customTitle ??= 'Mètriques de preguntes diàries';
-                }
+                // Apply filename-based title/description overrides when available.
+                final mappedTitle =
+                    _GraphCard._titleForFilename(graph.filename);
+                final mappedDesc =
+                    _GraphCard._descriptionForFilename(graph.filename);
+                customTitle = mappedTitle ?? customTitle;
+                customDesc = mappedDesc ?? customDesc;
 
                 return _GraphCard(
                   graph: graph,
@@ -2169,6 +2171,60 @@ class _GraphCard extends StatelessWidget {
         return "Mètriques de preguntes diàries";
 
       // If other filenames appear, return null so we fall back to filename.
+      default:
+        return null;
+    }
+  }
+
+  // Map graph PNG base filename to descriptive text.
+  static String? _descriptionForFilename(String rawName) {
+    final String base = rawName
+        .split('/')
+        .last
+        .split('\\')
+        .last
+        .replaceAll('.png', '')
+        .replaceAll('.PNG', '')
+        .trim()
+        .toLowerCase();
+
+    switch (base) {
+      // Scores (puntuació)
+      case 'scores_speed':
+        return "Evolució de la puntuació en activitats de velocitat; valors a l'alça indiquen més agilitat cognitiva.";
+      case 'scores_sorting':
+        return "Puntuació en activitats d'ordenament; reflecteix organització i planificació.";
+      case 'scores_words':
+        return "Puntuacions en activitats de paraules; mesuren fluïdesa verbal i recuperació lèxica.";
+      case 'scores_concentration':
+        return "Puntuacions en activitats de concentració; indiquen atenció sostinguda i control d'interferències.";
+      case 'scores_multitasking':
+        return "Puntuacions en activitats de multitasca; avalua gestió simultània de tasques.";
+      case 'scores_diary':
+        return "Mètriques derivades de les respostes del diari; mostren la qualitat i constància de les entrades.";
+      case 'scores_by_question_type':
+        return "Mitjana de puntuació per domini; permet comparar fortaleses i àrees de millora entre tipus de pregunta.";
+      case 'progress_composite':
+        return "Visió global de la puntuació; agrega indicadors per veure la tendència general del progrés.";
+
+      // Speed (temps per completar)
+      case 'speed_speed':
+        return "Temps en activitats de velocitat; una davallada indica més rapidesa mantenint la precisió.";
+      case 'speed_sorting':
+        return "Temps en activitats d'ordenament; segueix l'eficiència organitzant seqüències.";
+      case 'speed_words':
+        return "Temps en activitats de paraules; mesura la fluïdesa en la recuperació lèxica.";
+      case 'speed_concentration':
+        return "Temps en activitats de concentració; indica capacitat de mantenir el focus amb agilitat.";
+      case 'speed_multitasking':
+        return "Temps en activitats de multitasca; avalua coordinació i canvi ràpid entre tasques.";
+      case 'speed_diary':
+        return "Temps global per completar sessions; resum transversal de l'agilitat en les activitats.";
+
+      // Question metrics summary
+      case 'question_metrics':
+        return "Mostra com evolucionen les mètriques de les preguntes diàries (precisió, temps de resposta, dificultat, etc) per detectar millores o regressions.";
+
       default:
         return null;
     }
