@@ -1768,19 +1768,12 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
               final bool isWide = width > 800;
               const double spacing = 12;
 
-              final graphCards = graphs.asMap().entries.map((entry) {
+              // Build cards with proper titles/descriptions
+              final List<_GraphCard> allCards =
+                  graphs.asMap().entries.map((entry) {
                 final int idx = entry.key;
                 final graph = entry.value;
-                final String baseName = graph.filename
-                    .split('/')
-                    .last
-                    .split('\\')
-                    .last
-                    .replaceAll('.png', '')
-                    .replaceAll('.PNG', '')
-                    .trim()
-                    .toLowerCase();
-                // Custom titles and descriptions for the first four graphs.
+
                 const titles = <String>[
                   'Progressió de puntuacions',
                   'Puntuació mitjana per àmbit',
@@ -1794,7 +1787,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                   'Visió agregada del progrés; combina resultats per oferir una lectura global de l\'evolució.',
                 ];
 
-                // Overrides for last HTML graph take precedence.
                 String? customTitle;
                 String? customDesc;
                 if (idx == lastHtmlIndex) {
@@ -1807,7 +1799,6 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                       idx < descriptions.length ? descriptions[idx] : null;
                 }
 
-                // Apply filename-based title/description overrides when available.
                 final mappedTitle =
                     _GraphCard._titleForFilename(graph.filename);
                 final mappedDesc =
@@ -1823,30 +1814,68 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 );
               }).toList();
 
+              // Identify the "Mètriques de preguntes diàries" card if present
+              int dailyIdx = allCards.indexWhere((c) {
+                final title = c.titleOverride ??
+                    _GraphCard._titleForFilename(c.graph.filename) ??
+                    '';
+                return title
+                        .toLowerCase()
+                        .contains('mètriques de preguntes diàries') ||
+                    title
+                        .toLowerCase()
+                        .contains('evolució de mètriques de preguntes') ||
+                    c.graph.filename.toLowerCase().contains('question_metrics');
+              });
+
+              final List<_GraphCard> orderedCards = List.of(allCards);
+              _GraphCard? dailyCard;
+              if (dailyIdx != -1) {
+                dailyCard = orderedCards.removeAt(dailyIdx);
+              }
+
               if (!isWide) {
+                // On narrow screens: show daily card first, alone, then the rest stacked
                 return Column(
                   children: [
-                    for (int i = 0; i < graphCards.length; i++) ...[
-                      graphCards[i],
-                      if (i != graphCards.length - 1)
+                    if (dailyCard != null) ...[
+                      dailyCard,
+                      const SizedBox(height: spacing),
+                    ],
+                    for (int i = 0; i < orderedCards.length; i++) ...[
+                      orderedCards[i],
+                      if (i != orderedCards.length - 1)
                         const SizedBox(height: spacing),
                     ],
                   ],
                 );
               }
 
-              final double itemWidth = (width - spacing) / 2;
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: graphCards
-                    .map(
-                      (card) => SizedBox(
-                        width: itemWidth,
-                        child: card,
-                      ),
-                    )
-                    .toList(),
+              // Wide screens: daily card occupies full width in first row
+              final double halfWidth = (width - spacing) / 2;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (dailyCard != null) ...[
+                    SizedBox(
+                      width: width,
+                      child: dailyCard,
+                    ),
+                    const SizedBox(height: spacing),
+                  ],
+                  Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: orderedCards
+                        .map(
+                          (card) => SizedBox(
+                            width: halfWidth,
+                            child: card,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
               );
             },
           ),
