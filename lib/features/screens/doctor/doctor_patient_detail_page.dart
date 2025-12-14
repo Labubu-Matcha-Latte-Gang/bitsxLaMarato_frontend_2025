@@ -1851,15 +1851,20 @@ class _DoctorPatientDetailPageState extends State<DoctorPatientDetailPage> {
                 );
               }
 
-              // Wide screens: daily card occupies full width in first row
+              // Wide screens: daily card occupies a single column width, centered
               final double halfWidth = (width - spacing) / 2;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (dailyCard != null) ...[
-                    SizedBox(
-                      width: width,
-                      child: dailyCard,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: halfWidth,
+                          child: dailyCard,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: spacing),
                   ],
