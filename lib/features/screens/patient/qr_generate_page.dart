@@ -367,10 +367,18 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
   }
 
   Widget _buildQRArea(double dimension) {
-    final bool canToggleFullscreen =
-        !_isLoading && _showQR && _qrCodeUrl != null;
+    final bool canToggleFullscreen = !_isLoading && _showQR && _qrCodeUrl != null;
     return GestureDetector(
-      onTap: canToggleFullscreen ? _toggleQRFullscreen : null,
+      onTap: _isLoading
+          ? null
+          : () {
+              if (canToggleFullscreen) {
+                _toggleQRFullscreen();
+              } else {
+                _generateQR();
+              }
+            },
+      onLongPress: canToggleFullscreen ? _toggleQRFullscreen : null,
       child: _buildQRFrame(dimension, _buildQRContent(dimension)),
     );
   }
@@ -758,7 +766,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Fes clic al botó de sota per generar el teu codi QR personal.',
+                                      'Toca la targeta del QR o fes clic al botó per generar el teu codi QR personal.',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: AppColors.getSecondaryTextColor(
@@ -767,6 +775,49 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                                         height: 1.5,
                                       ),
                                     ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton.icon(
+                                      onPressed: _isLoading || !_isContrastValid
+                                          ? null
+                                          : _generateQR,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            AppColors.getPrimaryButtonColor(
+                                                isDarkMode),
+                                        foregroundColor:
+                                            AppColors.getPrimaryButtonTextColor(
+                                                isDarkMode),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 32,
+                                          vertical: 16,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      icon: _isLoading
+                                          ? SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<Color>(
+                                                  AppColors.getPrimaryButtonTextColor(
+                                                      isDarkMode),
+                                                ),
+                                              ),
+                                            )
+                                          : const Icon(Icons.qr_code),
+                                      label: Text(
+                                        _isLoading ? 'Generant...' : 'Generar QR',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 32),
                               ],
                             ),
                           ),
@@ -804,48 +855,7 @@ class _QRGeneratePageState extends State<QRGeneratePage> {
                           const SizedBox(height: 16),
                           _buildContrastHelper(),
                           const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: _isLoading || !_isContrastValid
-                                ? null
-                                : _generateQR,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  AppColors.getPrimaryButtonColor(
-                                          isDarkMode),
-                                  foregroundColor:
-                                      AppColors.getPrimaryButtonTextColor(
-                                          isDarkMode),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32,
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: _isLoading
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            AppColors.getPrimaryButtonTextColor(
-                                                isDarkMode),
-                                          ),
-                                        ),
-                                      )
-                                    : const Icon(Icons.qr_code),
-                                label: Text(
-                                  _isLoading ? 'Generant...' : 'Generar QR',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                        ],
                           ),
                         ),
                       ),
