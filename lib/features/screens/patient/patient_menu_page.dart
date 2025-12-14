@@ -371,6 +371,26 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
+                                  title: 'Supera\'t',
+                                  description:
+                                      'Activitats en el món real per ajudar-te a superar els teus reptes.',
+                                  icon: Icons.emoji_events,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => Flashcards(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
                                   title: 'Tots els tests',
                                   description:
                                       'Realitza tests i avaluacions cognitives per monitoritzar el teu progrés.',
@@ -401,26 +421,6 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) => AllActivitiesPage(
-                                          initialDarkMode: isDarkMode,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              _CardContainer(
-                                isDarkMode: isDarkMode,
-                                child: _ActionCard(
-                                  title: 'Supera\'t',
-                                  description:
-                                      'Activitats en el món real per ajudar-te a superar els teus reptes.',
-                                  icon: Icons.auto_awesome,
-                                  isDarkMode: isDarkMode,
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => Flashcards(
                                           initialDarkMode: isDarkMode,
                                         ),
                                       ),
