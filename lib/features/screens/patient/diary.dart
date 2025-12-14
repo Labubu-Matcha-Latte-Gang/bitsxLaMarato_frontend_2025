@@ -661,30 +661,7 @@ class _DiaryPageState extends State<DiaryPage>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildWaveform(),
-        const SizedBox(height: 32),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          decoration: BoxDecoration(
-            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.getPrimaryButtonColor(isDarkMode)
-                  .withAlpha((0.3 * 255).round()),
-              width: 1.5,
-            ),
-          ),
-          child: Text(
-            _formatDuration(_recordDuration),
-            style: TextStyle(
-              color: AppColors.getPrimaryButtonColor(isDarkMode),
-              fontSize: 56,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
+        // 1) Enunciat a sobre
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(16),
@@ -708,7 +685,32 @@ class _DiaryPageState extends State<DiaryPage>
             ),
           ),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 32),
+        // 2) Temporitzador al mig
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha((0.3 * 255).round()),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            _formatDuration(_recordDuration),
+            style: TextStyle(
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
+              fontSize: 56,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        // 3) Botó de stop
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -747,6 +749,9 @@ class _DiaryPageState extends State<DiaryPage>
               ),
             ),
           ),
+        const SizedBox(height: 24),
+        // 4) Animació d'ones a sota
+        _buildWaveform(),
       ],
     );
   }
