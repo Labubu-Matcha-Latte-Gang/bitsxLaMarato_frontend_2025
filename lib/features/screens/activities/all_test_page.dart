@@ -429,9 +429,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 68,
+            height: 74,
             child: DropdownButtonFormField<String>(
               value: _selectedType,
               isExpanded: true,
@@ -448,7 +448,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   fontSize: 13,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
               dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
@@ -461,17 +461,25 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   value: null,
                   child: Text('Tots'),
                 ),
-                ...const [
-                  'concentration',
-                  'speed',
-                  'words',
-                  'sorting',
-                  'multitasking',
-                ].map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ),
+                DropdownMenuItem(
+                  value: 'concentration',
+                  child: const Text('Concentració'),
+                ),
+                DropdownMenuItem(
+                  value: 'speed',
+                  child: const Text('Velocitat'),
+                ),
+                DropdownMenuItem(
+                  value: 'words',
+                  child: const Text('Paraules'),
+                ),
+                DropdownMenuItem(
+                  value: 'sorting',
+                  child: const Text('Ordenació'),
+                ),
+                DropdownMenuItem(
+                  value: 'multitasking',
+                  child: const Text('Multitasca'),
                 ),
               ],
               onChanged: (value) {
@@ -521,6 +529,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),
@@ -539,6 +549,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),

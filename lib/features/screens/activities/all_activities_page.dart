@@ -432,9 +432,9 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 68,
+            height: 74,
             child: DropdownButtonFormField<String>(
               value: _selectedType,
               isExpanded: true,
@@ -451,7 +451,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   fontSize: 13,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
               dropdownColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
@@ -464,17 +464,25 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   value: null,
                   child: Text('Tots'),
                 ),
-                ...const [
-                  'concentration',
-                  'speed',
-                  'words',
-                  'sorting',
-                  'multitasking',
-                ].map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type),
-                  ),
+                DropdownMenuItem(
+                  value: 'concentration',
+                  child: const Text('Concentració'),
+                ),
+                DropdownMenuItem(
+                  value: 'speed',
+                  child: const Text('Velocitat'),
+                ),
+                DropdownMenuItem(
+                  value: 'words',
+                  child: const Text('Paraules'),
+                ),
+                DropdownMenuItem(
+                  value: 'sorting',
+                  child: const Text('Ordenació'),
+                ),
+                DropdownMenuItem(
+                  value: 'multitasking',
+                  child: const Text('Multitasca'),
                 ),
               ],
               onChanged: (value) {
@@ -524,6 +532,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),
@@ -542,6 +552,8 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
                   labelStyle: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
                   ),
+                  backgroundColor:
+                      AppColors.getSecondaryBackgroundColor(isDarkMode),
                   selectedColor: AppColors.getPrimaryButtonColor(isDarkMode)
                       .withOpacity(0.2),
                 ),
@@ -711,15 +723,14 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     final lowerTitle = activity.title.toLowerCase();
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
-      if(lowerTitle.contains('fàcil')) {
+      if (lowerTitle.contains('fàcil')) {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const SudokuEasyPage(),
           ),
         );
         return;
-      }
-      else if(lowerTitle.contains('mitjà')) {
+      } else if (lowerTitle.contains('mitjà')) {
         // Future implementation for medium difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -727,8 +738,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
         );
         return;
-      }
-      else if(lowerTitle.contains('difícil')) {
+      } else if (lowerTitle.contains('difícil')) {
         // Future implementation for hard difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -741,15 +751,14 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     }
 
     if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
-      if(lowerTitle.contains('fàcil')) {
+      if (lowerTitle.contains('fàcil')) {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const WordleEasyScreen(),
           ),
         );
         return;
-      }
-      else if(lowerTitle.contains('mitjà')) {
+      } else if (lowerTitle.contains('mitjà')) {
         // Future implementation for medium difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -757,8 +766,7 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
           ),
         );
         return;
-      }
-      else if(lowerTitle.contains('difícil')) {
+      } else if (lowerTitle.contains('difícil')) {
         // Future implementation for hard difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
