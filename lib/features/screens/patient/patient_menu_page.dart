@@ -367,6 +367,27 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                               _CardContainer(
                                 isDarkMode: isDarkMode,
                                 child: _ActionCard(
+                                  title: 'Tots els tests',
+                                  description:
+                                      'Realitza tests i avaluacions cognitives per monitoritzar el teu progrés.',
+                                  icon: Icons.quiz_outlined,
+                                  isDarkMode: isDarkMode,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            test_page.AllActivitiesPage(
+                                          initialDarkMode: isDarkMode,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _CardContainer(
+                                isDarkMode: isDarkMode,
+                                child: _ActionCard(
                                   title: 'Totes les activitats',
                                   description:
                                       'Cerca, filtra i explora tot el catàleg d\'activitats disponibles.',
@@ -389,16 +410,15 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                                 child: _ActionCard(
                                   title: 'Supera\'t',
                                   description:
-                                  'Activitats en el món real per ajudar-te a superar els teus reptes.',
+                                      'Activitats en el món real per ajudar-te a superar els teus reptes.',
                                   icon: Icons.auto_awesome,
                                   isDarkMode: isDarkMode,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            Flashcards(
-                                              initialDarkMode: isDarkMode,
-                                            ),
+                                        builder: (_) => Flashcards(
+                                          initialDarkMode: isDarkMode,
+                                        ),
                                       ),
                                     );
                                   },
@@ -494,6 +514,21 @@ class ActivitiesPage extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => RecommendedActivitiesPage(
+                            initialDarkMode: isDarkMode,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _ActivitiesPageButton(
+                    label: 'Tots els tests',
+                    icon: Icons.quiz_outlined,
+                    isDarkMode: isDarkMode,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => test_page.AllActivitiesPage(
                             initialDarkMode: isDarkMode,
                           ),
                         ),
