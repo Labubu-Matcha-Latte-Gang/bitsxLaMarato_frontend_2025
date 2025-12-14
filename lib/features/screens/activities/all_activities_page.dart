@@ -11,7 +11,11 @@ import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 import 'games/sorting.dart';
 import 'games/sudoku_easy.dart';
+import 'games/sudoku_med.dart';
+import 'games/sudoku_hard.dart';
 import 'games/wordle_easy.dart';
+import 'games/wordle_med.dart';
+import 'games/wordle_hard.dart';
 import 'widgets/activity_card.dart';
 
 class AllActivitiesPage extends StatefulWidget {
@@ -707,20 +711,62 @@ class _AllActivitiesPageState extends State<AllActivitiesPage> {
     final lowerTitle = activity.title.toLowerCase();
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SudokuPage(isDarkMode: isDarkMode),
-        ),
-      );
+      if(lowerTitle.contains('fàcil')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const SudokuEasyPage(),
+          ),
+        );
+        return;
+      }
+      else if(lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const SudokuMedPage(),
+          ),
+        );
+        return;
+      }
+      else if(lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const SudokuHardPage(),
+          ),
+        );
+        return;
+      }
       return;
     }
 
     if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const WordleScreen(),
-        ),
-      );
+      if(lowerTitle.contains('fàcil')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleEasyScreen(),
+          ),
+        );
+        return;
+      }
+      else if(lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleMedScreen(),
+          ),
+        );
+        return;
+      }
+      else if(lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleHardScreen(),
+          ),
+        );
+        return;
+      }
       return;
     }
 

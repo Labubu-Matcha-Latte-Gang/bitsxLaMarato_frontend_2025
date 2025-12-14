@@ -7,7 +7,11 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import 'games/sorting.dart';
 import 'games/sudoku_easy.dart';
+import 'games/sudoku_med.dart';
+import 'games/sudoku_hard.dart';
 import 'games/wordle_easy.dart';
+import 'games/wordle_med.dart';
+import 'games/wordle_hard.dart';
 import 'games/memory_animals.dart';
 import 'games/memory_monuments.dart';
 
@@ -95,93 +99,142 @@ class _RecommendedActivitiesPageState extends State<RecommendedActivitiesPage> {
     final lowerTitle = activity.title.toLowerCase();
 
     if (lowerType.contains('sudoku') || lowerTitle.contains('sudoku')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SudokuPage(isDarkMode: isDarkMode),
-        ),
-      );
-      return;
-    }
-
-    if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const WordleScreen(),
-        ),
-      );
-      return;
-    }
-
-    if (lowerType.contains('memory') ||
-        lowerTitle.contains('memory') ||
-        lowerTitle.contains('memoritzar') ||
-        lowerType.contains('concentration')) {
-      // Route to specific memory game based on title
-      if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+      if (lowerTitle.contains('fàcil')) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameAnimals(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuEasyPage(),
           ),
         );
-      } else if (lowerTitle.contains('monuments') ||
-          lowerTitle.contains('monument')) {
+        return;
+      }
+      else if (lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameMonuments(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuMedPage(),
           ),
         );
-      } else {
-        // Default to animals if no specific match
+        return;
+      }
+      else if (lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MemoryGameAnimals(
-              activityId: activity.id,
-              isDarkMode: isDarkMode,
-            ),
+            builder: (_) => const SudokuHardPage(),
           ),
         );
+        return;
       }
       return;
     }
 
-    if (lowerType.contains('sorting')) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SortingActivityPage(
-            activity: activity,
-            initialDarkMode: isDarkMode,
+    if (lowerType.contains('wordle') || lowerTitle.contains('wordle')) {
+      if (lowerTitle.contains('fàcil')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleEasyScreen(),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
+      else if (lowerTitle.contains('mitjà')) {
+        // Future implementation for medium difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleMedScreen(),
+          ),
+        );
+        return;
+      }
+      else if (lowerTitle.contains('difícil')) {
+        // Future implementation for hard difficulty
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WordleHardScreen(),
+          ),
+        );
+        return;
+      }
 
-    // Default behaviour: show a details dialog with the activity description.
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_displayTitle(activity.title),
-            style: TextStyle(color: AppColors.getPrimaryTextColor(isDarkMode))),
-        content: Text(activity.description,
-            style:
-                TextStyle(color: AppColors.getSecondaryTextColor(isDarkMode))),
-        backgroundColor: AppColors.getSecondaryBackgroundColor(isDarkMode),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Tancar',
-                style: TextStyle(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode))),
-          )
-        ],
-      ),
-    );
+      if (lowerType.contains('memory') ||
+          lowerTitle.contains('memory') ||
+          lowerTitle.contains('memoritzar') ||
+          lowerType.contains('concentration')) {
+        // Route to specific memory game based on title
+        if (lowerTitle.contains('animals') || lowerTitle.contains('animal')) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameAnimals(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        } else if (lowerTitle.contains('monuments') ||
+            lowerTitle.contains('monument')) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameMonuments(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        } else {
+          // Default to animals if no specific match
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MemoryGameAnimals(
+                    activityId: activity.id,
+                    isDarkMode: isDarkMode,
+                  ),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (lowerType.contains('sorting')) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                SortingActivityPage(
+                  activity: activity,
+                  initialDarkMode: isDarkMode,
+                ),
+          ),
+        );
+        return;
+      }
+
+      // Default behaviour: show a details dialog with the activity description.
+      showDialog<void>(
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: Text(activity.title,
+                  style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode))),
+              content: Text(activity.description,
+                  style:
+                  TextStyle(
+                      color: AppColors.getSecondaryTextColor(isDarkMode))),
+              backgroundColor: AppColors.getSecondaryBackgroundColor(
+                  isDarkMode),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Tancar',
+                      style: TextStyle(
+                          color: AppColors.getPrimaryButtonColor(isDarkMode))),
+                )
+              ],
+            ),
+      );
+    }
   }
 
   @override

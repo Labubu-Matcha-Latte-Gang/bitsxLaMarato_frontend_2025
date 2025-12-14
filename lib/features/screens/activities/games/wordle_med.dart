@@ -6,23 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../../utils/effects/particle_system.dart';
 import '../../../../utils/app_colors.dart';
-import '../recommended_activities_page.dart';
 import '../../../../services/api_service.dart';
 import '../../../../models/activity_models.dart' show ActivityCompleteRequest;
 
 // Wordle game screen: 8 tries, 5-letter words.
-class WordleScreen extends StatefulWidget {
+class WordleMedScreen extends StatefulWidget {
   final bool isDarkMode;
   final String? activityId;
-  const WordleScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
+  const WordleMedScreen({Key? key, this.isDarkMode = true, this.activityId}) : super(key: key);
 
   @override
-  State<WordleScreen> createState() => _WordleScreenState();
+  State<WordleMedScreen> createState() => _WordleMedScreenState();
 }
 
 enum LetterState { initial, correct, present, absent }
 
-class _WordleScreenState extends State<WordleScreen>
+class _WordleMedScreenState extends State<WordleMedScreen>
     with SingleTickerProviderStateMixin {
   static const int rows = 6; // changed to 6 guesses x 5 columns (classic Wordle)
   static const int cols = 5;
@@ -40,6 +39,10 @@ class _WordleScreenState extends State<WordleScreen>
   List<String>? _dictionary;
   Set<String>? _dictionarySet;
   List<String>? _medWords;
+
+  ApiService apiService = ApiService();
+  // Local resolved activity id if not provided by caller
+  String? _resolvedActivityId;
 
   // Gameplay stats (previously removed) — keep them here so other parts of the file compile
   int invalidWordCount = 0;
@@ -59,6 +62,11 @@ class _WordleScreenState extends State<WordleScreen>
     super.initState();
     isDark = widget.isDarkMode;
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    // Attempt to resolve activity id from backend if not provided
+    if (widget.activityId == null) {
+      _resolveActivityIdByTitle();
+    }
+
     // Load dictionaries first, then start the game so we can prefer med words
     _loadDictionary().whenComplete(() {
       // After the first frame, show difficulty selector before starting
@@ -66,6 +74,19 @@ class _WordleScreenState extends State<WordleScreen>
         _showDialog();
       });
     });
+  }
+
+  // Fallback: resolve activity id from API by known title
+  Future<void> _resolveActivityIdByTitle() async {
+    try {
+      final activity = await ApiService.getActivity('Wordle (mitjà)');
+      if (!mounted) return;
+      setState(() {
+        _resolvedActivityId = activity.id;
+      });
+    } catch (e) {
+      debugPrint('Failed to resolve Wordle Medium activity id: $e');
+    }
   }
 
   // Helper to ensure we have an activity id (prefer explicit, else try to resolve)
