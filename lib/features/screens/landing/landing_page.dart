@@ -50,30 +50,63 @@ class _LandingPageState extends State<LandingPage> {
   String get _aboutTitle =>
       _isCatalan ? 'Sobre el projecte' : 'About the project';
   String get _aboutBody => _isCatalan
-      ? 'NeuroSight monitoritza i millora les capacitats cognitives dels '
-        'pacients mitjançant jocs interactius, preguntes diàries i '
-        'recomanacions personalitzades amb IA. Desenvolupat per al '
-        'hackathon BitsxLaMarató 2025.'
-      : 'NeuroSight monitors and improves patients\' cognitive abilities '
-        'through interactive games, daily questions, and personalised '
-        'AI-powered recommendations. Built for the BitsxLaMarató 2025 '
-        'hackathon.';
+      ? 'LMLG NeuroSight és una plataforma d\'intel·ligència artificial '
+        'dissenyada per a la detecció integrada i el seguiment longitudinal '
+        'del dèficit cognitiu en pacients oncològics. Ofereix un Perfil '
+        'Cognitiu Unificat que combina anàlisi de la parla mitjançant 9 '
+        'mètriques lingüístiques clau, tests cognitius gamificats i un '
+        'diari subjectiu del pacient.\n\n'
+        'Amb aquesta anàlisi multi-modal, NeuroSight no només detecta el '
+        'dèficit sinó que també proposa recursos psicoeducatius i tasques '
+        'de rehabilitació cognitiva personalitzada, tancant el cicle des '
+        'de l\'avaluació fins a la intervenció.'
+      : 'LMLG NeuroSight is an AI-powered platform designed for integrated '
+        'detection and longitudinal monitoring of cognitive deficit in '
+        'oncology patients. It provides a Unified Cognitive Profile combining '
+        'speech analysis through 9 key linguistic metrics, gamified cognitive '
+        'tests, and a subjective patient diary.\n\n'
+        'Through this multi-modal analysis, NeuroSight not only detects '
+        'deficit but also proposes psychoeducational resources and '
+        'personalised cognitive rehabilitation tasks, closing the loop '
+        'from assessment to intervention.';
   String get _metricsTitle =>
       _isCatalan ? 'Mètriques mesurades' : 'Measured metrics';
   String get _teamTitle => _isCatalan ? 'L\'equip' : 'The team';
   String get _ctaButton => _isCatalan ? 'ENTRA A L\'APP' : 'ENTER THE APP';
 
   static const _teamMembers = [
-    _TeamMember('Erik Batiste', 'https://www.linkedin.com/in/erikbatisteviader/',
-        'https://avatars.githubusercontent.com/u/96847443?s=80'),
-    _TeamMember('Oriol Orbea', 'https://www.linkedin.com/in/oriol-orbea-suari/',
-        'https://avatars.githubusercontent.com/u/145404641?s=80'),
     _TeamMember(
-        'Ernest Rull',
-        'https://www.linkedin.com/in/ernest-rull-turigas/',
-        'https://avatars.githubusercontent.com/u/118774478?s=80'),
-    _TeamMember('Kaleb Grove', 'https://www.linkedin.com/in/kaleb-grove/',
-        'https://avatars.githubusercontent.com/u/72881364?s=80'),
+      'Erik Batiste',
+      'https://www.linkedin.com/in/erikbatisteviader/',
+      'https://avatars.githubusercontent.com/u/96847443?s=160',
+      'DevOps & Backend',
+      'Infraestructura, CI/CD, contenidorització i integració de serveis al núvol.',
+      'Infrastructure, CI/CD, containerisation and cloud service integration.',
+    ),
+    _TeamMember(
+      'Oriol Orbea',
+      'https://www.linkedin.com/in/oriol-orbea-suari/',
+      'https://avatars.githubusercontent.com/u/145404641?s=160',
+      'Backend & Full Stack',
+      'Arquitectura del backend amb Python/Flask, API RESTful i integració Frontend.',
+      'Backend architecture with Python/Flask, RESTful API and Frontend integration.',
+    ),
+    _TeamMember(
+      'Ernest Rull',
+      'https://www.linkedin.com/in/ernest-rull-turigas/',
+      'https://avatars.githubusercontent.com/u/118774478?s=160',
+      'Lead Frontend',
+      'Arquitectura UI amb Flutter, tests cognitius gamificats i sistema de rols.',
+      'UI architecture with Flutter, gamified cognitive tests and role system.',
+    ),
+    _TeamMember(
+      'Kaleb Grove',
+      'https://www.linkedin.com/in/kaleb-grove/',
+      'https://avatars.githubusercontent.com/u/72881364?s=160',
+      'Frontend & Games',
+      'Disseny d\'interfície, jocs interactius i experiència d\'usuari amb Flutter.',
+      'Interface design, interactive games and user experience with Flutter.',
+    ),
   ];
 
   List<_Metric> get _metrics => [
@@ -254,6 +287,7 @@ class _LandingPageState extends State<LandingPage> {
 
   // ──────────────────── NARROW (mobile) ────────────────────
   Widget _buildNarrowLayout() {
+    final metrics = _metrics;
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
@@ -263,9 +297,19 @@ class _LandingPageState extends State<LandingPage> {
           const SizedBox(height: 20),
           _buildAboutCard(),
           const SizedBox(height: 16),
-          _buildMetricsCard(),
+          _sectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _sectionHeader(Icons.analytics, _metricsTitle),
+                const SizedBox(height: 12),
+                ...metrics.map((m) => _metricRow(m)),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
-          _buildTeamCard(),
+          _buildTeamWrap(),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -443,61 +487,67 @@ class _LandingPageState extends State<LandingPage> {
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           _sectionHeader(Icons.analytics, _metricsTitle),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: metrics.map((m) => _metricTile(m)).toList(),
+          const SizedBox(height: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: metrics.map((m) => _metricRow(m)).toList(),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _metricTile(_Metric m) {
+  Widget _metricRow(_Metric m) {
     final name = _isCatalan ? m.catName : m.enName;
     final desc = _isCatalan ? m.catDesc : m.enDesc;
-    return Tooltip(
-      message: desc,
-      preferBelow: true,
-      textStyle: TextStyle(
-        color: isDarkMode ? Colors.black87 : Colors.white,
-        fontSize: 12,
-      ),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.white.withAlpha(230) : Colors.grey[850],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color:
-                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(m.icon,
-                size: 16,
-                color: AppColors.getPrimaryButtonColor(isDarkMode)),
-            const SizedBox(width: 7),
-            Text(
-              name,
-              style: TextStyle(
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color:
+                  AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(18),
+              borderRadius: BorderRadius.circular(7),
             ),
-          ],
-        ),
+            child: Icon(m.icon,
+                size: 15,
+                color: AppColors.getPrimaryButtonColor(isDarkMode)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryTextColor(isDarkMode),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  desc,
+                  style: TextStyle(
+                    color: AppColors.getTertiaryTextColor(isDarkMode),
+                    fontSize: 11,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -509,38 +559,57 @@ class _LandingPageState extends State<LandingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(Icons.group, _teamTitle),
-          const SizedBox(height: 16),
-          ..._teamMembers.expand((m) => [
-                _teamMemberTile(m),
-                const SizedBox(height: 10),
-              ]),
+          const SizedBox(height: 14),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _teamVerticalCard(_teamMembers[0])),
+                const SizedBox(width: 10),
+                Expanded(child: _teamVerticalCard(_teamMembers[1])),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _teamVerticalCard(_teamMembers[2])),
+                const SizedBox(width: 10),
+                Expanded(child: _teamVerticalCard(_teamMembers[3])),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _teamMemberTile(_TeamMember member) {
+  Widget _teamVerticalCard(_TeamMember member) {
     final initials = member.name.split(' ').map((w) => w[0]).join();
+    final desc = _isCatalan ? member.catDesc : member.enDesc;
     return GestureDetector(
       onTap: () => _openUrl(member.linkedIn),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
-            borderRadius: BorderRadius.circular(14),
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color:
-                  AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha(30),
             ),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode)
-                    .withAlpha(35),
+                radius: 30,
+                backgroundColor:
+                    AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha(35),
                 backgroundImage: NetworkImage(member.imageUrl),
                 onBackgroundImageError: (_, __) {},
                 child: Text(
@@ -548,39 +617,61 @@ class _LandingPageState extends State<LandingPage> {
                   style: TextStyle(
                     color: AppColors.getPrimaryButtonColor(isDarkMode),
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member.name,
-                      style: TextStyle(
-                        color: AppColors.getPrimaryTextColor(isDarkMode),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'LinkedIn',
-                      style: TextStyle(
-                        color: AppColors.getPrimaryButtonColor(isDarkMode),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 10),
+              Text(
+                member.name,
+                style: TextStyle(
+                  color: AppColors.getPrimaryTextColor(isDarkMode),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                 ),
+                textAlign: TextAlign.center,
               ),
-              Icon(Icons.open_in_new,
-                  size: 16,
-                  color: AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha(140)),
+              const SizedBox(height: 3),
+              Text(
+                member.role,
+                style: TextStyle(
+                  color: AppColors.getPrimaryButtonColor(isDarkMode),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                desc,
+                style: TextStyle(
+                  color: AppColors.getTertiaryTextColor(isDarkMode),
+                  fontSize: 10,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.open_in_new,
+                      size: 12,
+                      color: AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha(140)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'LinkedIn',
+                    style: TextStyle(
+                      color: AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha(140),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -588,70 +679,46 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _buildTeamRow() {
-    return Row(
-      children: [
-        Icon(Icons.group,
-            size: 18,
-            color: AppColors.getPrimaryButtonColor(isDarkMode)),
-        const SizedBox(width: 8),
-        Text(
-          '${_teamTitle}:',
-          style: TextStyle(
-            color: AppColors.getPrimaryTextColor(isDarkMode),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ..._teamMembers.expand((m) => [
-              _teamChip(m),
-              const SizedBox(width: 6),
-            ]),
-      ],
-    );
-  }
-
-  Widget _buildTeamColumn() {
+  Widget _buildTeamWrap() {
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           _sectionHeader(Icons.group, _teamTitle),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _teamMembers.map((m) => _teamChip(m)).toList(),
-          ),
+          const SizedBox(height: 14),
+          ..._teamMembers.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _teamMobileTile(m),
+              )),
         ],
       ),
     );
   }
 
-  Widget _teamChip(_TeamMember member) {
-    final initials =
-        member.name.split(' ').map((w) => w[0]).join();
+  Widget _teamMobileTile(_TeamMember member) {
+    final initials = member.name.split(' ').map((w) => w[0]).join();
+    final desc = _isCatalan ? member.catDesc : member.enDesc;
     return GestureDetector(
       onTap: () => _openUrl(member.linkedIn),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-          borderRadius: BorderRadius.circular(20),
+          color:
+              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color:
-                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode)
-                  .withAlpha(35),
+              radius: 24,
+              backgroundColor:
+                  AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha(35),
               backgroundImage: NetworkImage(member.imageUrl),
               onBackgroundImageError: (_, __) {},
               child: Text(
@@ -659,23 +726,49 @@ class _LandingPageState extends State<LandingPage> {
                 style: TextStyle(
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
                   fontWeight: FontWeight.w700,
-                  fontSize: 9,
+                  fontSize: 14,
                 ),
               ),
             ),
-            const SizedBox(width: 6),
-            Text(
-              member.name,
-              style: TextStyle(
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.name,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryTextColor(isDarkMode),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    member.role,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryButtonColor(isDarkMode),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    desc,
+                    style: TextStyle(
+                      color: AppColors.getTertiaryTextColor(isDarkMode),
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 4),
             Icon(Icons.open_in_new,
-                size: 11,
-                color: AppColors.getPrimaryButtonColor(isDarkMode)),
+                size: 14,
+                color: AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha(140)),
           ],
         ),
       ),
@@ -821,7 +914,11 @@ class _TeamMember {
   final String name;
   final String linkedIn;
   final String imageUrl;
-  const _TeamMember(this.name, this.linkedIn, this.imageUrl);
+  final String role;
+  final String catDesc;
+  final String enDesc;
+  const _TeamMember(
+      this.name, this.linkedIn, this.imageUrl, this.role, this.catDesc, this.enDesc);
 }
 
 class _Metric {
