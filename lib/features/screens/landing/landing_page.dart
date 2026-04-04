@@ -43,99 +43,158 @@ class _LandingPageState extends State<LandingPage> {
     setState(() => _isCatalan = !_isCatalan);
   }
 
-  // ──────────────────── LOCALISATION HELPERS ────────────────────
-  String get _heroTitle => _isCatalan ? 'NeuroSight' : 'NeuroSight';
+  // ──────────────────── LOCALISATION ────────────────────
   String get _heroSubtitle => _isCatalan
       ? 'El teu company de salut cognitiva'
       : 'Your cognitive health companion';
-  String get _aboutTitle => _isCatalan ? 'Sobre el projecte' : 'About the project';
+  String get _aboutTitle =>
+      _isCatalan ? 'Sobre el projecte' : 'About the project';
   String get _aboutBody => _isCatalan
-      ? 'NeuroSight és una aplicació de salut cognitiva dissenyada per '
-        'monitoritzar i millorar les capacitats cognitives dels pacients '
-        'mitjançant jocs interactius, preguntes diàries i recomanacions '
-        'personalitzades amb intel·ligència artificial.\n\n'
-        'Desenvolupat per al hackathon BitsxLaMarató 2025, el projecte '
-        'combina tecnologia punta amb un disseny centrat en l\'usuari per '
-        'oferir eines útils tant a pacients com a professionals de la salut.'
-      : 'NeuroSight is a cognitive health application designed to '
-        'monitor and improve patients\' cognitive abilities through '
-        'interactive games, daily questions, and personalised '
-        'AI-powered recommendations.\n\n'
-        'Built for the BitsxLaMarató 2025 hackathon, the project '
-        'combines cutting-edge technology with user-centred design to '
-        'provide useful tools for both patients and healthcare professionals.';
+      ? 'NeuroSight monitoritza i millora les capacitats cognitives dels '
+        'pacients mitjançant jocs interactius, preguntes diàries i '
+        'recomanacions personalitzades amb IA. Desenvolupat per al '
+        'hackathon BitsxLaMarató 2025.'
+      : 'NeuroSight monitors and improves patients\' cognitive abilities '
+        'through interactive games, daily questions, and personalised '
+        'AI-powered recommendations. Built for the BitsxLaMarató 2025 '
+        'hackathon.';
+  String get _metricsTitle =>
+      _isCatalan ? 'Mètriques mesurades' : 'Measured metrics';
   String get _teamTitle => _isCatalan ? 'L\'equip' : 'The team';
   String get _ctaButton => _isCatalan ? 'ENTRA A L\'APP' : 'ENTER THE APP';
-  String get _hackathonBadge => 'BitsxLaMarató 2025';
 
   static const _teamMembers = [
-    _TeamMember('Erik Batiste', 'https://www.linkedin.com/in/erikbatisteviader/'),
-    _TeamMember('Oriol Orbea', 'https://www.linkedin.com/in/oriol-orbea-suari/'),
-    _TeamMember('Ernest Rull', 'https://www.linkedin.com/in/ernest-rull-turigas/'),
+    _TeamMember(
+        'Erik Batiste', 'https://www.linkedin.com/in/erikbatisteviader/'),
+    _TeamMember(
+        'Oriol Orbea', 'https://www.linkedin.com/in/oriol-orbea-suari/'),
+    _TeamMember(
+        'Ernest Rull', 'https://www.linkedin.com/in/ernest-rull-turigas/'),
     _TeamMember('Kaleb Grove', 'https://www.linkedin.com/in/kaleb-grove/'),
   ];
+
+  List<_Metric> get _metrics => [
+        _Metric(
+          icon: Icons.link,
+          catName: 'Coherència Semàntica',
+          enName: 'Semantic Coherence',
+          catDesc:
+              'Mesura si les oracions consecutives mantenen el fil argumental.',
+          enDesc:
+              'Measures whether consecutive sentences maintain the same thread.',
+        ),
+        _Metric(
+          icon: Icons.alt_route,
+          catName: 'Desviació Semàntica',
+          enName: 'Semantic Deviation',
+          catDesc:
+              'Distància vectorial entre el tema sol·licitat i el discurs real.',
+          enDesc:
+              'Vector distance between the requested topic and actual speech.',
+        ),
+        _Metric(
+          icon: Icons.lightbulb_outline,
+          catName: 'Densitat d\'Idees',
+          enName: 'Idea Density',
+          catDesc:
+              'Informació útil en relació al total de paraules emeses.',
+          enDesc:
+              'Useful information relative to total words produced.',
+        ),
+        _Metric(
+          icon: Icons.swap_horiz,
+          catName: 'Ràtio P/S',
+          enName: 'P/N Ratio',
+          catDesc:
+              'Pronoms vs. substantius — indicador primerenc d\'anòmia.',
+          enDesc:
+              'Pronouns vs. nouns — early indicator of anomia.',
+        ),
+        _Metric(
+          icon: Icons.auto_stories,
+          catName: 'Riquesa Lèxica (TTR)',
+          enName: 'Lexical Richness (TTR)',
+          catDesc:
+              'Diversitat de vocabulari: paraules úniques / total de paraules.',
+          enDesc:
+              'Vocabulary diversity: unique words / total words.',
+        ),
+        _Metric(
+          icon: Icons.account_tree,
+          catName: 'Complexitat Sintàctica',
+          enName: 'Syntactic Complexity',
+          catDesc:
+              'Longitud mitjana de la frase i estructura gramatical.',
+          enDesc:
+              'Average sentence length and grammatical structure.',
+        ),
+        _Metric(
+          icon: Icons.record_voice_over,
+          catName: 'Fluïdesa Verbal',
+          enName: 'Verbal Fluency',
+          catDesc:
+              'Continuïtat i ritme del discurs sense interrupcions atípiques.',
+          enDesc:
+              'Speech continuity and rhythm without atypical interruptions.',
+        ),
+        _Metric(
+          icon: Icons.pause_circle_outline,
+          catName: 'Pauses i Vacil·lacions',
+          enName: 'Pauses & Hesitations',
+          catDesc:
+              'Silencis llargs i muletilles de dubte que reflecteixen esforç cognitiu.',
+          enDesc:
+              'Long silences and filler words reflecting cognitive effort.',
+        ),
+        _Metric(
+          icon: Icons.speed,
+          catName: 'Velocitat (WPM)',
+          enName: 'Speed (WPM)',
+          catDesc:
+              'Paraules per minut — la ralentització indica boira mental.',
+          enDesc:
+              'Words per minute — slowdown indicates brain fog.',
+        ),
+      ];
 
   // ──────────────────── BUILD ────────────────────
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth > 800;
-    final horizontalPadding = isWide ? screenWidth * 0.15 : 24.0;
+    final isWide = screenWidth > 900;
+    final horizontalPadding = isWide ? screenWidth * 0.08 : 20.0;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: AppColors.getBackgroundGradient(isDarkMode),
             ),
           ),
-
-          // Particle system
           ParticleSystemWidget(
             isDarkMode: isDarkMode,
-            particleCount: 60,
-            maxSize: 3.0,
+            particleCount: 50,
+            maxSize: 2.5,
             minSize: 1.0,
-            speed: 0.4,
-            maxOpacity: 0.5,
-            minOpacity: 0.15,
+            speed: 0.35,
+            maxOpacity: 0.45,
+            minOpacity: 0.12,
           ),
-
-          // Main scrollable content
           SafeArea(
-            child: Column(
-              children: [
-                // Header bar
-                _buildHeader(isWide),
-
-                // Scrollable body
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 40),
-                          _buildHeroSection(isWide),
-                          const SizedBox(height: 48),
-                          _buildAboutSection(isWide),
-                          const SizedBox(height: 48),
-                          _buildTeamSection(isWide),
-                          const SizedBox(height: 48),
-                          _buildCtaSection(),
-                          const SizedBox(height: 40),
-                          _buildFooter(),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: isWide
+                        ? _buildWideLayout()
+                        : _buildNarrowLayout(),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -143,20 +202,95 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
+  // ──────────────────── WIDE (desktop) ────────────────────
+  Widget _buildWideLayout() {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        _buildHeroCompact(),
+        const SizedBox(height: 18),
+        // Two-column: left = about + features, right = metrics
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: _buildAboutCard(),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 6,
+                child: _buildMetricsCard(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Team row + CTA
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Team
+            Expanded(
+              child: _buildTeamRow(),
+            ),
+            const SizedBox(width: 16),
+            // CTA button
+            SizedBox(
+              width: 220,
+              height: 46,
+              child: _buildCtaButton(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _buildFooter(),
+        const SizedBox(height: 6),
+      ],
+    );
+  }
+
+  // ──────────────────── NARROW (mobile) ────────────────────
+  Widget _buildNarrowLayout() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          _buildHeroCompact(),
+          const SizedBox(height: 20),
+          _buildAboutCard(),
+          const SizedBox(height: 16),
+          _buildMetricsCard(),
+          const SizedBox(height: 16),
+          _buildTeamColumn(),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: _buildCtaButton(),
+          ),
+          const SizedBox(height: 12),
+          _buildFooter(),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
   // ──────────────────── HEADER ────────────────────
-  Widget _buildHeader(bool isWide) {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          // Language toggle
           _pillButton(
             label: _isCatalan ? 'EN' : 'CAT',
             icon: Icons.language,
             onTap: _toggleLanguage,
           ),
           const Spacer(),
-          // Theme toggle
           _pillButton(
             icon: isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
             onTap: _toggleTheme,
@@ -175,16 +309,16 @@ class _LandingPageState extends State<LandingPage> {
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: label != null ? 14 : 10,
-          vertical: 8,
+          horizontal: label != null ? 12 : 8,
+          vertical: 6,
         ),
         decoration: BoxDecoration(
           color: AppColors.getBlurContainerColor(isDarkMode),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: AppColors.containerShadow,
-              blurRadius: 8,
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -192,14 +326,16 @@ class _LandingPageState extends State<LandingPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: AppColors.getPrimaryTextColor(isDarkMode)),
+            Icon(icon,
+                size: 18,
+                color: AppColors.getPrimaryTextColor(isDarkMode)),
             if (label != null) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
                   color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -210,112 +346,89 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  // ──────────────────── HERO SECTION ────────────────────
-  Widget _buildHeroSection(bool isWide) {
-    return Column(
+  // ──────────────────── HERO (compact) ────────────────────
+  Widget _buildHeroCompact() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Logo
         SizedBox(
-          height: isWide ? 120 : 90,
+          height: 50,
           child: Image.asset(
             isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Icon(
-              Icons.local_hospital,
-              size: 60,
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-            ),
+            errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
+                size: 36,
+                color: AppColors.getPrimaryTextColor(isDarkMode)),
           ),
         ),
-        const SizedBox(height: 20),
-
-        // Hackathon badge
+        const SizedBox(width: 16),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
-            borderRadius: BorderRadius.circular(20),
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(25),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(80),
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha(70),
             ),
           ),
           child: Text(
-            _hackathonBadge,
+            'BitsxLaMarató 2025',
             style: TextStyle(
               color: AppColors.getPrimaryButtonColor(isDarkMode),
-              fontSize: 13,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
-              letterSpacing: 1,
+              letterSpacing: 0.5,
             ),
           ),
         ),
-        const SizedBox(height: 20),
-
-        // Tagline
-        Text(
-          _heroSubtitle,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.getSecondaryTextColor(isDarkMode),
-            fontSize: isWide ? 20 : 16,
-            fontWeight: FontWeight.w400,
-            height: 1.4,
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            _heroSubtitle,
+            style: TextStyle(
+              color: AppColors.getSecondaryTextColor(isDarkMode),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
 
-  // ──────────────────── ABOUT SECTION ────────────────────
-  Widget _buildAboutSection(bool isWide) {
+  // ──────────────────── ABOUT CARD ────────────────────
+  Widget _buildAboutCard() {
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(25),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.psychology,
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                _aboutTitle,
-                style: TextStyle(
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          _sectionHeader(Icons.psychology, _aboutTitle),
+          const SizedBox(height: 10),
           Text(
             _aboutBody,
             style: TextStyle(
               color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 15,
-              height: 1.6,
+              fontSize: 13,
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 20),
-          // Feature highlights
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              _featureChip(Icons.videogame_asset, _isCatalan ? 'Jocs cognitius' : 'Cognitive games'),
-              _featureChip(Icons.mic, _isCatalan ? 'Anàlisi de veu' : 'Voice analysis'),
-              _featureChip(Icons.auto_awesome, _isCatalan ? 'IA personalitzada' : 'Personalised AI'),
-              _featureChip(Icons.medical_services, _isCatalan ? 'Panel mèdic' : 'Doctor panel'),
+              _featureChip(Icons.videogame_asset,
+                  _isCatalan ? 'Jocs cognitius' : 'Cognitive games'),
+              _featureChip(Icons.mic,
+                  _isCatalan ? 'Anàlisi de veu' : 'Voice analysis'),
+              _featureChip(Icons.auto_awesome,
+                  _isCatalan ? 'IA personalitzada' : 'Personalised AI'),
+              _featureChip(Icons.medical_services,
+                  _isCatalan ? 'Panel mèdic' : 'Doctor panel'),
             ],
           ),
         ],
@@ -323,194 +436,197 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _featureChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(18),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(50),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: AppColors.getPrimaryButtonColor(isDarkMode)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────── TEAM SECTION ────────────────────
-  Widget _buildTeamSection(bool isWide) {
+  // ──────────────────── METRICS CARD ────────────────────
+  Widget _buildMetricsCard() {
+    final metrics = _metrics;
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(25),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.group,
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                _teamTitle,
-                style: TextStyle(
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+          _sectionHeader(Icons.analytics, _metricsTitle),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: metrics.map((m) => _metricTile(m)).toList(),
           ),
-          const SizedBox(height: 20),
-          isWide ? _teamRow() : _teamColumn(),
         ],
       ),
     );
   }
 
-  Widget _teamRow() {
+  Widget _metricTile(_Metric m) {
+    final name = _isCatalan ? m.catName : m.enName;
+    final desc = _isCatalan ? m.catDesc : m.enDesc;
+    return Tooltip(
+      message: desc,
+      preferBelow: true,
+      textStyle: TextStyle(
+        color: isDarkMode ? Colors.black87 : Colors.white,
+        fontSize: 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.white.withAlpha(230) : Colors.grey[850],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(m.icon,
+                size: 14,
+                color: AppColors.getPrimaryButtonColor(isDarkMode)),
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ──────────────────── TEAM ────────────────────
+  Widget _buildTeamRow() {
     return Row(
-      children: _teamMembers
-          .map((m) => Expanded(child: _teamCard(m)))
-          .toList(),
+      children: [
+        Icon(Icons.group,
+            size: 18,
+            color: AppColors.getPrimaryButtonColor(isDarkMode)),
+        const SizedBox(width: 8),
+        Text(
+          '${_teamTitle}:',
+          style: TextStyle(
+            color: AppColors.getPrimaryTextColor(isDarkMode),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 10),
+        ..._teamMembers.expand((m) => [
+              _teamChip(m),
+              const SizedBox(width: 6),
+            ]),
+      ],
     );
   }
 
-  Widget _teamColumn() {
-    return Column(
-      children: _teamMembers
-          .map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _teamCard(m),
-              ))
-          .toList(),
+  Widget _buildTeamColumn() {
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _sectionHeader(Icons.group, _teamTitle),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _teamMembers.map((m) => _teamChip(m)).toList(),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _teamCard(_TeamMember member) {
-    final initials = member.name.split(' ').map((w) => w[0]).join();
+  Widget _teamChip(_TeamMember member) {
+    final initials =
+        member.name.split(' ').map((w) => w[0]).join();
     return GestureDetector(
       onTap: () => _openUrl(member.linkedIn),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.getBackgroundColor(isDarkMode).withAlpha(
-            isDarkMode ? 120 : 180,
-          ),
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.getSecondaryBackgroundColor(isDarkMode),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
           ),
         ),
-        child: Column(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Avatar
             CircleAvatar(
-              radius: 28,
-              backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+              radius: 12,
+              backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha(35),
               child: Text(
                 initials,
                 style: TextStyle(
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
                   fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                  fontSize: 9,
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 6),
             Text(
               member.name,
-              textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.open_in_new,
-                  size: 14,
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'LinkedIn',
-                  style: TextStyle(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+            const SizedBox(width: 4),
+            Icon(Icons.open_in_new,
+                size: 11,
+                color: AppColors.getPrimaryButtonColor(isDarkMode)),
           ],
         ),
       ),
     );
   }
 
-  // ──────────────────── CTA SECTION ────────────────────
-  Widget _buildCtaSection() {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(32),
+  // ──────────────────── CTA ────────────────────
+  Widget _buildCtaButton() {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        elevation: 0,
+      ),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => InitialPage(initialDarkMode: isDarkMode),
           ),
-          elevation: 0,
-        ),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => InitialPage(initialDarkMode: isDarkMode),
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _ctaButton,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
             ),
-          );
-        },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _ctaButton,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_rounded, size: 20),
-          ],
-        ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.arrow_forward_rounded, size: 18),
+        ],
       ),
     );
   }
@@ -518,34 +634,90 @@ class _LandingPageState extends State<LandingPage> {
   // ──────────────────── FOOTER ────────────────────
   Widget _buildFooter() {
     return Text(
-      _isCatalan
-          ? '© 2025 LMLG · BitsxLaMarató 2025'
-          : '© 2025 LMLG · BitsxLaMarató 2025',
+      '© 2025 LMLG · BitsxLaMarató 2025',
       textAlign: TextAlign.center,
       style: TextStyle(
         color: AppColors.getTertiaryTextColor(isDarkMode),
-        fontSize: 12,
+        fontSize: 11,
       ),
     );
   }
 
-  // ──────────────────── REUSABLE WIDGETS ────────────────────
+  // ──────────────────── SHARED WIDGETS ────────────────────
   Widget _sectionCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getSecondaryBackgroundColor(isDarkMode),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: AppColors.containerShadow,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String title) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(20),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon,
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
+              size: 18),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            color: AppColors.getPrimaryTextColor(isDarkMode),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _featureChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon,
+              size: 14,
+              color: AppColors.getPrimaryButtonColor(isDarkMode)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -561,4 +733,19 @@ class _TeamMember {
   final String name;
   final String linkedIn;
   const _TeamMember(this.name, this.linkedIn);
+}
+
+class _Metric {
+  final IconData icon;
+  final String catName;
+  final String enName;
+  final String catDesc;
+  final String enDesc;
+  const _Metric({
+    required this.icon,
+    required this.catName,
+    required this.enName,
+    required this.catDesc,
+    required this.enDesc,
+  });
 }
