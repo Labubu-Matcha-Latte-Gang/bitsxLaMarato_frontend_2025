@@ -86,7 +86,8 @@ class _LandingPageState extends State<LandingPage> {
     _TeamMember(
       'Erik Batiste',
       'https://www.linkedin.com/in/erikbatisteviader/',
-      'https://avatars.githubusercontent.com/u/96847443?s=160',
+      'https://github.com/Ki-re',
+      'https://avatars.githubusercontent.com/u/96847443?s=200',
       'DevOps & Backend',
       'Infraestructura, CI/CD, contenidorització i integració de serveis al núvol.',
       'Infrastructure, CI/CD, containerisation and cloud service integration.',
@@ -94,7 +95,8 @@ class _LandingPageState extends State<LandingPage> {
     _TeamMember(
       'Oriol Orbea',
       'https://www.linkedin.com/in/oriol-orbea-suari/',
-      'https://avatars.githubusercontent.com/u/145404641?s=160',
+      'https://github.com/oorbea',
+      'https://avatars.githubusercontent.com/u/145404641?s=200',
       'Backend & Full Stack',
       'Arquitectura del backend amb Python/Flask, API RESTful i integració Frontend.',
       'Backend architecture with Python/Flask, RESTful API and Frontend integration.',
@@ -102,7 +104,8 @@ class _LandingPageState extends State<LandingPage> {
     _TeamMember(
       'Ernest Rull',
       'https://www.linkedin.com/in/ernest-rull-turigas/',
-      'https://avatars.githubusercontent.com/u/118774478?s=160',
+      'https://github.com/Yearsuck',
+      'https://avatars.githubusercontent.com/u/118774478?s=200',
       'Lead Frontend',
       'Arquitectura UI amb Flutter, tests cognitius gamificats i sistema de rols.',
       'UI architecture with Flutter, gamified cognitive tests and role system.',
@@ -110,7 +113,8 @@ class _LandingPageState extends State<LandingPage> {
     _TeamMember(
       'Kaleb Grove',
       'https://www.linkedin.com/in/kaleb-grove/',
-      'https://avatars.githubusercontent.com/u/72881364?s=160',
+      'https://github.com/kalebgrove',
+      'https://avatars.githubusercontent.com/u/72881364?s=200',
       'Frontend & Games',
       'Disseny d\'interfície, jocs interactius i experiència d\'usuari amb Flutter.',
       'Interface design, interactive games and user experience with Flutter.',
@@ -405,12 +409,12 @@ class _LandingPageState extends State<LandingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          height: 80,
+          height: 96,
           child: Image.asset(
             isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
-                size: 56,
+                size: 64,
                 color: AppColors.getPrimaryTextColor(isDarkMode)),
           ),
         ),
@@ -608,86 +612,113 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _teamVerticalCard(_TeamMember member) {
     final desc = _isCatalan ? member.catDesc : member.enDesc;
-    return GestureDetector(
-      onTap: () => _openUrl(member.linkedIn),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color:
-                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.getPrimaryButtonColor(isDarkMode)
-                  .withAlpha(30),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color:
+              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.getPrimaryButtonColor(isDarkMode)
+                .withAlpha(30),
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(),
+            CircleAvatar(
+              radius: 42,
+              backgroundColor:
+                  AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha(35),
+              backgroundImage: NetworkImage(member.imageUrl),
+              onBackgroundImageError: (_, __) {},
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              CircleAvatar(
-                radius: 36,
-                backgroundColor:
-                    AppColors.getPrimaryButtonColor(isDarkMode)
-                        .withAlpha(35),
-                backgroundImage: NetworkImage(member.imageUrl),
-                onBackgroundImageError: (_, __) {},
+            const SizedBox(height: 12),
+            Text(
+              member.name,
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 12),
-              Text(
-                member.name,
-                style: TextStyle(
-                  color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              member.role,
+              style: TextStyle(
+                color: AppColors.getPrimaryButtonColor(isDarkMode),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 3),
-              Text(
-                member.role,
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              desc,
+              style: TextStyle(
+                color: AppColors.getTertiaryTextColor(isDarkMode),
+                fontSize: 11,
+                height: 1.3,
               ),
-              const SizedBox(height: 6),
-              Text(
-                desc,
-                style: TextStyle(
-                  color: AppColors.getTertiaryTextColor(isDarkMode),
-                  fontSize: 11,
-                  height: 1.3,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.open_in_new,
-                      size: 12,
-                      color: AppColors.getPrimaryButtonColor(isDarkMode)
-                          .withAlpha(140)),
-                  const SizedBox(width: 4),
-                  Text(
-                    'LinkedIn',
-                    style: TextStyle(
-                      color: AppColors.getPrimaryButtonColor(isDarkMode)
-                          .withAlpha(140),
-                      fontSize: 11,
-                    ),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () => _openUrl(member.linkedIn),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.open_in_new,
+                          size: 12,
+                          color: AppColors.getPrimaryButtonColor(isDarkMode)
+                              .withAlpha(150)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'LinkedIn',
+                        style: TextStyle(
+                          color: AppColors.getPrimaryButtonColor(isDarkMode)
+                              .withAlpha(150),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(width: 14),
+                GestureDetector(
+                  onTap: () => _openUrl(member.gitHub),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.code,
+                          size: 13,
+                          color: AppColors.getPrimaryButtonColor(isDarkMode)
+                              .withAlpha(150)),
+                      const SizedBox(width: 3),
+                      Text(
+                        'GitHub',
+                        style: TextStyle(
+                          color: AppColors.getPrimaryButtonColor(isDarkMode)
+                              .withAlpha(150),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -712,70 +743,83 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _teamMobileTile(_TeamMember member) {
     final desc = _isCatalan ? member.catDesc : member.enDesc;
-    return GestureDetector(
-      onTap: () => _openUrl(member.linkedIn),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color:
+            AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
           color:
-              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color:
-                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
+              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor:
+                AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha(35),
+            backgroundImage: NetworkImage(member.imageUrl),
+            onBackgroundImageError: (_, __) {},
           ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha(35),
-              backgroundImage: NetworkImage(member.imageUrl),
-              onBackgroundImageError: (_, __) {},
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.name,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryTextColor(isDarkMode),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  member.role,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  desc,
+                  style: TextStyle(
+                    color: AppColors.getTertiaryTextColor(isDarkMode),
+                    fontSize: 11,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.name,
-                    style: TextStyle(
-                      color: AppColors.getPrimaryTextColor(isDarkMode),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    member.role,
-                    style: TextStyle(
-                      color: AppColors.getPrimaryButtonColor(isDarkMode),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    desc,
-                    style: TextStyle(
-                      color: AppColors.getTertiaryTextColor(isDarkMode),
-                      fontSize: 11,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () => _openUrl(member.linkedIn),
+                child: Icon(Icons.open_in_new,
+                    size: 14,
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha(140)),
               ),
-            ),
-            Icon(Icons.open_in_new,
-                size: 14,
-                color: AppColors.getPrimaryButtonColor(isDarkMode)
-                    .withAlpha(140)),
-          ],
-        ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => _openUrl(member.gitHub),
+                child: Icon(Icons.code,
+                    size: 15,
+                    color: AppColors.getPrimaryButtonColor(isDarkMode)
+                        .withAlpha(140)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -918,12 +962,13 @@ class _LandingPageState extends State<LandingPage> {
 class _TeamMember {
   final String name;
   final String linkedIn;
+  final String gitHub;
   final String imageUrl;
   final String role;
   final String catDesc;
   final String enDesc;
-  const _TeamMember(
-      this.name, this.linkedIn, this.imageUrl, this.role, this.catDesc, this.enDesc);
+  const _TeamMember(this.name, this.linkedIn, this.gitHub, this.imageUrl,
+      this.role, this.catDesc, this.enDesc);
 }
 
 class _Metric {
