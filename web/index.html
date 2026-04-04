@@ -111,16 +111,11 @@
         serviceWorkerSettings: {
           serviceWorkerVersion: '{{flutter_service_worker_version}}',
         },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-            // Fade out and remove the loading screen
-            var el = document.getElementById('loading');
-            if (el) {
-              el.classList.add('fade-out');
-              setTimeout(function() { el.remove(); }, 400);
-            }
-          });
+      }).then(function() {
+        var el = document.getElementById('loading');
+        if (el) {
+          el.classList.add('fade-out');
+          setTimeout(function() { el.remove(); }, 400);
         }
       });
     });
