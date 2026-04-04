@@ -604,24 +604,32 @@ class _LandingPageState extends State<LandingPage> {
         children: [
           _sectionHeader(Icons.build_circle, _techTitle),
           const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: techs.map((t) => _techChip(t)).toList(),
+          // 6 rows × 2 columns, each cell stretches to fill
+          for (var i = 0; i < techs.length; i += 2)
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: i < techs.length - 2 ? 8 : 0),
+                child: Row(
+                  children: [
+                    Expanded(child: _techCell(techs[i])),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: i + 1 < techs.length
+                          ? _techCell(techs[i + 1])
+                          : const SizedBox(),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _techChip(_Tech tech) {
+  Widget _techCell(_Tech tech) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
         borderRadius: BorderRadius.circular(10),
@@ -630,18 +638,20 @@ class _LandingPageState extends State<LandingPage> {
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(tech.icon,
-              size: 14,
+              size: 16,
               color: AppColors.getPrimaryButtonColor(isDarkMode)),
-          const SizedBox(width: 6),
-          Text(
-            tech.name,
-            style: TextStyle(
-              color: AppColors.getPrimaryTextColor(isDarkMode),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              tech.name,
+              style: TextStyle(
+                color: AppColors.getPrimaryTextColor(isDarkMode),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
