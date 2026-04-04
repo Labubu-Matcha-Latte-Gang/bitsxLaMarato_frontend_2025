@@ -50,25 +50,33 @@ class _LandingPageState extends State<LandingPage> {
   String get _aboutTitle =>
       _isCatalan ? 'Sobre el projecte' : 'About the project';
   String get _aboutBody => _isCatalan
-      ? 'LMLG NeuroSight és una plataforma d\'intel·ligència artificial '
-        'dissenyada per a la detecció integrada i el seguiment longitudinal '
-        'del dèficit cognitiu en pacients oncològics. Ofereix un Perfil '
-        'Cognitiu Unificat que combina anàlisi de la parla mitjançant 9 '
-        'mètriques lingüístiques clau, tests cognitius gamificats i un '
-        'diari subjectiu del pacient.\n\n'
+      ? 'LMLG NeuroSight és una plataforma innovadora d\'intel·ligència '
+        'artificial dissenyada per a la detecció integrada i el seguiment '
+        'longitudinal del dèficit cognitiu en pacients oncològics — el '
+        '"Brain Fog" que experimenten entre el 15% i el 50% dels pacients '
+        'amb càncer.\n\n'
+        'Ofereix un Perfil Cognitiu Unificat que combina tres fonts de '
+        'dades: anàlisi de la parla mitjançant el nostre motor NLP amb 9 '
+        'mètriques lingüístiques clau, tests cognitius gamificats que '
+        'mesuren memòria i atenció, i un diari subjectiu que recull el '
+        'feedback diari del pacient.\n\n'
         'Amb aquesta anàlisi multi-modal, NeuroSight no només detecta el '
-        'dèficit sinó que també proposa recursos psicoeducatius i tasques '
-        'de rehabilitació cognitiva personalitzada, tancant el cicle des '
-        'de l\'avaluació fins a la intervenció.'
-      : 'LMLG NeuroSight is an AI-powered platform designed for integrated '
-        'detection and longitudinal monitoring of cognitive deficit in '
-        'oncology patients. It provides a Unified Cognitive Profile combining '
-        'speech analysis through 9 key linguistic metrics, gamified cognitive '
-        'tests, and a subjective patient diary.\n\n'
+        'dèficit sinó que proposa recursos psicoeducatius i tasques de '
+        'rehabilitació cognitiva personalitzada, tancant el cicle des de '
+        'l\'avaluació fins a la intervenció — tot des de casa del pacient.'
+      : 'LMLG NeuroSight is an innovative AI-powered platform designed for '
+        'integrated detection and longitudinal monitoring of cognitive '
+        'deficit in oncology patients — the "Brain Fog" experienced by '
+        '15–50% of cancer patients.\n\n'
+        'It provides a Unified Cognitive Profile combining three data '
+        'sources: speech analysis through our NLP engine with 9 key '
+        'linguistic metrics, gamified cognitive tests measuring memory '
+        'and attention, and a subjective diary capturing the patient\'s '
+        'daily feedback.\n\n'
         'Through this multi-modal analysis, NeuroSight not only detects '
-        'deficit but also proposes psychoeducational resources and '
-        'personalised cognitive rehabilitation tasks, closing the loop '
-        'from assessment to intervention.';
+        'deficit but proposes psychoeducational resources and personalised '
+        'cognitive rehabilitation tasks, closing the loop from assessment '
+        'to intervention — all from the patient\'s home.';
   String get _metricsTitle =>
       _isCatalan ? 'Mètriques mesurades' : 'Measured metrics';
   String get _teamTitle => _isCatalan ? 'L\'equip' : 'The team';
@@ -397,12 +405,12 @@ class _LandingPageState extends State<LandingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          height: 64,
+          height: 80,
           child: Image.asset(
             isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
-                size: 48,
+                size: 56,
                 color: AppColors.getPrimaryTextColor(isDarkMode)),
           ),
         ),
@@ -484,6 +492,8 @@ class _LandingPageState extends State<LandingPage> {
   // ──────────────────── METRICS CARD ────────────────────
   Widget _buildMetricsCard() {
     final metrics = _metrics;
+    final leftCol = metrics.sublist(0, 5);
+    final rightCol = metrics.sublist(5);
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,11 +501,23 @@ class _LandingPageState extends State<LandingPage> {
           _sectionHeader(Icons.analytics, _metricsTitle),
           const SizedBox(height: 12),
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: metrics.map((m) => _metricRow(m)).toList(),
-              ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: leftCol.map((m) => _metricRow(m)).toList(),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: rightCol.map((m) => _metricRow(m)).toList(),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -585,7 +607,6 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _teamVerticalCard(_TeamMember member) {
-    final initials = member.name.split(' ').map((w) => w[0]).join();
     final desc = _isCatalan ? member.catDesc : member.enDesc;
     return GestureDetector(
       onTap: () => _openUrl(member.linkedIn),
@@ -605,28 +626,21 @@ class _LandingPageState extends State<LandingPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Spacer(),
               CircleAvatar(
-                radius: 30,
+                radius: 36,
                 backgroundColor:
                     AppColors.getPrimaryButtonColor(isDarkMode)
                         .withAlpha(35),
                 backgroundImage: NetworkImage(member.imageUrl),
                 onBackgroundImageError: (_, __) {},
-                child: Text(
-                  initials,
-                  style: TextStyle(
-                    color: AppColors.getPrimaryButtonColor(isDarkMode),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 member.name,
                 style: TextStyle(
                   color: AppColors.getPrimaryTextColor(isDarkMode),
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
@@ -636,7 +650,7 @@ class _LandingPageState extends State<LandingPage> {
                 member.role,
                 style: TextStyle(
                   color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -646,7 +660,7 @@ class _LandingPageState extends State<LandingPage> {
                 desc,
                 style: TextStyle(
                   color: AppColors.getTertiaryTextColor(isDarkMode),
-                  fontSize: 10,
+                  fontSize: 11,
                   height: 1.3,
                 ),
                 textAlign: TextAlign.center,
@@ -697,7 +711,6 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _teamMobileTile(_TeamMember member) {
-    final initials = member.name.split(' ').map((w) => w[0]).join();
     final desc = _isCatalan ? member.catDesc : member.enDesc;
     return GestureDetector(
       onTap: () => _openUrl(member.linkedIn),
@@ -721,14 +734,6 @@ class _LandingPageState extends State<LandingPage> {
                       .withAlpha(35),
               backgroundImage: NetworkImage(member.imageUrl),
               onBackgroundImageError: (_, __) {},
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: AppColors.getPrimaryButtonColor(isDarkMode),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
             ),
             const SizedBox(width: 12),
             Expanded(
