@@ -79,6 +79,8 @@ class _LandingPageState extends State<LandingPage> {
         'to intervention — all from the patient\'s home.';
   String get _metricsTitle =>
       _isCatalan ? 'Mètriques mesurades' : 'Measured metrics';
+  String get _techTitle =>
+      _isCatalan ? 'Tecnologies utilitzades' : 'Used technologies';
   String get _teamTitle => _isCatalan ? 'L\'equip' : 'The team';
   String get _ctaButton => _isCatalan ? 'ENTRA A L\'APP' : 'ENTER THE APP';
 
@@ -261,14 +263,23 @@ class _LandingPageState extends State<LandingPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Left column: About + Metrics
+              // Left column: About + (Metrics | Tech)
               Expanded(
                 flex: 5,
                 child: Column(
                   children: [
                     _buildAboutCard(),
                     const SizedBox(height: 14),
-                    Expanded(child: _buildMetricsCard()),
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(flex: 3, child: _buildMetricsCard()),
+                          const SizedBox(width: 14),
+                          Expanded(flex: 2, child: _buildTechCard()),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -311,6 +322,8 @@ class _LandingPageState extends State<LandingPage> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          _buildTechCard(),
           const SizedBox(height: 16),
           _buildTeamWrap(),
           const SizedBox(height: 12),
@@ -562,6 +575,73 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────── TECH CARD ────────────────────
+  Widget _buildTechCard() {
+    const techs = [
+      _Tech(Icons.flutter_dash, 'Flutter'),
+      _Tech(Icons.code, 'Dart'),
+      _Tech(Icons.terminal, 'Python'),
+      _Tech(Icons.dns, 'Flask'),
+      _Tech(Icons.storage, 'PostgreSQL'),
+      _Tech(Icons.inventory_2, 'Docker'),
+      _Tech(Icons.auto_awesome, 'Azure OpenAI'),
+      _Tech(Icons.psychology, 'Gemini'),
+      _Tech(Icons.mic, 'Whisper ASR'),
+      _Tech(Icons.text_fields, 'NLP Engine'),
+      _Tech(Icons.rocket_launch, 'GitHub Actions'),
+      _Tech(Icons.cloud, 'Cloud Deploy'),
+    ];
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(Icons.build_circle, _techTitle),
+          const SizedBox(height: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: techs.map((t) => _techChip(t)).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _techChip(_Tech tech) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tech.icon,
+              size: 14,
+              color: AppColors.getPrimaryButtonColor(isDarkMode)),
+          const SizedBox(width: 6),
+          Text(
+            tech.name,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -977,4 +1057,10 @@ class _Metric {
     required this.catDesc,
     required this.enDesc,
   });
+}
+
+class _Tech {
+  final IconData icon;
+  final String name;
+  const _Tech(this.icon, this.name);
 }
