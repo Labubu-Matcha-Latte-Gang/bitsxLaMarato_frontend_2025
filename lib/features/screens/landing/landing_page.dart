@@ -209,47 +209,45 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildWideLayout() {
     return Column(
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         _buildHeroCompact(),
-        const SizedBox(height: 18),
-        // Two-column: left = about + features, right = metrics
+        const SizedBox(height: 20),
         Expanded(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Left column: About + Metrics
               Expanded(
                 flex: 5,
-                child: _buildAboutCard(),
+                child: Column(
+                  children: [
+                    _buildAboutCard(),
+                    const SizedBox(height: 14),
+                    Expanded(child: _buildMetricsCard()),
+                  ],
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
+              // Right column: Team
               Expanded(
-                flex: 6,
-                child: _buildMetricsCard(),
+                flex: 4,
+                child: _buildTeamCard(),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        // Team row + CTA
+        const SizedBox(height: 14),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Team
-            Expanded(
-              child: _buildTeamRow(),
-            ),
-            const SizedBox(width: 16),
-            // CTA button
+            Expanded(child: _buildFooter()),
             SizedBox(
-              width: 220,
-              height: 46,
+              width: 240,
+              height: 48,
               child: _buildCtaButton(),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        _buildFooter(),
-        const SizedBox(height: 6),
       ],
     );
   }
@@ -267,7 +265,7 @@ class _LandingPageState extends State<LandingPage> {
           const SizedBox(height: 16),
           _buildMetricsCard(),
           const SizedBox(height: 16),
-          _buildTeamColumn(),
+          _buildTeamCard(),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -355,18 +353,18 @@ class _LandingPageState extends State<LandingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          height: 50,
+          height: 64,
           child: Image.asset(
             isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
-                size: 36,
+                size: 48,
                 color: AppColors.getPrimaryTextColor(isDarkMode)),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 20),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color:
                 AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(25),
@@ -380,19 +378,19 @@ class _LandingPageState extends State<LandingPage> {
             'BitsxLaMarató 2025',
             style: TextStyle(
               color: AppColors.getPrimaryButtonColor(isDarkMode),
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 20),
         Flexible(
           child: Text(
             _heroSubtitle,
             style: TextStyle(
               color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
             overflow: TextOverflow.ellipsis,
@@ -415,7 +413,7 @@ class _LandingPageState extends State<LandingPage> {
             _aboutBody,
             style: TextStyle(
               color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 13,
+              fontSize: 14,
               height: 1.5,
             ),
           ),
@@ -474,7 +472,7 @@ class _LandingPageState extends State<LandingPage> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
           borderRadius: BorderRadius.circular(10),
@@ -487,14 +485,14 @@ class _LandingPageState extends State<LandingPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(m.icon,
-                size: 14,
+                size: 16,
                 color: AppColors.getPrimaryButtonColor(isDarkMode)),
-            const SizedBox(width: 6),
+            const SizedBox(width: 7),
             Text(
               name,
               style: TextStyle(
                 color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -505,6 +503,91 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   // ──────────────────── TEAM ────────────────────
+  Widget _buildTeamCard() {
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(Icons.group, _teamTitle),
+          const SizedBox(height: 16),
+          ..._teamMembers.expand((m) => [
+                _teamMemberTile(m),
+                const SizedBox(height: 10),
+              ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _teamMemberTile(_TeamMember member) {
+    final initials = member.name.split(' ').map((w) => w[0]).join();
+    return GestureDetector(
+      onTap: () => _openUrl(member.linkedIn),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color:
+                  AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(30),
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha(35),
+                backgroundImage: NetworkImage(member.imageUrl),
+                onBackgroundImageError: (_, __) {},
+                child: Text(
+                  initials,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      member.name,
+                      style: TextStyle(
+                        color: AppColors.getPrimaryTextColor(isDarkMode),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'LinkedIn',
+                      style: TextStyle(
+                        color: AppColors.getPrimaryButtonColor(isDarkMode),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.open_in_new,
+                  size: 16,
+                  color: AppColors.getPrimaryButtonColor(isDarkMode)
+                      .withAlpha(140)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTeamRow() {
     return Row(
       children: [
@@ -672,7 +755,7 @@ class _LandingPageState extends State<LandingPage> {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(7),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color:
                 AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(20),
@@ -680,14 +763,14 @@ class _LandingPageState extends State<LandingPage> {
           ),
           child: Icon(icon,
               color: AppColors.getPrimaryButtonColor(isDarkMode),
-              size: 18),
+              size: 20),
         ),
         const SizedBox(width: 10),
         Text(
           title,
           style: TextStyle(
             color: AppColors.getPrimaryTextColor(isDarkMode),
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
