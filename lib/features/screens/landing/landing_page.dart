@@ -254,9 +254,9 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildWideLayout() {
     return Column(
       children: [
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildHeroCompact(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,18 +281,9 @@ class _LandingPageState extends State<LandingPage> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(child: _buildFooter()),
-            SizedBox(
-              width: 240,
-              height: 48,
-              child: _buildCtaButton(),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        _buildFooter(),
+        const SizedBox(height: 6),
       ],
     );
   }
@@ -322,12 +313,6 @@ class _LandingPageState extends State<LandingPage> {
           ),
           const SizedBox(height: 16),
           _buildTeamWrap(),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: _buildCtaButton(),
-          ),
           const SizedBox(height: 12),
           _buildFooter(),
           const SizedBox(height: 16),
@@ -347,10 +332,16 @@ class _LandingPageState extends State<LandingPage> {
             icon: Icons.language,
             onTap: _toggleLanguage,
           ),
-          const Spacer(),
+          const SizedBox(width: 8),
           _pillButton(
             icon: isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
             onTap: _toggleTheme,
+          ),
+          const Spacer(),
+          SizedBox(
+            height: 36,
+            width: 200,
+            child: _buildCtaButton(),
           ),
         ],
       ),
@@ -409,12 +400,12 @@ class _LandingPageState extends State<LandingPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          height: 96,
+          height: 110,
           child: Image.asset(
             isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
-                size: 64,
+                size: 72,
                 color: AppColors.getPrimaryTextColor(isDarkMode)),
           ),
         ),
@@ -434,7 +425,7 @@ class _LandingPageState extends State<LandingPage> {
             'BitsxLaMarató 2025',
             style: TextStyle(
               color: AppColors.getPrimaryButtonColor(isDarkMode),
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
@@ -446,7 +437,7 @@ class _LandingPageState extends State<LandingPage> {
             _heroSubtitle,
             style: TextStyle(
               color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
             ),
             overflow: TextOverflow.ellipsis,
