@@ -64,13 +64,16 @@ class _LandingPageState extends State<LandingPage> {
   String get _ctaButton => _isCatalan ? 'ENTRA A L\'APP' : 'ENTER THE APP';
 
   static const _teamMembers = [
+    _TeamMember('Erik Batiste', 'https://www.linkedin.com/in/erikbatisteviader/',
+        'https://avatars.githubusercontent.com/u/96847443?s=80'),
+    _TeamMember('Oriol Orbea', 'https://www.linkedin.com/in/oriol-orbea-suari/',
+        'https://avatars.githubusercontent.com/u/145404641?s=80'),
     _TeamMember(
-        'Erik Batiste', 'https://www.linkedin.com/in/erikbatisteviader/'),
-    _TeamMember(
-        'Oriol Orbea', 'https://www.linkedin.com/in/oriol-orbea-suari/'),
-    _TeamMember(
-        'Ernest Rull', 'https://www.linkedin.com/in/ernest-rull-turigas/'),
-    _TeamMember('Kaleb Grove', 'https://www.linkedin.com/in/kaleb-grove/'),
+        'Ernest Rull',
+        'https://www.linkedin.com/in/ernest-rull-turigas/',
+        'https://avatars.githubusercontent.com/u/118774478?s=80'),
+    _TeamMember('Kaleb Grove', 'https://www.linkedin.com/in/kaleb-grove/',
+        'https://avatars.githubusercontent.com/u/72881364?s=80'),
   ];
 
   List<_Metric> get _metrics => [
@@ -566,6 +569,8 @@ class _LandingPageState extends State<LandingPage> {
               radius: 12,
               backgroundColor: AppColors.getPrimaryButtonColor(isDarkMode)
                   .withAlpha(35),
+              backgroundImage: NetworkImage(member.imageUrl),
+              onBackgroundImageError: (_, __) {},
               child: Text(
                 initials,
                 style: TextStyle(
@@ -732,7 +737,8 @@ class _LandingPageState extends State<LandingPage> {
 class _TeamMember {
   final String name;
   final String linkedIn;
-  const _TeamMember(this.name, this.linkedIn);
+  final String imageUrl;
+  const _TeamMember(this.name, this.linkedIn, this.imageUrl);
 }
 
 class _Metric {
