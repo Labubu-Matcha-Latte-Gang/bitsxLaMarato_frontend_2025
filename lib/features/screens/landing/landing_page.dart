@@ -307,7 +307,7 @@ class _LandingPageState extends State<LandingPage> {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          _buildHeroCompact(),
+          _buildHeroNarrow(),
           const SizedBox(height: 20),
           _buildAboutCard(),
           const SizedBox(height: 16),
@@ -323,7 +323,7 @@ class _LandingPageState extends State<LandingPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildTechCard(),
+          _buildTechCardNarrow(),
           const SizedBox(height: 16),
           _buildTeamWrap(),
           const SizedBox(height: 12),
@@ -407,7 +407,57 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  // ──────────────────── HERO (compact) ────────────────────
+  // ──────────────────── HERO (narrow / stacked) ────────────────────
+  Widget _buildHeroNarrow() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 80,
+          child: Image.asset(
+            isDarkMode ? TImages.lightLogoText : TImages.darkLogoText,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(Icons.local_hospital,
+                size: 56,
+                color: AppColors.getPrimaryTextColor(isDarkMode)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color:
+                AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(25),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha(70),
+            ),
+          ),
+          child: Text(
+            'BitsxLaMarató 2025',
+            style: TextStyle(
+              color: AppColors.getPrimaryButtonColor(isDarkMode),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _heroSubtitle,
+          style: TextStyle(
+            color: AppColors.getSecondaryTextColor(isDarkMode),
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────── HERO (compact / wide) ────────────────────
   Widget _buildHeroCompact() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -582,7 +632,49 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  // ──────────────────── TECH CARD ────────────────────
+  // ──────────────────── TECH CARD (narrow) ────────────────────
+  Widget _buildTechCardNarrow() {
+    const techs = [
+      _Tech(Icons.flutter_dash, 'Flutter', 'UI multiplataforma', 'Cross-platform UI'),
+      _Tech(Icons.code, 'Dart', 'Llenguatge de l\'app', 'App language'),
+      _Tech(Icons.terminal, 'Python', 'Backend i NLP', 'Backend & NLP'),
+      _Tech(Icons.dns, 'Flask', 'Servidor API REST', 'REST API server'),
+      _Tech(Icons.storage, 'PostgreSQL', 'Persistència de dades', 'Data persistence'),
+      _Tech(Icons.inventory_2, 'Docker', 'Contenidorització', 'Containerisation'),
+      _Tech(Icons.auto_awesome, 'Azure OpenAI', 'Recomanacions IA', 'AI recommendations'),
+      _Tech(Icons.psychology, 'Gemini', 'Anàlisi cognitiva', 'Cognitive analysis'),
+      _Tech(Icons.mic, 'Whisper', 'Veu a text', 'Speech-to-text'),
+      _Tech(Icons.text_fields, 'NLP Engine', '9 mètriques lingüístiques', '9 linguistic metrics'),
+      _Tech(Icons.rocket_launch, 'GitHub Actions', 'Pipelines CI/CD', 'CI/CD pipelines'),
+      _Tech(Icons.cloud, 'Cloud Deploy', 'Allotjament en producció', 'Production hosting'),
+    ];
+    return _sectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _sectionHeader(Icons.build_circle, _techTitle),
+          const SizedBox(height: 10),
+          for (var i = 0; i < techs.length; i += 2)
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _techCell(techs[i])),
+                  Expanded(
+                    child: i + 1 < techs.length
+                        ? _techCell(techs[i + 1])
+                        : const SizedBox(),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────── TECH CARD (wide) ────────────────────
   Widget _buildTechCard() {
     const techs = [
       _Tech(Icons.flutter_dash, 'Flutter', 'UI multiplataforma', 'Cross-platform UI'),
