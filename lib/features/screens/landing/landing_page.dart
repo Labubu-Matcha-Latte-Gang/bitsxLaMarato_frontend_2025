@@ -585,18 +585,18 @@ class _LandingPageState extends State<LandingPage> {
   // ──────────────────── TECH CARD ────────────────────
   Widget _buildTechCard() {
     const techs = [
-      _Tech(Icons.flutter_dash, 'Flutter', 'Cross-platform UI'),
-      _Tech(Icons.code, 'Dart', 'App language'),
-      _Tech(Icons.terminal, 'Python', 'Backend & NLP'),
-      _Tech(Icons.dns, 'Flask', 'REST API server'),
-      _Tech(Icons.storage, 'PostgreSQL', 'Data persistence'),
-      _Tech(Icons.inventory_2, 'Docker', 'Containerisation'),
-      _Tech(Icons.auto_awesome, 'Azure OpenAI', 'AI recommendations'),
-      _Tech(Icons.psychology, 'Gemini', 'Cognitive analysis'),
-      _Tech(Icons.mic, 'Whisper', 'Speech-to-text'),
-      _Tech(Icons.text_fields, 'NLP Engine', '9 linguistic metrics'),
-      _Tech(Icons.rocket_launch, 'GitHub Actions', 'CI/CD pipelines'),
-      _Tech(Icons.cloud, 'Cloud Deploy', 'Production hosting'),
+      _Tech(Icons.flutter_dash, 'Flutter', 'UI multiplataforma', 'Cross-platform UI'),
+      _Tech(Icons.code, 'Dart', 'Llenguatge de l\'app', 'App language'),
+      _Tech(Icons.terminal, 'Python', 'Backend i NLP', 'Backend & NLP'),
+      _Tech(Icons.dns, 'Flask', 'Servidor API REST', 'REST API server'),
+      _Tech(Icons.storage, 'PostgreSQL', 'Persistència de dades', 'Data persistence'),
+      _Tech(Icons.inventory_2, 'Docker', 'Contenidorització', 'Containerisation'),
+      _Tech(Icons.auto_awesome, 'Azure OpenAI', 'Recomanacions IA', 'AI recommendations'),
+      _Tech(Icons.psychology, 'Gemini', 'Anàlisi cognitiva', 'Cognitive analysis'),
+      _Tech(Icons.mic, 'Whisper', 'Veu a text', 'Speech-to-text'),
+      _Tech(Icons.text_fields, 'NLP Engine', '9 mètriques lingüístiques', '9 linguistic metrics'),
+      _Tech(Icons.rocket_launch, 'GitHub Actions', 'Pipelines CI/CD', 'CI/CD pipelines'),
+      _Tech(Icons.cloud, 'Cloud Deploy', 'Allotjament en producció', 'Production hosting'),
     ];
     return _sectionCard(
       child: Column(
@@ -624,6 +624,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Widget _techCell(_Tech tech) {
+    final desc = _isCatalan ? tech.catDesc : tech.enDesc;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -653,7 +654,7 @@ class _LandingPageState extends State<LandingPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  tech.desc,
+                  desc,
                   style: TextStyle(
                     color: AppColors.getTertiaryTextColor(isDarkMode),
                     fontSize: 10,
@@ -1081,6 +1082,7 @@ class _Metric {
 class _Tech {
   final IconData icon;
   final String name;
-  final String desc;
-  const _Tech(this.icon, this.name, this.desc);
+  final String catDesc;
+  final String enDesc;
+  const _Tech(this.icon, this.name, this.catDesc, this.enDesc);
 }
