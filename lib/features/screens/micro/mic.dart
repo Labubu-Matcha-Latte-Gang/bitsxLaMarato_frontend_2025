@@ -14,6 +14,7 @@ import 'web_audio_recorder.dart';
 import '../../../models/question_models.dart';
 import '../../../models/transcription_models.dart';
 import '../../../services/api_service.dart';
+import '../../../services/demo_mode.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
@@ -128,6 +129,17 @@ class _MicScreenState extends State<MicScreen>
   }
 
   Future<bool> _requestMicPermission({bool showToast = true}) async {
+    // In demo mode, always grant permission without actually requesting
+    if (DemoMode.isActive) {
+      if (mounted) {
+        setState(() {
+          _hasMicPermission = true;
+          _isCheckingPermission = false;
+        });
+      }
+      return true;
+    }
+
     setState(() {
       _isCheckingPermission = true;
     });
@@ -196,6 +208,28 @@ class _MicScreenState extends State<MicScreen>
       _canNavigateToActivities = false;
       _completionMessage = null;
     });
+
+    // In demo mode, simulate recording with just the animation
+    if (DemoMode.isActive) {
+      _transcriptionText = null;
+      _hasUploadError = false;
+      _currentSessionId = 'demo-session';
+      _nextChunkIndex = 0;
+
+      setState(() {
+        _isRecording = true;
+        _recordDuration = Duration.zero;
+      });
+      _waveController.repeat();
+
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() {
+          _recordDuration += const Duration(seconds: 1);
+        });
+      });
+      return;
+    }
 
     // Reinicializa estado de la sesión
     _transcriptionText = null;
@@ -301,6 +335,20 @@ class _MicScreenState extends State<MicScreen>
   /// Detiene la grabación, envía el último fragmento y completa la sesión.
   Future<void> _stopRecording() async {
     if (!_isRecording) return;
+
+    // In demo mode, skip the minimum duration check and go straight to complete
+    if (DemoMode.isActive) {
+      _timer?.cancel();
+      _timer = null;
+      setState(() {
+        _isRecording = false;
+        _recordDuration = Duration.zero;
+      });
+      _waveController.stop();
+      _waveController.reset();
+      await _completeTranscription();
+      return;
+    }
 
     if (!_hasReachedMinimumDuration) {
       _showError(
@@ -930,6 +978,24 @@ class _MicScreenState extends State<MicScreen>
 
   /// Completa la sessió actual i mostra la confirmació.
   Future<void> _completeTranscription() async {
+    // In demo mode, show a message that recording is disabled
+    if (DemoMode.isActive) {
+      setState(() {
+        _isUploading = false;
+        _isRecording = false;
+        _timer?.cancel();
+        _chunkTimer?.cancel();
+        _transcriptionText = null;
+        _showCompletionOverlay = true;
+        _canNavigateToActivities = true;
+        _completionHadError = false;
+        _completionMessage =
+            'La gravació està desactivada en mode demo. Prem continuar per explorar l\'app.';
+      });
+      _bufferFlushTimer?.cancel();
+      return;
+    }
+
     final String? sessionId = _currentSessionId;
     if (sessionId == null) return;
     final questionId = _currentDailyQuestion?.id;
@@ -1213,9 +1279,9 @@ class _MicScreenState extends State<MicScreen>
     final bool baseRecordEnabled = _hasMicPermission &&
         !_showCompletionOverlay &&
         (_isRecording || !_isUploading);
-    final bool stopLocked = _isRecording && !_hasReachedMinimumDuration;
+    final bool stopLocked = !DemoMode.isActive && _isRecording && !_hasReachedMinimumDuration;
     final bool buttonEnabled = baseRecordEnabled && !stopLocked;
-    final bool showMinDurationWarning = _isRecording && stopLocked;
+    final bool showMinDurationWarning = !DemoMode.isActive && _isRecording && stopLocked;
     final VoidCallback? micButtonAction = baseRecordEnabled
         ? (_isRecording
             ? (stopLocked ? null : _stopRecording)

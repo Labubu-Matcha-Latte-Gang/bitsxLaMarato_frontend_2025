@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../services/session_manager.dart';
+import '../../../services/demo_mode.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../login/login.dart';
 import '../register/registerLobby.dart';
+import '../patient/patient_menu_page.dart';
+import '../doctor/doctor_home_page.dart';
 
 class InitialPage extends StatefulWidget {
   final bool initialDarkMode;
@@ -39,6 +42,19 @@ class _InitialPageState extends State<InitialPage> {
         isDarkMode = saved;
       });
     }
+  }
+
+  Future<void> _startDemo(String role) async {
+    await DemoMode.activate(role: role);
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => role == 'doctor'
+            ? DoctorHomePage(initialDarkMode: isDarkMode)
+            : PatientMenuPage(initialDarkMode: isDarkMode),
+      ),
+      (route) => false,
+    );
   }
 
   @override
@@ -246,6 +262,98 @@ class _InitialPageState extends State<InitialPage> {
                                             ),
                                           ),
                                         ),
+                                      ),
+
+                                      const SizedBox(height: 24),
+
+                                      // Demo divider
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Divider(
+                                              color: AppColors.getTertiaryTextColor(isDarkMode),
+                                              thickness: 0.5,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                                            child: Text(
+                                              'o prova la demo',
+                                              style: TextStyle(
+                                                color: AppColors.getTertiaryTextColor(isDarkMode),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Divider(
+                                              color: AppColors.getTertiaryTextColor(isDarkMode),
+                                              thickness: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 16),
+
+                                      // Demo buttons row
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 46,
+                                              child: OutlinedButton.icon(
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                                                  side: BorderSide(
+                                                    color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(120),
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(32),
+                                                  ),
+                                                ),
+                                                icon: const Icon(Icons.person, size: 18),
+                                                label: const Text(
+                                                  'DEMO PACIENT',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                                onPressed: () => _startDemo('patient'),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 46,
+                                              child: OutlinedButton.icon(
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: AppColors.getPrimaryButtonColor(isDarkMode),
+                                                  side: BorderSide(
+                                                    color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(120),
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(32),
+                                                  ),
+                                                ),
+                                                icon: const Icon(Icons.medical_services, size: 18),
+                                                label: const Text(
+                                                  'DEMO METGE',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                                onPressed: () => _startDemo('doctor'),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
