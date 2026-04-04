@@ -5,10 +5,11 @@ import '../../../utils/app_colors.dart';
 import '../../../utils/constants/image_strings.dart';
 import '../../../utils/effects/particle_system.dart';
 import '../../../services/session_manager.dart';
+import '../../../services/demo_mode.dart';
 import '../activities/all_activities_page.dart';
 import '../activities/all_test_page.dart' as test_page;
 import '../activities/recommended_activities_page.dart';
-import '../initialPage/initialPage.dart';
+import '../landing/landing_page.dart';
 import 'qr_generate_page.dart';
 import 'diary.dart';
 import 'flashcards.dart';
@@ -177,8 +178,12 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
     setState(() => _isLoggingOut = false);
 
     if (success) {
+      if (DemoMode.isActive) {
+        await DemoMode.deactivate();
+      }
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const InitialPage()),
+        MaterialPageRoute(builder: (_) => const LandingPage()),
         (route) => false,
       );
     } else {
@@ -264,6 +269,10 @@ class _PatientMenuPageState extends State<PatientMenuPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // Demo mode banner
+                  if (DemoMode.isActive)
+                    _DemoBanner(isDarkMode: isDarkMode),
 
                   // Centered logo under the header (same style as LoginScreen)
                   Center(
@@ -741,6 +750,42 @@ class _CardContainer extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _DemoBanner extends StatelessWidget {
+  final bool isDarkMode;
+  const _DemoBanner({required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF9800).withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFF9800).withAlpha(80),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.sports_esports, size: 16, color: Color(0xFFFF9800)),
+          const SizedBox(width: 8),
+          Text(
+            'Mode Demo',
+            style: TextStyle(
+              color: isDarkMode ? const Color(0xFFFFB74D) : const Color(0xFFE65100),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

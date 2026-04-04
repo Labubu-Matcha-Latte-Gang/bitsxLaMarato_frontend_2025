@@ -1,4 +1,5 @@
 import 'package:bitsxlamarato_frontend_2025/features/screens/initialPage/initialPage.dart';
+import 'package:bitsxlamarato_frontend_2025/features/screens/landing/landing_page.dart';
 import 'package:bitsxlamarato_frontend_2025/features/screens/register/registerLobby.dart';
 import 'package:bitsxlamarato_frontend_2025/features/screens/login/login.dart';
 import 'package:bitsxlamarato_frontend_2025/features/screens/micro/mic.dart';
@@ -68,8 +69,10 @@ class MyApp extends StatelessWidget {
                 : (startInActivities
                     ? PatientMenuPage(initialDarkMode: initialDarkMode)
                     : const MicScreen()))
-            : InitialPage(initialDarkMode: initialDarkMode),
+            : LandingPage(initialDarkMode: initialDarkMode),
         routes: {
+          '/landing': (context) =>
+              LandingPage(initialDarkMode: initialDarkMode),
           '/initial': (context) =>
               InitialPage(initialDarkMode: initialDarkMode),
           '/register': (context) => const RegisterLobby(),
