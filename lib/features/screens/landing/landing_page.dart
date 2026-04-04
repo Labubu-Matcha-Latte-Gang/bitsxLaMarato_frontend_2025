@@ -585,41 +585,37 @@ class _LandingPageState extends State<LandingPage> {
   // ──────────────────── TECH CARD ────────────────────
   Widget _buildTechCard() {
     const techs = [
-      _Tech(Icons.flutter_dash, 'Flutter'),
-      _Tech(Icons.code, 'Dart'),
-      _Tech(Icons.terminal, 'Python'),
-      _Tech(Icons.dns, 'Flask'),
-      _Tech(Icons.storage, 'PostgreSQL'),
-      _Tech(Icons.inventory_2, 'Docker'),
-      _Tech(Icons.auto_awesome, 'Azure OpenAI'),
-      _Tech(Icons.psychology, 'Gemini'),
-      _Tech(Icons.mic, 'Whisper ASR'),
-      _Tech(Icons.text_fields, 'NLP Engine'),
-      _Tech(Icons.rocket_launch, 'GitHub Actions'),
-      _Tech(Icons.cloud, 'Cloud Deploy'),
+      _Tech(Icons.flutter_dash, 'Flutter', 'Cross-platform UI'),
+      _Tech(Icons.code, 'Dart', 'App language'),
+      _Tech(Icons.terminal, 'Python', 'Backend & NLP'),
+      _Tech(Icons.dns, 'Flask', 'REST API server'),
+      _Tech(Icons.storage, 'PostgreSQL', 'Data persistence'),
+      _Tech(Icons.inventory_2, 'Docker', 'Containerisation'),
+      _Tech(Icons.auto_awesome, 'Azure OpenAI', 'AI recommendations'),
+      _Tech(Icons.psychology, 'Gemini', 'Cognitive analysis'),
+      _Tech(Icons.mic, 'Whisper', 'Speech-to-text'),
+      _Tech(Icons.text_fields, 'NLP Engine', '9 linguistic metrics'),
+      _Tech(Icons.rocket_launch, 'GitHub Actions', 'CI/CD pipelines'),
+      _Tech(Icons.cloud, 'Cloud Deploy', 'Production hosting'),
     ];
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(Icons.build_circle, _techTitle),
-          const SizedBox(height: 12),
-          // 6 rows × 2 columns, each cell stretches to fill
+          const SizedBox(height: 10),
           for (var i = 0; i < techs.length; i += 2)
             Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: i < techs.length - 2 ? 8 : 0),
-                child: Row(
-                  children: [
-                    Expanded(child: _techCell(techs[i])),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: i + 1 < techs.length
-                          ? _techCell(techs[i + 1])
-                          : const SizedBox(),
-                    ),
-                  ],
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _techCell(techs[i])),
+                  Expanded(
+                    child: i + 1 < techs.length
+                        ? _techCell(techs[i + 1])
+                        : const SizedBox(),
+                  ),
+                ],
               ),
             ),
         ],
@@ -629,12 +625,11 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _techCell(_Tech tech) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(14),
-        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(40),
+          color: AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(20),
+          width: 0.5,
         ),
       ),
       child: Row(
@@ -644,14 +639,28 @@ class _LandingPageState extends State<LandingPage> {
               color: AppColors.getPrimaryButtonColor(isDarkMode)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              tech.name,
-              style: TextStyle(
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  tech.name,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryTextColor(isDarkMode),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  tech.desc,
+                  style: TextStyle(
+                    color: AppColors.getTertiaryTextColor(isDarkMode),
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
@@ -1072,5 +1081,6 @@ class _Metric {
 class _Tech {
   final IconData icon;
   final String name;
-  const _Tech(this.icon, this.name);
+  final String desc;
+  const _Tech(this.icon, this.name, this.desc);
 }
