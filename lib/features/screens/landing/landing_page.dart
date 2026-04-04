@@ -211,7 +211,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth > 900;
-    final horizontalPadding = isWide ? screenWidth * 0.08 : 20.0;
+    final horizontalPadding = isWide ? screenWidth * 0.04 : 16.0;
 
     return Scaffold(
       body: Stack(
@@ -630,7 +630,7 @@ class _LandingPageState extends State<LandingPage> {
           children: [
             const Spacer(),
             CircleAvatar(
-              radius: 42,
+              radius: 48,
               backgroundColor:
                   AppColors.getPrimaryButtonColor(isDarkMode)
                       .withAlpha(35),
@@ -674,6 +674,7 @@ class _LandingPageState extends State<LandingPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => _openUrl(member.linkedIn),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -696,6 +697,7 @@ class _LandingPageState extends State<LandingPage> {
                 ),
                 const SizedBox(width: 14),
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => _openUrl(member.gitHub),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -803,6 +805,7 @@ class _LandingPageState extends State<LandingPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => _openUrl(member.linkedIn),
                 child: Icon(Icons.open_in_new,
                     size: 14,
@@ -811,6 +814,7 @@ class _LandingPageState extends State<LandingPage> {
               ),
               const SizedBox(height: 8),
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => _openUrl(member.gitHub),
                 child: Icon(Icons.code,
                     size: 15,
@@ -953,9 +957,7 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 }
 
