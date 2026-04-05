@@ -559,23 +559,29 @@ class _LandingPageState extends State<LandingPage> {
           _sectionHeader(Icons.analytics, _metricsTitle),
           const SizedBox(height: 12),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: leftCol.map((m) => _metricRow(m)).toList(),
+            child: ClipRect(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      children: leftCol.map((m) => _metricRow(m)).toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: rightCol.map((m) => _metricRow(m)).toList(),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      children: rightCol.map((m) => _metricRow(m)).toList(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -623,6 +629,8 @@ class _LandingPageState extends State<LandingPage> {
                     fontSize: 11,
                     height: 1.3,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -696,20 +704,28 @@ class _LandingPageState extends State<LandingPage> {
         children: [
           _sectionHeader(Icons.build_circle, _techTitle),
           const SizedBox(height: 10),
-          for (var i = 0; i < techs.length; i += 2)
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          Expanded(
+            child: ClipRect(
+              child: Column(
                 children: [
-                  Expanded(child: _techCell(techs[i])),
-                  Expanded(
-                    child: i + 1 < techs.length
-                        ? _techCell(techs[i + 1])
-                        : const SizedBox(),
-                  ),
+                  for (var i = 0; i < techs.length; i += 2)
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: _techCell(techs[i])),
+                          Expanded(
+                            child: i + 1 < techs.length
+                                ? _techCell(techs[i + 1])
+                                : const SizedBox(),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -718,6 +734,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget _techCell(_Tech tech) {
     final desc = _isCatalan ? tech.catDesc : tech.enDesc;
     return Container(
+      clipBehavior: Clip.hardEdge,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         border: Border.all(
