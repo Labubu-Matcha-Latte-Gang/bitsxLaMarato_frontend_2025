@@ -254,48 +254,71 @@ class _LandingPageState extends State<LandingPage> {
 
   // ──────────────────── WIDE (desktop) ────────────────────
   Widget _buildWideLayout() {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        _buildHeroCompact(),
-        const SizedBox(height: 16),
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Left column: About + (Metrics | Tech)
-              Expanded(
-                flex: 5,
-                child: Column(
-                  children: [
-                    _buildAboutCard(),
-                    const SizedBox(height: 14),
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(flex: 3, child: _buildMetricsCard()),
-                          const SizedBox(width: 14),
-                          Expanded(flex: 2, child: _buildTechCard()),
-                        ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        // Reserve space for hero (~130), footer (~30), and spacing
+        const overhead = 170.0;
+        final contentHeight =
+            (availableHeight - overhead).clamp(400.0, availableHeight);
+
+        return Scrollbar(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                _buildHeroCompact(),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: contentHeight,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Left column: About + (Metrics | Tech)
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          children: [
+                            Flexible(
+                              flex: 2,
+                              child: _buildAboutCard(),
+                            ),
+                            const SizedBox(height: 14),
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                      flex: 3, child: _buildMetricsCard()),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                      flex: 2, child: _buildTechCard()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 18),
+                      // Right column: Team
+                      Expanded(
+                        flex: 4,
+                        child: _buildTeamCard(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 18),
-              // Right column: Team
-              Expanded(
-                flex: 4,
-                child: _buildTeamCard(),
-              ),
-            ],
+                const SizedBox(height: 6),
+                _buildFooter(),
+                const SizedBox(height: 6),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        _buildFooter(),
-        const SizedBox(height: 6),
-      ],
+        );
+      },
     );
   }
 
@@ -512,6 +535,8 @@ class _LandingPageState extends State<LandingPage> {
 
   // ──────────────────── ABOUT CARD ────────────────────
   Widget _buildAboutCard() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bodyFontSize = (14.0 * (screenWidth / 1920)).clamp(11.0, 14.0);
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,7 +548,7 @@ class _LandingPageState extends State<LandingPage> {
             _aboutBody,
             style: TextStyle(
               color: AppColors.getSecondaryTextColor(isDarkMode),
-              fontSize: 14,
+              fontSize: bodyFontSize,
               height: 1.5,
             ),
           ),
@@ -559,25 +584,24 @@ class _LandingPageState extends State<LandingPage> {
           _sectionHeader(Icons.analytics, _metricsTitle),
           const SizedBox(height: 12),
           Expanded(
-            child: ClipRect(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: leftCol.map((m) => _metricRow(m)).toList(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children:
+                          leftCol.map((m) => _metricRow(m)).toList(),
                     ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      children: rightCol.map((m) => _metricRow(m)).toList(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children:
+                          rightCol.map((m) => _metricRow(m)).toList(),
                     ),
                   ),
                 ],
@@ -592,6 +616,9 @@ class _LandingPageState extends State<LandingPage> {
   Widget _metricRow(_Metric m) {
     final name = _isCatalan ? m.catName : m.enName;
     final desc = _isCatalan ? m.catDesc : m.enDesc;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final nameSize = (13.0 * (screenWidth / 1920)).clamp(10.0, 13.0);
+    final descSize = (11.0 * (screenWidth / 1920)).clamp(9.0, 11.0);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -617,16 +644,18 @@ class _LandingPageState extends State<LandingPage> {
                   name,
                   style: TextStyle(
                     color: AppColors.getPrimaryTextColor(isDarkMode),
-                    fontSize: 13,
+                    fontSize: nameSize,
                     fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   desc,
                   style: TextStyle(
                     color: AppColors.getTertiaryTextColor(isDarkMode),
-                    fontSize: 11,
+                    fontSize: descSize,
                     height: 1.3,
                   ),
                   maxLines: 2,
@@ -705,11 +734,12 @@ class _LandingPageState extends State<LandingPage> {
           _sectionHeader(Icons.build_circle, _techTitle),
           const SizedBox(height: 10),
           Expanded(
-            child: ClipRect(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 children: [
                   for (var i = 0; i < techs.length; i += 2)
-                    Expanded(
+                    IntrinsicHeight(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -812,117 +842,140 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _teamVerticalCard(_TeamMember member) {
     final desc = _isCatalan ? member.catDesc : member.enDesc;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color:
-              AppColors.getPrimaryButtonColor(isDarkMode).withAlpha(10),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.getPrimaryButtonColor(isDarkMode)
-                .withAlpha(30),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(),
-            CircleAvatar(
-              radius: 48,
-              backgroundColor:
-                  AppColors.getPrimaryButtonColor(isDarkMode)
-                      .withAlpha(35),
-              backgroundImage: NetworkImage(member.imageUrl),
-              onBackgroundImageError: (_, __) {},
-            ),
-            const SizedBox(height: 12),
-            Text(
-              member.name,
-              style: TextStyle(
-                color: AppColors.getPrimaryTextColor(isDarkMode),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardHeight = constraints.maxHeight;
+        final scaleFactor = (cardHeight / 280).clamp(0.55, 1.0);
+        final avatarRadius = (48.0 * scaleFactor).clamp(20.0, 48.0);
+        final cardPadding = (14.0 * scaleFactor).clamp(6.0, 14.0);
+        final nameSize = (16.0 * scaleFactor).clamp(11.0, 16.0);
+        final roleSize = (14.0 * scaleFactor).clamp(10.0, 14.0);
+        final descSize = (11.0 * scaleFactor).clamp(8.0, 11.0);
+        final gapAfterAvatar = (12.0 * scaleFactor).clamp(4.0, 12.0);
+
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            padding: EdgeInsets.all(cardPadding),
+            decoration: BoxDecoration(
+              color: AppColors.getPrimaryButtonColor(isDarkMode)
+                  .withAlpha(10),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.getPrimaryButtonColor(isDarkMode)
+                    .withAlpha(30),
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 3),
-            Text(
-              member.role,
-              style: TextStyle(
-                color: AppColors.getPrimaryButtonColor(isDarkMode),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              desc,
-              style: TextStyle(
-                color: AppColors.getTertiaryTextColor(isDarkMode),
-                fontSize: 11,
-                height: 1.3,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const Spacer(),
-            Row(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _openUrl(member.linkedIn),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.open_in_new,
-                          size: 12,
-                          color: AppColors.getPrimaryButtonColor(isDarkMode)
-                              .withAlpha(150)),
-                      const SizedBox(width: 3),
-                      Text(
-                        'LinkedIn',
-                        style: TextStyle(
-                          color: AppColors.getPrimaryButtonColor(isDarkMode)
-                              .withAlpha(150),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                const Spacer(),
+                CircleAvatar(
+                  radius: avatarRadius,
+                  backgroundColor:
+                      AppColors.getPrimaryButtonColor(isDarkMode)
+                          .withAlpha(35),
+                  backgroundImage: NetworkImage(member.imageUrl),
+                  onBackgroundImageError: (_, __) {},
+                ),
+                SizedBox(height: gapAfterAvatar),
+                Text(
+                  member.name,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryTextColor(isDarkMode),
+                    fontSize: nameSize,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  member.role,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryButtonColor(isDarkMode),
+                    fontSize: roleSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Flexible(
+                  child: Text(
+                    desc,
+                    style: TextStyle(
+                      color: AppColors.getTertiaryTextColor(isDarkMode),
+                      fontSize: descSize,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 14),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _openUrl(member.gitHub),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.code,
-                          size: 13,
-                          color: AppColors.getPrimaryButtonColor(isDarkMode)
-                              .withAlpha(150)),
-                      const SizedBox(width: 3),
-                      Text(
-                        'GitHub',
-                        style: TextStyle(
-                          color: AppColors.getPrimaryButtonColor(isDarkMode)
-                              .withAlpha(150),
-                          fontSize: 11,
-                        ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _openUrl(member.linkedIn),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.open_in_new,
+                              size: 12,
+                              color:
+                                  AppColors.getPrimaryButtonColor(isDarkMode)
+                                      .withAlpha(150)),
+                          const SizedBox(width: 3),
+                          Text(
+                            'LinkedIn',
+                            style: TextStyle(
+                              color:
+                                  AppColors.getPrimaryButtonColor(isDarkMode)
+                                      .withAlpha(150),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 14),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _openUrl(member.gitHub),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.code,
+                              size: 13,
+                              color:
+                                  AppColors.getPrimaryButtonColor(isDarkMode)
+                                      .withAlpha(150)),
+                          const SizedBox(width: 3),
+                          Text(
+                            'GitHub',
+                            style: TextStyle(
+                              color:
+                                  AppColors.getPrimaryButtonColor(isDarkMode)
+                                      .withAlpha(150),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1081,6 +1134,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget _sectionCard({required Widget child}) {
     return Container(
       width: double.infinity,
+      clipBehavior: Clip.hardEdge,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getSecondaryBackgroundColor(isDarkMode),
@@ -1112,12 +1166,16 @@ class _LandingPageState extends State<LandingPage> {
               size: 20),
         ),
         const SizedBox(width: 10),
-        Text(
-          title,
-          style: TextStyle(
-            color: AppColors.getPrimaryTextColor(isDarkMode),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+        Flexible(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: AppColors.getPrimaryTextColor(isDarkMode),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
