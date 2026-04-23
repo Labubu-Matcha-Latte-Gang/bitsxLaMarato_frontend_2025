@@ -254,71 +254,57 @@ class _LandingPageState extends State<LandingPage> {
 
   // ──────────────────── WIDE (desktop) ────────────────────
   Widget _buildWideLayout() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        // Reserve space for hero (~130), footer (~30), and spacing
-        const overhead = 170.0;
-        final contentHeight =
-            (availableHeight - overhead).clamp(400.0, availableHeight);
-
-        return Scrollbar(
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                _buildHeroCompact(),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: contentHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Left column: About + (Metrics | Tech)
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          children: [
-                            Flexible(
-                              flex: 2,
-                              child: _buildAboutCard(),
-                            ),
-                            const SizedBox(height: 14),
-                            Expanded(
-                              flex: 3,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                      flex: 3, child: _buildMetricsCard()),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                      flex: 2, child: _buildTechCard()),
-                                ],
-                              ),
-                            ),
-                          ],
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            _buildHeroCompact(),
+            const SizedBox(height: 16),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left column: About + (Metrics | Tech)
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildAboutCard(),
+                        const SizedBox(height: 14),
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                  flex: 3, child: _buildMetricsCard()),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                  flex: 2, child: _buildTechCard()),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 18),
-                      // Right column: Team
-                      Expanded(
-                        flex: 4,
-                        child: _buildTeamCard(),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                _buildFooter(),
-                const SizedBox(height: 6),
-              ],
+                  const SizedBox(width: 18),
+                  // Right column: Team stretches to match left column
+                  Expanded(
+                    flex: 4,
+                    child: _buildTeamCard(),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 6),
+            _buildFooter(),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
     );
   }
 
@@ -580,33 +566,29 @@ class _LandingPageState extends State<LandingPage> {
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _sectionHeader(Icons.analytics, _metricsTitle),
           const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children:
-                          leftCol.map((m) => _metricRow(m)).toList(),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children:
-                          rightCol.map((m) => _metricRow(m)).toList(),
-                    ),
-                  ),
-                ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children:
+                      leftCol.map((m) => _metricRow(m)).toList(),
+                ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children:
+                      rightCol.map((m) => _metricRow(m)).toList(),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -730,32 +712,24 @@ class _LandingPageState extends State<LandingPage> {
     return _sectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _sectionHeader(Icons.build_circle, _techTitle),
           const SizedBox(height: 10),
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
+          for (var i = 0; i < techs.length; i += 2)
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (var i = 0; i < techs.length; i += 2)
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _techCell(techs[i])),
-                          Expanded(
-                            child: i + 1 < techs.length
-                                ? _techCell(techs[i + 1])
-                                : const SizedBox(),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Expanded(child: _techCell(techs[i])),
+                  Expanded(
+                    child: i + 1 < techs.length
+                        ? _techCell(techs[i + 1])
+                        : const SizedBox(),
+                  ),
                 ],
               ),
             ),
-          ),
         ],
       ),
     );
